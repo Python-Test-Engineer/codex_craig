@@ -260,10 +260,31 @@ def generate_insights_bundle(
     ul {{
       padding-left: 20px;
     }}
+    .toolbar {{
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }}
+    .download-btn {{
+      display: inline-block;
+      text-decoration: none;
+      background: #1f4a63;
+      color: #ffffff;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }}
+    .download-btn:hover {{
+      opacity: 0.92;
+    }}
   </style>
 </head>
 <body>
   <main>
+    <div class="toolbar">
+      <a class="download-btn" href="../report.md" download="report.md">Download Report</a>
+    </div>
     {html_body}
   </main>
 </body>

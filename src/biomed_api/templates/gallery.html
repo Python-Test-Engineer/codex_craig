@@ -241,11 +241,11 @@
         </article>
 
         <article class="card">
-          <h2>3) INSIGHTS</h2>
-          <p class="small">Creates per-image insight markdown files and a merged final insights HTML report.</p>
-          <button id="show-insights-btn" class="btn-secondary" type="button" disabled>SHOW FINAL INSIGHTS</button>
-          <div id="insights-status" class="status">Run the pipeline to generate insights.</div>
+          <h2>3) Insights</h2>
+          <p class="small">Open the generated insights page in a new tab.</p>
+          <button id="view-insights-btn" class="btn-secondary" type="button">View Insights</button>
         </article>
+
       </aside>
 
       <section class="stack">
@@ -277,7 +277,7 @@
                 </div>
               {% endfor %}
             {% else %}
-              <div class="small">No PNG images found. Run pipeline with PNG enabled.</div>
+              <div class="small">No PNG images found.</div>
             {% endif %}
           </div>
 
@@ -291,8 +291,7 @@
     const executeStatus = document.getElementById("execute-status");
     const executeBtn = document.getElementById("execute-btn");
     const pipelineBusy = document.getElementById("pipeline-busy");
-    const showInsightsBtn = document.getElementById("show-insights-btn");
-    const insightsStatus = document.getElementById("insights-status");
+    const viewInsightsBtn = document.getElementById("view-insights-btn");
 
     function setStatus(el, text, isError = false) {
       el.textContent = text;
@@ -304,23 +303,6 @@
       executeBtn.disabled = isRunning;
       executeBtn.style.opacity = isRunning ? "0.7" : "1";
       executeBtn.style.cursor = isRunning ? "not-allowed" : "pointer";
-    }
-
-    async function refreshInsightsAvailability() {
-      try {
-        const response = await fetch("/output/insights/insights.html", { method: "HEAD" });
-        const available = response.ok;
-        showInsightsBtn.disabled = !available;
-        setStatus(
-          insightsStatus,
-          available
-            ? "Final insights are ready. Click SHOW FINAL INSIGHTS."
-            : "Run the pipeline to generate insights."
-        );
-      } catch {
-        showInsightsBtn.disabled = true;
-        setStatus(insightsStatus, "Run the pipeline to generate insights.");
-      }
     }
 
     async function refreshSummary() {
@@ -399,7 +381,6 @@
         setStatus(executeStatus, `${body.message} html=${body.html_charts}, png=${body.png_charts}`);
         await refreshSummary();
         await refreshReport();
-        await refreshInsightsAvailability();
         setTimeout(reloadPage, 1000);
       } catch (error) {
         setStatus(executeStatus, String(error), true);
@@ -408,13 +389,12 @@
       }
     });
 
-    showInsightsBtn.addEventListener("click", () => {
+    viewInsightsBtn.addEventListener("click", () => {
       window.open("/output/insights/insights.html", "_blank", "noopener,noreferrer");
     });
 
     refreshSummary();
     refreshReport();
-    refreshInsightsAvailability();
   </script>
 </body>
 </html>
