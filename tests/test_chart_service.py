@@ -2,12 +2,29 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pandas as pd
+
 from biomed_api.services.chart_service import generate_standard_charts, list_chart_artifacts
-from biomed_api.services.data_service import load_dataset
+
+
+def _build_chart_df() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "age_months": [12, 24, 18, 36, 30],
+            "stage": ["2", "4", "3", "4", "2"],
+            "risk_group": ["low", "high", "intermediate", "high", "low"],
+            "efs_months": [30, 12, 20, 8, 28],
+            "event": [0, 1, 0, 1, 0],
+            "mycn_amplified": [0, 1, 0, 1, 0],
+            "expr_mycn": [1.2, 2.7, 1.8, 3.1, 1.4],
+            "expr_alk": [1.9, 1.2, 1.5, 1.1, 1.8],
+            "expr_mdm2": [1.1, 2.4, 1.9, 2.8, 1.3],
+        }
+    )
 
 
 def test_generate_standard_charts_creates_artifacts(tmp_path: Path) -> None:
-    df = load_dataset("data/data.csv")
+    df = _build_chart_df()
 
     artifacts = generate_standard_charts(
         df, output_dir=tmp_path, clean_output=True, write_png=True
@@ -20,7 +37,7 @@ def test_generate_standard_charts_creates_artifacts(tmp_path: Path) -> None:
 
 
 def test_chart_artifacts_have_required_categories(tmp_path: Path) -> None:
-    df = load_dataset("data/data.csv")
+    df = _build_chart_df()
     generate_standard_charts(df, output_dir=tmp_path, clean_output=True, write_png=True)
 
     listed = list_chart_artifacts(output_dir=tmp_path)
