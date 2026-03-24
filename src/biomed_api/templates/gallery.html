@@ -86,6 +86,23 @@
       font-size: 0.86rem;
       color: var(--ink);
     }
+    textarea {
+      width: 100%;
+      margin: 8px 0 4px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.82rem;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      resize: vertical;
+      background: #f7faf6;
+      box-sizing: border-box;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
     button {
       width: 100%;
       border: 0;
@@ -230,6 +247,11 @@
           <input id="csv-file" type="file" accept=".csv" />
           <button id="upload-btn" type="button">Upload Dataset</button>
           <div id="upload-status" class="status"></div>
+          <hr style="border:none;border-top:1px solid var(--line);margin:12px 0;" />
+          <label for="objectives-text" style="font-size:0.88rem;color:var(--muted);display:block;margin-bottom:4px;">Objectives (<code>OBJECTIVES.md</code>)</label>
+          <textarea id="objectives-text" rows="8" placeholder="Paste or type your objectives here. This will be saved as OBJECTIVES.md and used by the pipeline."></textarea>
+          <button id="objectives-btn" type="button" class="btn-secondary">Save OBJECTIVES.md</button>
+          <div id="objectives-status" class="status"></div>
         </article>
 
         <article class="card">
@@ -244,6 +266,15 @@
           <h2>3) Insights</h2>
           <p class="small">Open the generated insights page in a new tab.</p>
           <button id="view-insights-btn" class="btn-secondary" type="button">View Insights</button>
+        </article>
+
+        <article class="card">
+          <h2>4) Response to Objectives</h2>
+          <p class="small">Summarise pipeline outputs against <code>OBJECTIVES.md</code> and download as <code>RESPONSE_TO_OBJECTIVES.md</code>.</p>
+          <button id="response-btn" type="button" class="btn-secondary">Generate Response</button>
+          <div id="response-busy" class="busy"><span class="spinner"></span><span>Generating...</span></div>
+          <div id="response-status" class="status"></div>
+          <button id="download-response-btn" class="btn-secondary" type="button" disabled style="margin-top:6px;">Download RESPONSE_TO_OBJECTIVES.md</button>
         </article>
 
       </aside>
@@ -288,10 +319,15 @@
 
   <script>
     const uploadStatus = document.getElementById("upload-status");
+    const objectivesStatus = document.getElementById("objectives-status");
     const executeStatus = document.getElementById("execute-status");
     const executeBtn = document.getElementById("execute-btn");
     const pipelineBusy = document.getElementById("pipeline-busy");
     const viewInsightsBtn = document.getElementById("view-insights-btn");
+    const responseBtn = document.getElementById("response-btn");
+    const responseBusy = document.getElementById("response-busy");
+    const responseStatus = document.getElementById("response-status");
+    const downloadResponseBtn = document.getElementById("download-response-btn");
 
     function setStatus(el, text, isError = false) {
       el.textContent = text;
@@ -339,8 +375,24 @@
       }
     }
 
-    function reloadPage() {
-      window.location.href = "/";
+    async function refreshImages() {
+      const grid = document.getElementById("image-grid");
+      try {
+        const res = await fetch("/output-images");
+        if (!res.ok) return;
+        const images = await res.json();
+        if (!images.length) {
+          grid.innerHTML = '<div class="small">No PNG images found.</div>';
+          return;
+        }
+        grid.innerHTML = images.map(img => `
+          <div class="tile">
+            <a href="/viewer/${img.name}" target="_blank" rel="noopener noreferrer">
+              <img src="${img.url}" alt="${img.name}" loading="lazy" />
+            </a>
+            <div class="meta">${img.name} | ${img.category}</div>
+          </div>`).join("");
+      } catch { /* leave grid as-is */ }
     }
 
     document.getElementById("upload-btn").addEventListener("click", async () => {
@@ -365,6 +417,27 @@
       }
     });
 
+    document.getElementById("objectives-btn").addEventListener("click", async () => {
+      const content = document.getElementById("objectives-text").value;
+      if (!content.trim()) {
+        setStatus(objectivesStatus, "Text box is empty.", true);
+        return;
+      }
+      setStatus(objectivesStatus, "Saving OBJECTIVES.md...");
+      try {
+        const response = await fetch("/upload/objectives", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.detail || "Save failed.");
+        setStatus(objectivesStatus, body.message);
+      } catch (error) {
+        setStatus(objectivesStatus, String(error), true);
+      }
+    });
+
     document.getElementById("execute-btn").addEventListener("click", async () => {
       setPipelineRunning(true);
       setStatus(executeStatus, "Running chart/report pipeline...");
@@ -381,7 +454,7 @@
         setStatus(executeStatus, `${body.message} html=${body.html_charts}, png=${body.png_charts}`);
         await refreshSummary();
         await refreshReport();
-        setTimeout(reloadPage, 1000);
+        await refreshImages();
       } catch (error) {
         setStatus(executeStatus, String(error), true);
       } finally {
@@ -393,8 +466,40 @@
       window.open("/output/insights/insights.html", "_blank", "noopener,noreferrer");
     });
 
-    refreshSummary();
-    refreshReport();
+    responseBtn.addEventListener("click", async () => {
+      responseBusy.classList.add("active");
+      responseBtn.disabled = true;
+      downloadResponseBtn.disabled = true;
+      setStatus(responseStatus, "Generating response to objectives...");
+      try {
+        const res = await fetch("/generate/response-to-objectives", { method: "POST" });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.detail || "Generation failed.");
+        setStatus(responseStatus, `${body.message} (${body.objectives_found} objectives found)`);
+        downloadResponseBtn.disabled = false;
+      } catch (error) {
+        setStatus(responseStatus, String(error), true);
+      } finally {
+        responseBusy.classList.remove("active");
+        responseBtn.disabled = false;
+      }
+    });
+
+    downloadResponseBtn.addEventListener("click", () => {
+      window.location.href = "/response-to-objectives/download";
+    });
+
+    async function loadObjectives() {
+      try {
+        const response = await fetch("/objectives");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.content) {
+          document.getElementById("objectives-text").value = data.content;
+        }
+      } catch { /* ignore */ }
+    }
+
   </script>
 </body>
 </html>

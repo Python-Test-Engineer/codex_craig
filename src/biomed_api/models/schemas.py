@@ -89,5 +89,25 @@ class ExecutePlanResponse(BaseModel):
     output_dir: str
 
 
+class ObjectivesUploadRequest(BaseModel):
+    content: str
+
+
+class ObjectivesUploadResponse(BaseModel):
+    message: str
+    path: str
+
+
+class ObjectivesResponse(BaseModel):
+    content: str
+    path: str
+
+
+class ResponseToObjectivesResponse(BaseModel):
+    message: str
+    path: str
+    objectives_found: int
+
+
 class ErrorResponse(BaseModel):
     detail: str

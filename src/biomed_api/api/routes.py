@@ -17,6 +17,10 @@ from biomed_api.models.schemas import (
     ExecutePlanRequest,
     ExecutePlanResponse,
     HealthResponse,
+    ObjectivesResponse,
+    ObjectivesUploadRequest,
+    ObjectivesUploadResponse,
+    ResponseToObjectivesResponse,
     InsightsGenerationResponse,
     InsightsResponse,
     ReportGenerationResponse,
@@ -30,7 +34,10 @@ from biomed_api.services.chart_service import (
     list_chart_artifacts,
 )
 from biomed_api.services.data_service import DATA_PATH, build_summary, load_dataset
+
+OBJECTIVES_PATH = DATA_PATH.parent.parent / "OBJECTIVES.md"
 from biomed_api.services.insight_service import generate_insights_bundle, read_final_insights
+from biomed_api.services.objectives_service import generate_response_to_objectives
 from biomed_api.services.report_service import generate_report, read_report
 
 
@@ -65,16 +72,16 @@ def _build_image_cards() -> list[dict[str, str]]:
 
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request) -> HTMLResponse:
-    artifacts = list_chart_artifacts()
     return templates.TemplateResponse(
         request,
         "gallery.html",
-        {
-            "request": request,
-            "charts": artifacts,
-            "images": _build_image_cards(),
-        },
+        {"request": request, "charts": [], "images": []},
     )
+
+
+@router.get("/output-images")
+def output_images() -> list[dict[str, str]]:
+    return _build_image_cards()
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -109,6 +116,53 @@ async def upload_csv(file: UploadFile = File(...)) -> CsvUploadResponse:
         )
     finally:
         await file.close()
+
+
+@router.post("/upload/objectives", response_model=ObjectivesUploadResponse)
+def upload_objectives(payload: ObjectivesUploadRequest) -> ObjectivesUploadResponse:
+    if not payload.content.strip():
+        raise HTTPException(status_code=400, detail="Objectives content cannot be empty.")
+    OBJECTIVES_PATH.write_text(payload.content, encoding="utf-8")
+    return ObjectivesUploadResponse(
+        message="OBJECTIVES.md saved successfully.",
+        path=str(OBJECTIVES_PATH),
+    )
+
+
+@router.get("/objectives", response_model=ObjectivesResponse)
+def get_objectives() -> ObjectivesResponse:
+    content = OBJECTIVES_PATH.read_text(encoding="utf-8") if OBJECTIVES_PATH.exists() else ""
+    return ObjectivesResponse(content=content, path=str(OBJECTIVES_PATH))
+
+
+@router.post("/generate/response-to-objectives", response_model=ResponseToObjectivesResponse)
+def generate_response_to_objectives_endpoint() -> ResponseToObjectivesResponse:
+    try:
+        artifacts = list_chart_artifacts()
+        out_path = generate_response_to_objectives(artifacts)
+        objectives_count = len(
+            [l for l in (OBJECTIVES_PATH.read_text(encoding="utf-8") if OBJECTIVES_PATH.exists() else "").splitlines()
+             if l.strip().startswith("- ") or (l.strip() and l.strip()[0].isdigit())]
+        )
+        return ResponseToObjectivesResponse(
+            message="RESPONSE_TO_OBJECTIVES.md generated successfully.",
+            path=str(out_path),
+            objectives_found=objectives_count,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Response generation failed: {exc}") from exc
+
+
+@router.get("/response-to-objectives/download")
+def download_response_to_objectives() -> FileResponse:
+    from biomed_api.services.objectives_service import RESPONSE_PATH
+    if not RESPONSE_PATH.exists():
+        raise HTTPException(status_code=404, detail="RESPONSE_TO_OBJECTIVES.md has not been generated yet.")
+    return FileResponse(
+        path=str(RESPONSE_PATH),
+        media_type="text/markdown",
+        headers={"Content-Disposition": 'attachment; filename="RESPONSE_TO_OBJECTIVES.md"'},
+    )
 
 
 @router.get("/summary", response_model=SummaryResponse)
@@ -271,13 +325,8 @@ def insights() -> InsightsResponse:
 
 @router.get("/gallery", response_class=HTMLResponse)
 def gallery(request: Request) -> HTMLResponse:
-    artifacts = list_chart_artifacts()
     return templates.TemplateResponse(
         request,
         "gallery.html",
-        {
-            "request": request,
-            "charts": artifacts,
-            "images": _build_image_cards(),
-        },
+        {"request": request, "charts": [], "images": []},
     )
