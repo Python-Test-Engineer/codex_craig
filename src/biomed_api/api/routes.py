@@ -347,31 +347,35 @@ async def ask_question(payload: AskRequest) -> AskResponse:
     if not api_key:
         raise HTTPException(status_code=400, detail="OPENROUTER_API_KEY is not set.")
 
-    # Build context from available pipeline outputs
-    context_parts: list[str] = []
+    # Require generated insights — do not use raw dataset as context
     try:
-        df = load_dataset()
-        summary = build_summary(df)
-        context_parts.append(
-            f"Dataset: {summary['row_count']} rows, {summary['column_count']} columns.\n"
-            f"Columns: {', '.join(col['name'] for col in summary['columns'])}.\n"
-            f"Missing cells: {summary['missing_cells']} ({summary['missing_pct']:.4g}%)."
+        _, insights_content = read_final_insights()
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No insights have been generated yet. "
+                "Please run all sections (1–4) first to generate insights before asking questions."
+            ),
         )
-    except Exception:
-        pass
 
+    # Add chart list as supplementary context
+    context_parts: list[str] = [f"Insights:\n{insights_content}"]
     try:
-        _, report_content = read_report()
-        context_parts.append(f"Report:\n{report_content[:2000]}")
+        artifacts = list_chart_artifacts()
+        if artifacts:
+            chart_names = ", ".join(a.name for a in artifacts)
+            context_parts.append(f"Available charts: {chart_names}")
     except Exception:
         pass
 
-    context_block = "\n\n".join(context_parts) if context_parts else "No pipeline outputs are available yet."
+    context_block = "\n\n".join(context_parts)
 
     system_prompt = (
         "You are a biomedical data scientist assistant. "
-        "Answer questions about the dataset and pipeline outputs concisely and accurately. "
-        "Base your answers on the provided context. If the context is insufficient, say so clearly."
+        "Answer questions strictly based on the provided insights and chart information. "
+        "Do not fabricate data, statistics, or conclusions beyond what is stated in the context. "
+        "If the context is insufficient to answer the question, say so clearly."
     )
     user_message = f"Context:\n{context_block}\n\nQuestion: {question}"
 
