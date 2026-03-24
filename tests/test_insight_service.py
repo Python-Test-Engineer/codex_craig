@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from biomed_api.models.schemas import ChartArtifact
 from biomed_api.services.insight_service import generate_insights_bundle, read_final_insights
@@ -63,3 +64,54 @@ def test_read_final_insights_returns_path_and_content(tmp_path: Path) -> None:
 
     assert path == insights_path
     assert "Final Biomedical Insights" in content
+
+
+def test_generate_insights_uses_llm_when_configured(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from biomed_api.services import insight_service
+
+    class _TextBlock:
+        type = "text"
+        text = (
+            '{"medical_insight":"LLM medical insight",'
+            '"research_insight":"LLM research insight",'
+            '"caveat":"LLM caveat"}'
+        )
+
+    class _Response:
+        content = [_TextBlock()]
+
+    class _Messages:
+        @staticmethod
+        def create(**_: object) -> _Response:
+            return _Response()
+
+    class _Client:
+        def __init__(self, **_: object) -> None:
+            self.messages = _Messages()
+
+    image_dir = tmp_path / "images"
+    image_dir.mkdir(parents=True, exist_ok=True)
+    image_path = image_dir / "clinical_age_distribution.png"
+    image_path.write_bytes(b"\x89PNG\r\n\x1a\nfake")
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setattr(insight_service.anthropic, "Anthropic", _Client)
+
+    df = _build_df()
+    artifacts = [
+        ChartArtifact(
+            name=image_path.name,
+            category="clinical",
+            format="png",
+            path=str(image_path),
+        )
+    ]
+
+    insights_md, _, _ = generate_insights_bundle(df, artifacts, insights_dir=tmp_path / "insights")
+    content = insights_md.read_text(encoding="utf-8")
+
+    assert "LLM medical insight" in content
+    assert "LLM research insight" in content
+    assert "LLM caveat" in content

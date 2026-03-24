@@ -10,6 +10,8 @@ from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
 
 from biomed_api.models.schemas import (
+    AskRequest,
+    AskResponse,
     ChartGenerationRequest,
     ChartGenerationResponse,
     ChartListResponse,
@@ -34,13 +36,14 @@ from biomed_api.services.chart_service import (
     list_chart_artifacts,
 )
 from biomed_api.services.data_service import DATA_PATH, build_summary, load_dataset
-
-OBJECTIVES_PATH = DATA_PATH.parent.parent / "OBJECTIVES.md"
+from biomed_api.services.insight_service import MODEL as INSIGHTS_MODEL
 from biomed_api.services.insight_service import generate_insights_bundle, read_final_insights
-from biomed_api.services.objectives_service import generate_response_to_objectives
+from biomed_api.services.objectives_service import MODEL as OBJECTIVES_MODEL
+from biomed_api.services.objectives_service import OPENROUTER_BASE_URL, generate_response_to_objectives
 from biomed_api.services.report_service import generate_report, read_report
 
 
+OBJECTIVES_PATH = DATA_PATH.parent.parent / "OBJECTIVES.md"
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parents[1] / "templates"))
 
@@ -75,7 +78,7 @@ def home(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
         request,
         "gallery.html",
-        {"request": request, "charts": [], "images": []},
+        {"request": request, "charts": [], "images": [], "insights_model": INSIGHTS_MODEL, "objectives_model": OBJECTIVES_MODEL},
     )
 
 
@@ -108,11 +111,15 @@ async def upload_csv(file: UploadFile = File(...)) -> CsvUploadResponse:
         DATA_PATH.write_bytes(content)
 
         df = load_dataset(DATA_PATH)
+        summary = build_summary(df)
         return CsvUploadResponse(
             message="CSV uploaded successfully and saved as data/data.csv.",
             dataset_path=str(DATA_PATH),
-            row_count=len(df),
-            column_count=len(df.columns),
+            row_count=summary["row_count"],
+            column_count=summary["column_count"],
+            missing_cells=summary["missing_cells"],
+            missing_pct=summary["missing_pct"],
+            description=summary["description"],
         )
     finally:
         await file.close()
@@ -143,13 +150,19 @@ async def generate_response_to_objectives_endpoint() -> ResponseToObjectivesResp
         loop = asyncio.get_event_loop()
         out_path = await loop.run_in_executor(None, generate_response_to_objectives, artifacts)
         objectives_count = len(
-            [l for l in (OBJECTIVES_PATH.read_text(encoding="utf-8") if OBJECTIVES_PATH.exists() else "").splitlines()
-             if l.strip().startswith("- ") or (l.strip() and l.strip()[0].isdigit())]
+            [
+                line
+                for line in (
+                    OBJECTIVES_PATH.read_text(encoding="utf-8") if OBJECTIVES_PATH.exists() else ""
+                ).splitlines()
+                if line.strip().startswith("- ") or (line.strip() and line.strip()[0].isdigit())
+            ]
         )
         return ResponseToObjectivesResponse(
             message="RESPONSE_TO_OBJECTIVES.md generated successfully.",
             path=str(out_path),
             objectives_found=objectives_count,
+            model_used=OBJECTIVES_MODEL,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Response generation failed: {exc}") from exc
@@ -253,19 +266,15 @@ def chart_by_name(name: str) -> FileResponse:
 
 @router.get("/viewer/{name}", response_class=HTMLResponse)
 def chart_viewer(request: Request, name: str) -> HTMLResponse:
-    try:
-        path = get_chart_path(name)
-        return templates.TemplateResponse(
-            request,
-            "viewer.html",
-            {
-                "request": request,
-                "image_name": path.name,
-                "image_url": f"/charts/{path.name}",
-            },
-        )
-    except FileNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return templates.TemplateResponse(
+        request,
+        "viewer.html",
+        {
+            "request": request,
+            "image_name": name,
+            "image_url": f"/output/images/{name}",
+        },
+    )
 
 
 @router.post("/generate/report", response_model=ReportGenerationResponse)
@@ -325,10 +334,72 @@ def insights() -> InsightsResponse:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
+@router.post("/ask", response_model=AskResponse)
+async def ask_question(payload: AskRequest) -> AskResponse:
+    import asyncio
+    import os
+    import anthropic
+
+    question = payload.question.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Question cannot be empty.")
+
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="OPENROUTER_API_KEY is not set.")
+
+    # Build context from available pipeline outputs
+    context_parts: list[str] = []
+    try:
+        df = load_dataset()
+        summary = build_summary(df)
+        context_parts.append(
+            f"Dataset: {summary['row_count']} rows, {summary['column_count']} columns.\n"
+            f"Columns: {', '.join(col['name'] for col in summary['columns'])}.\n"
+            f"Missing cells: {summary['missing_cells']} ({summary['missing_pct']:.4g}%)."
+        )
+    except Exception:
+        pass
+
+    try:
+        _, report_content = read_report()
+        context_parts.append(f"Report:\n{report_content[:2000]}")
+    except Exception:
+        pass
+
+    context_block = "\n\n".join(context_parts) if context_parts else "No pipeline outputs are available yet."
+
+    system_prompt = (
+        "You are a biomedical data scientist assistant. "
+        "Answer questions about the dataset and pipeline outputs concisely and accurately. "
+        "Base your answers on the provided context. If the context is insufficient, say so clearly."
+    )
+    user_message = f"Context:\n{context_block}\n\nQuestion: {question}"
+
+    client = anthropic.Anthropic(api_key=api_key, base_url=OPENROUTER_BASE_URL)
+
+    def _call() -> str:
+        response = client.messages.create(
+            model=OBJECTIVES_MODEL,
+            max_tokens=1024,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        return next((b.text for b in response.content if b.type == "text"), "")
+
+    try:
+        loop = asyncio.get_event_loop()
+        answer = await loop.run_in_executor(None, _call)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"AI request failed: {exc}") from exc
+
+    return AskResponse(question=question, answer=answer, model_used=OBJECTIVES_MODEL)
+
+
 @router.get("/gallery", response_class=HTMLResponse)
 def gallery(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
         request,
         "gallery.html",
-        {"request": request, "charts": [], "images": []},
+        {"request": request, "charts": [], "images": [], "insights_model": INSIGHTS_MODEL, "objectives_model": OBJECTIVES_MODEL},
     )

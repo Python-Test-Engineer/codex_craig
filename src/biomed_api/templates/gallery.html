@@ -249,16 +249,26 @@
         <article class="card">
           <h2>3) Insights</h2>
           <p class="small">Open the generated insights page in a new tab.</p>
-          <button id="view-insights-btn" class="btn-secondary" type="button">View Insights</button>
+          <p class="small">LLM model: <code>{{ insights_model }}</code></p>
+          <button id="view-insights-btn" class="btn-secondary" type="button" disabled>View Insights</button>
         </article>
 
         <article class="card">
           <h2>4) Response to Objectives</h2>
           <p class="small">Summarise pipeline outputs against <code>OBJECTIVES.md</code> and download as <code>RESPONSE_TO_OBJECTIVES.md</code>.</p>
           <button id="response-btn" type="button" class="btn-secondary">Generate Response</button>
-          <div id="response-busy" class="busy"><span class="spinner"></span><span>Opus thinking… this may take 30–60 s</span></div>
+          <div id="response-busy" class="busy"><span class="spinner"></span><span>{{ objectives_model }} thinking… this may take 30–60 s</span></div>
           <div id="response-status" class="status"></div>
           <button id="download-response-btn" class="btn-secondary" type="button" disabled style="margin-top:6px;">Download RESPONSE_TO_OBJECTIVES.md</button>
+        </article>
+
+        <article class="card">
+          <h2>5) Ask AI</h2>
+          <p class="small">Ask a question about the dataset or pipeline results.</p>
+          <textarea id="ask-text" rows="4" placeholder="e.g. What is the event rate for high-risk patients?"></textarea>
+          <button id="ask-btn" type="button">Ask AI</button>
+          <div id="ask-busy" class="busy"><span class="spinner"></span><span>Thinking…</span></div>
+          <div id="ask-status" class="status"></div>
         </article>
 
       </aside>
@@ -282,6 +292,11 @@
           <h2>Report Preview</h2>
           <div id="report" class="report" style="display:none;"></div>
           <p id="report-placeholder" class="small" style="margin:0;">Run the pipeline to generate a report.</p>
+        </article>
+
+        <article class="card" id="qa-card" style="display:none;">
+          <h2>AI Q&amp;A</h2>
+          <div id="qa-thread" style="display:grid;gap:12px;"></div>
         </article>
 
         <article class="card">
@@ -331,6 +346,12 @@
       executeBtn.style.cursor = isRunning ? "not-allowed" : "pointer";
     }
 
+    function formatPct(val) {
+      if (val === 0) return "0";
+      if (val >= 10) return val.toFixed(1);
+      return parseFloat(val.toPrecision(2)).toString();
+    }
+
     function renderInlineMd(text) {
       return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
                  .replace(/`(.+?)`/g, "<code>$1</code>");
@@ -344,7 +365,7 @@
         document.getElementById("rows").textContent = summary.row_count;
         document.getElementById("cols").textContent = summary.column_count;
         document.getElementById("missing").textContent = summary.missing_cells;
-        document.getElementById("missing-pct").textContent = `${summary.missing_pct}%`;
+        document.getElementById("missing-pct").textContent = `${formatPct(summary.missing_pct)}%`;
         if (summary.description) {
           document.getElementById("dataset-description").innerHTML = renderInlineMd(summary.description);
           document.getElementById("dataset-description-wrap").style.display = "block";
@@ -406,7 +427,14 @@
           throw new Error(body.detail || "Upload failed.");
         }
         setStatus(uploadStatus, `${body.message} rows=${body.row_count}, cols=${body.column_count}`);
-        await refreshSummary();
+        document.getElementById("rows").textContent = body.row_count;
+        document.getElementById("cols").textContent = body.column_count;
+        document.getElementById("missing").textContent = body.missing_cells;
+        document.getElementById("missing-pct").textContent = `${formatPct(body.missing_pct)}%`;
+        if (body.description) {
+          document.getElementById("dataset-description").innerHTML = renderInlineMd(body.description);
+          document.getElementById("dataset-description-wrap").style.display = "block";
+        }
         await refreshReport();
       } catch (error) {
         setStatus(uploadStatus, String(error), true);
@@ -448,7 +476,7 @@
           throw new Error(body.detail || "Execution failed.");
         }
         setStatus(executeStatus, `${body.message} html=${body.html_charts}, png=${body.png_charts}`);
-        await refreshSummary();
+        viewInsightsBtn.disabled = false;
         await refreshReport();
         await refreshImages();
       } catch (error) {
@@ -471,7 +499,10 @@
         const res = await fetch("/generate/response-to-objectives", { method: "POST" });
         const body = await res.json();
         if (!res.ok) throw new Error(body.detail || "Generation failed.");
-        setStatus(responseStatus, `${body.message} (${body.objectives_found} objectives found)`);
+        setStatus(
+          responseStatus,
+          `${body.message} (${body.objectives_found} objectives found) | model: ${body.model_used}`
+        );
         downloadResponseBtn.disabled = false;
       } catch (error) {
         setStatus(responseStatus, String(error), true);
@@ -495,6 +526,89 @@
         }
       } catch { /* ignore */ }
     }
+
+    function resetPageState() {
+      // Clear all status messages
+      setStatus(uploadStatus, "");
+      setStatus(objectivesStatus, "");
+      setStatus(executeStatus, "");
+      setStatus(responseStatus, "");
+      // Reset report to placeholder
+      const reportEl = document.getElementById("report");
+      const placeholder = document.getElementById("report-placeholder");
+      reportEl.textContent = "";
+      reportEl.style.display = "none";
+      placeholder.style.display = "";
+      // Reset image grid
+      document.getElementById("image-grid").innerHTML = '<div class="small">No PNG images found.</div>';
+      // Reset stats
+      ["rows", "cols", "missing", "missing-pct"].forEach(id => {
+        document.getElementById(id).textContent = "-";
+      });
+      document.getElementById("dataset-description-wrap").style.display = "none";
+      // Reset action buttons that require pipeline output
+      viewInsightsBtn.disabled = true;
+      downloadResponseBtn.disabled = true;
+    }
+
+    // --- Section 5: Ask AI ---
+    const askBtn = document.getElementById("ask-btn");
+    const askBusy = document.getElementById("ask-busy");
+    const askStatus = document.getElementById("ask-status");
+    const qaCard = document.getElementById("qa-card");
+    const qaThread = document.getElementById("qa-thread");
+
+    function appendQA(question, answer, modelUsed) {
+      qaCard.style.display = "";
+      const entry = document.createElement("div");
+      entry.style.cssText = "border-top:1px solid var(--line);padding-top:10px;";
+      entry.innerHTML = `
+        <div style="font-size:0.74rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:4px;">Question</div>
+        <p style="margin:0 0 8px;font-size:0.9rem;font-weight:600;">${escapeHtml(question)}</p>
+        <div style="font-size:0.74rem;text-transform:uppercase;letter-spacing:0.06em;color:#1b5953;margin-bottom:4px;">Answer <span style="text-transform:none;font-weight:400;color:var(--muted);">· ${escapeHtml(modelUsed)}</span></div>
+        <p style="margin:0;font-size:0.88rem;line-height:1.6;white-space:pre-wrap;">${escapeHtml(answer)}</p>`;
+      qaThread.appendChild(entry);
+      qaCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    document.getElementById("ask-text").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) askBtn.click();
+    });
+
+    askBtn.addEventListener("click", async () => {
+      const question = document.getElementById("ask-text").value.trim();
+      if (!question) {
+        setStatus(askStatus, "Enter a question first.", true);
+        return;
+      }
+      askBusy.classList.add("active");
+      askBtn.disabled = true;
+      setStatus(askStatus, "");
+      try {
+        const res = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.detail || "Request failed.");
+        appendQA(body.question, body.answer, body.model_used);
+        document.getElementById("ask-text").value = "";
+      } catch (error) {
+        setStatus(askStatus, String(error), true);
+      } finally {
+        askBusy.classList.remove("active");
+        askBtn.disabled = false;
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      resetPageState();
+    });
 
   </script>
 </body>

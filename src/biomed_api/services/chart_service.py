@@ -19,6 +19,10 @@ def _require_columns(df: pd.DataFrame, required: list[str], context: str) -> Non
         raise ValueError(f"Cannot generate {context}. Missing columns: {', '.join(missing)}")
 
 
+def _has_columns(df: pd.DataFrame, required: list[str]) -> bool:
+    return all(col in df.columns for col in required)
+
+
 def _safe_category_from_name(name: str) -> str:
     if name.startswith("clinical_"):
         return "clinical"
@@ -86,165 +90,171 @@ def generate_standard_charts(
     image_directory = directory / "images"
     artifacts: list[ChartArtifact] = []
 
-    _require_columns(
-        df, ["age_months", "stage", "risk_group", "efs_months", "event"], "clinical charts"
-    )
-    _require_columns(df, ["mycn_amplified"], "survival charts")
-
     expr_columns = [c for c in df.columns if c.startswith("expr_")]
-    if not expr_columns:
-        raise ValueError(
-            "Cannot generate biomarker charts. No 'expr_' biomarker columns were found."
-        )
+
+    has_clinical = _has_columns(df, ["age_months", "stage", "risk_group", "efs_months", "event"])
+    has_mycn = _has_columns(df, ["mycn_amplified"])
+    has_expr = bool(expr_columns)
 
     chart_defs: list[tuple[str, str, go.Figure]] = []
 
-    chart_defs.append(
-        (
-            "clinical_age_distribution",
-            "clinical",
-            px.histogram(df, x="age_months", nbins=20, title="Age Distribution (Months)"),
-        )
-    )
-
-    stage_counts = df["stage"].fillna("<missing>").value_counts().reset_index()
-    stage_counts.columns = ["stage", "count"]
-    chart_defs.append(
-        (
-            "clinical_stage_distribution",
-            "clinical",
-            px.bar(stage_counts, x="stage", y="count", title="Stage Distribution"),
-        )
-    )
-
-    risk_counts = df["risk_group"].fillna("<missing>").value_counts().reset_index()
-    risk_counts.columns = ["risk_group", "count"]
-    chart_defs.append(
-        (
-            "clinical_risk_distribution",
-            "clinical",
-            px.bar(risk_counts, x="risk_group", y="count", title="Risk Group Distribution"),
-        )
-    )
-
-    chart_defs.append(
-        (
-            "clinical_efs_by_risk",
-            "clinical",
-            px.box(df, x="risk_group", y="efs_months", points="all", title="EFS by Risk Group"),
-        )
-    )
-
-    biomarker_melt = df[expr_columns].melt(var_name="biomarker", value_name="expression")
-    chart_defs.append(
-        (
-            "biomarker_expression_summary",
-            "biomarker",
-            px.box(
-                biomarker_melt,
-                x="biomarker",
-                y="expression",
-                points=False,
-                title="Biomarker Expression Summary",
-            ),
-        )
-    )
-
-    scatter_cols = [c for c in ("expr_mycn", "expr_alk") if c in df.columns]
-    if len(scatter_cols) == 2:
+    # --- Clinical charts ---
+    if has_clinical:
         chart_defs.append(
             (
-                "biomarker_mycn_vs_alk",
+                "clinical_age_distribution",
+                "clinical",
+                px.histogram(df, x="age_months", nbins=20, title="Age Distribution (Months)"),
+            )
+        )
+
+        stage_counts = df["stage"].fillna("<missing>").value_counts().reset_index()
+        stage_counts.columns = ["stage", "count"]
+        chart_defs.append(
+            (
+                "clinical_stage_distribution",
+                "clinical",
+                px.bar(stage_counts, x="stage", y="count", title="Stage Distribution"),
+            )
+        )
+
+        risk_counts = df["risk_group"].fillna("<missing>").value_counts().reset_index()
+        risk_counts.columns = ["risk_group", "count"]
+        chart_defs.append(
+            (
+                "clinical_risk_distribution",
+                "clinical",
+                px.bar(risk_counts, x="risk_group", y="count", title="Risk Group Distribution"),
+            )
+        )
+
+        chart_defs.append(
+            (
+                "clinical_efs_by_risk",
+                "clinical",
+                px.box(df, x="risk_group", y="efs_months", points="all", title="EFS by Risk Group"),
+            )
+        )
+
+    # --- Biomarker charts ---
+    if has_expr:
+        biomarker_melt = df[expr_columns].melt(var_name="biomarker", value_name="expression")
+        chart_defs.append(
+            (
+                "biomarker_expression_summary",
                 "biomarker",
-                px.scatter(
-                    df,
-                    x="expr_mycn",
-                    y="expr_alk",
-                    color="event",
-                    title="MYCN vs ALK Expression",
+                px.box(
+                    biomarker_melt,
+                    x="biomarker",
+                    y="expression",
+                    points=False,
+                    title="Biomarker Expression Summary",
                 ),
             )
         )
 
-    corr = df[expr_columns].corr(numeric_only=True)
-    chart_defs.append(
-        (
-            "biomarker_correlation_heatmap",
-            "biomarker",
-            px.imshow(corr, text_auto=False, title="Biomarker Correlation Heatmap"),
-        )
-    )
+        scatter_cols = [c for c in ("expr_mycn", "expr_alk") if c in df.columns]
+        if len(scatter_cols) == 2 and has_clinical:
+            chart_defs.append(
+                (
+                    "biomarker_mycn_vs_alk",
+                    "biomarker",
+                    px.scatter(
+                        df,
+                        x="expr_mycn",
+                        y="expr_alk",
+                        color="event",
+                        title="MYCN vs ALK Expression",
+                    ),
+                )
+            )
 
-    km_risk = _kaplan_like(df, "efs_months", "event", "risk_group")
-    chart_defs.append(
-        (
-            "survival_km_by_risk",
-            "survival",
-            px.line(km_risk, x="time", y="survival", color="group", title="KM-Style Curve by Risk"),
-        )
-    )
-
-    km_mycn = _kaplan_like(df, "efs_months", "event", "mycn_amplified")
-    chart_defs.append(
-        (
-            "survival_km_by_mycn",
-            "survival",
-            px.line(km_mycn, x="time", y="survival", color="group", title="KM-Style Curve by MYCN"),
-        )
-    )
-
-    event_rates = (
-        df.groupby(["risk_group", "mycn_amplified"], dropna=False)["event"]
-        .mean()
-        .reset_index(name="event_rate")
-    )
-    event_pivot = event_rates.pivot(
-        index="risk_group", columns="mycn_amplified", values="event_rate"
-    )
-    chart_defs.append(
-        (
-            "survival_event_rate_heatmap",
-            "survival",
-            px.imshow(event_pivot, text_auto=True, title="Event Rate Heatmap: Risk x MYCN"),
-        )
-    )
-
-    corr_to_event = (
-        df[expr_columns + ["event"]]
-        .corr(numeric_only=True)["event"]
-        .drop(labels=["event"], errors="ignore")
-    )
-    top_markers = corr_to_event.abs().sort_values(ascending=False).head(2).index.tolist()
-    for marker in top_markers:
-        split_df = df[[marker, "efs_months", "event"]].copy()
-        split_df["group"] = np.where(split_df[marker] >= split_df[marker].median(), "high", "low")
-        km_marker = _kaplan_like(split_df, "efs_months", "event", "group")
-        safe_marker = marker.replace("expr_", "")
+        corr = df[expr_columns].corr(numeric_only=True)
         chart_defs.append(
             (
-                f"survival_km_median_split_{safe_marker}",
-                "survival",
-                px.line(
-                    km_marker,
-                    x="time",
-                    y="survival",
-                    color="group",
-                    title=f"KM-Style Median Split: {marker}",
-                ),
+                "biomarker_correlation_heatmap",
+                "biomarker",
+                px.imshow(corr, text_auto=False, title="Biomarker Correlation Heatmap"),
             )
         )
+
+    # --- Survival charts ---
+    if has_clinical:
+        km_risk = _kaplan_like(df, "efs_months", "event", "risk_group")
+        chart_defs.append(
+            (
+                "survival_km_by_risk",
+                "survival",
+                px.line(km_risk, x="time", y="survival", color="group", title="KM-Style Curve by Risk"),
+            )
+        )
+
+    if has_clinical and has_mycn:
+        km_mycn = _kaplan_like(df, "efs_months", "event", "mycn_amplified")
+        chart_defs.append(
+            (
+                "survival_km_by_mycn",
+                "survival",
+                px.line(km_mycn, x="time", y="survival", color="group", title="KM-Style Curve by MYCN"),
+            )
+        )
+
+        event_rates = (
+            df.groupby(["risk_group", "mycn_amplified"], dropna=False)["event"]
+            .mean()
+            .reset_index(name="event_rate")
+        )
+        event_pivot = event_rates.pivot(
+            index="risk_group", columns="mycn_amplified", values="event_rate"
+        )
+        chart_defs.append(
+            (
+                "survival_event_rate_heatmap",
+                "survival",
+                px.imshow(event_pivot, text_auto=True, title="Event Rate Heatmap: Risk x MYCN"),
+            )
+        )
+
+    if has_clinical and has_expr:
+        corr_to_event = (
+            df[expr_columns + ["event"]]
+            .corr(numeric_only=True)["event"]
+            .drop(labels=["event"], errors="ignore")
+        )
+        top_markers = corr_to_event.abs().sort_values(ascending=False).head(2).index.tolist()
+        for marker in top_markers:
+            split_df = df[[marker, "efs_months", "event"]].copy()
+            split_df["group"] = np.where(split_df[marker] >= split_df[marker].median(), "high", "low")
+            km_marker = _kaplan_like(split_df, "efs_months", "event", "group")
+            safe_marker = marker.replace("expr_", "")
+            chart_defs.append(
+                (
+                    f"survival_km_median_split_{safe_marker}",
+                    "survival",
+                    px.line(
+                        km_marker,
+                        x="time",
+                        y="survival",
+                        color="group",
+                        title=f"KM-Style Median Split: {marker}",
+                    ),
+                )
+            )
 
     for name, category, fig in chart_defs:
-        png_path = image_directory / f"{name}.png"
-        _write_png(fig, png_path)
-        artifacts.append(
-            ChartArtifact(
-                name=png_path.name,
-                category=category,
-                format="png",
-                path=str(png_path),
+        try:
+            png_path = image_directory / f"{name}.png"
+            _write_png(fig, png_path)
+            artifacts.append(
+                ChartArtifact(
+                    name=png_path.name,
+                    category=category,
+                    format="png",
+                    path=str(png_path),
+                )
             )
-        )
+        except Exception:
+            pass
 
     return artifacts
 

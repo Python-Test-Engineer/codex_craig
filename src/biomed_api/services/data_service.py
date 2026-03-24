@@ -8,6 +8,32 @@ import pandas as pd
 
 DATA_PATH = Path("data/data.csv")
 
+# Gene names that should be prefixed with expr_ when found as bare column names
+_KNOWN_EXPR_GENES: set[str] = {
+    "mycn", "alk", "phox2b", "th", "chgb", "dbh", "ntrk1", "ntrk2",
+    "mdm2", "cdk4", "birc5", "ccnd1", "myc", "tert", "atrx", "tp53",
+    "cdk6", "cdkn2a", "rb1", "vegf", "hif1a", "hand2", "id2", "foxo1",
+}
+
+# Canonical aliases for common column name variations
+_COLUMN_ALIASES: dict[str, str] = {
+    "age_at_diagnosis_months": "age_months",
+    "age_diagnosis_months": "age_months",
+    "age_at_diagnosis": "age_months",
+    "age": "age_months",
+    "inrg_stage": "stage",
+    "disease_stage": "stage",
+    "inrg_risk_stage": "stage",
+    "mycn_amplification": "mycn_amplified",
+    "mycn_amp": "mycn_amplified",
+    "mycn_status": "mycn_amplified",
+    "event_free_survival_months": "efs_months",
+    "overall_survival_months": "os_months",
+    "event_efs": "event",
+    "efs_event": "event",
+    "relapse_event": "event",
+}
+
 
 def normalize_column_name(name: str) -> str:
     normalized = re.sub(r"[^0-9a-zA-Z]+", "_", name.strip().lower())
@@ -56,6 +82,16 @@ def _coerce_column_types(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
+def _apply_column_aliases(df: pd.DataFrame) -> pd.DataFrame:
+    rename_map: dict[str, str] = {}
+    for col in df.columns:
+        if col in _COLUMN_ALIASES and _COLUMN_ALIASES[col] not in df.columns:
+            rename_map[col] = _COLUMN_ALIASES[col]
+        elif col in _KNOWN_EXPR_GENES and f"expr_{col}" not in df.columns:
+            rename_map[col] = f"expr_{col}"
+    return df.rename(columns=rename_map) if rename_map else df
+
+
 def load_dataset(path: str | Path | None = None) -> pd.DataFrame:
     target_path = Path(path) if path is not None else DATA_PATH
     if not target_path.exists():
@@ -63,7 +99,8 @@ def load_dataset(path: str | Path | None = None) -> pd.DataFrame:
 
     df = pd.read_csv(target_path)
     df = df.rename(columns=dict(zip(df.columns, _dedupe_columns(list(df.columns)), strict=False)))
-    return _coerce_column_types(df)
+    df = _coerce_column_types(df)
+    return _apply_column_aliases(df)
 
 
 def infer_schema(df: pd.DataFrame) -> list[dict[str, str | int | float]]:
@@ -152,7 +189,7 @@ def build_summary(df: pd.DataFrame) -> dict[str, object]:
     column_count = len(df.columns)
     total_cells = row_count * max(column_count, 1)
     missing_cells = int(df.isna().sum().sum())
-    missing_pct = round((missing_cells / total_cells) * 100, 2) if total_cells else 0.0
+    missing_pct = (missing_cells / total_cells) * 100 if total_cells else 0.0
 
     distributions: dict[str, dict[str, int]] = {}
     for col in ("risk_group", "stage", "event"):

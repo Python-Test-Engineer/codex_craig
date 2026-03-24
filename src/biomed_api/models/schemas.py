@@ -72,6 +72,9 @@ class CsvUploadResponse(BaseModel):
     dataset_path: str
     row_count: int
     column_count: int
+    missing_cells: int = 0
+    missing_pct: float = 0.0
+    description: str = ""
 
 
 class ExecutePlanRequest(BaseModel):
@@ -108,6 +111,17 @@ class ResponseToObjectivesResponse(BaseModel):
     message: str
     path: str
     objectives_found: int
+    model_used: str
+
+
+class AskRequest(BaseModel):
+    question: str
+
+
+class AskResponse(BaseModel):
+    question: str
+    answer: str
+    model_used: str
 
 
 class ErrorResponse(BaseModel):

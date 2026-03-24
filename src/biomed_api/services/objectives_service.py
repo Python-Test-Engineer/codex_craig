@@ -17,8 +17,7 @@ DOTENV_PATH = _HERE / ".env"
 
 load_dotenv(dotenv_path=DOTENV_PATH, override=False)
 
-MODEL = os.environ.get("OPENROUTER_MODEL", "openai/gpt-5.3-codex")
-THINKING_BUDGET = 10_000  # tokens allocated to extended thinking
+MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet")
 MAX_TOKENS = 16_000
 OPENROUTER_BASE_URL = "https://openrouter.ai/api"
 
@@ -122,20 +121,15 @@ Please write the full detailed Response to Objectives document now.\
     response = client.messages.create(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        thinking={
-            "type": "enabled",
-            "budget_tokens": THINKING_BUDGET,
-        },
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
     )
 
-    # Extract the text block (thinking blocks are separate)
     text_content = next(
         (block.text for block in response.content if block.type == "text"),
         "",
     )
 
-    header = f"# Response to Objectives\n\n_Generated: {generated_at} · Model: {MODEL} with extended thinking_\n\n---\n\n"
+    header = f"# Response to Objectives\n\n_Generated: {generated_at} · Model: {MODEL}_\n\n---\n\n"
     out_path.write_text(header + text_content, encoding="utf-8")
     return out_path

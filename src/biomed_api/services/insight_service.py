@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import base64
+import json
+import os
 from datetime import UTC, datetime
 from html import escape
 from pathlib import Path
 
+import anthropic
 import pandas as pd
+from dotenv import load_dotenv
 
 from biomed_api.models.schemas import ChartArtifact
 
@@ -12,6 +17,14 @@ from biomed_api.models.schemas import ChartArtifact
 INSIGHTS_DIR = Path("output/insights")
 FINAL_INSIGHTS_MD = INSIGHTS_DIR / "insights.md"
 FINAL_INSIGHTS_HTML = INSIGHTS_DIR / "insights.html"
+_HERE = Path(__file__).resolve().parents[3]  # project root
+DOTENV_PATH = _HERE / ".env"
+
+load_dotenv(dotenv_path=DOTENV_PATH, override=False)
+
+MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet")
+OPENROUTER_BASE_URL = "https://openrouter.ai/api"
+MAX_TOKENS = 1_400
 
 
 def _safe_title(stem: str) -> str:
@@ -106,6 +119,135 @@ def _build_caveat(df: pd.DataFrame) -> str:
     )
 
 
+def _extract_response_text(response: object) -> str:
+    content = getattr(response, "content", [])
+    for block in content:
+        if getattr(block, "type", "") == "text":
+            return getattr(block, "text", "")
+    return ""
+
+
+def _extract_json_payload(text: str) -> dict[str, str] | None:
+    try:
+        payload = json.loads(text)
+        if isinstance(payload, dict):
+            return payload
+    except json.JSONDecodeError:
+        pass
+
+    marker = "```json"
+    if marker in text and "```" in text[text.find(marker) + len(marker) :]:
+        start = text.find(marker) + len(marker)
+        end = text.find("```", start)
+        snippet = text[start:end].strip()
+        try:
+            payload = json.loads(snippet)
+            if isinstance(payload, dict):
+                return payload
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
+def _cohort_context_for_prompt(df: pd.DataFrame) -> str:
+    lines = [
+        f"Rows: {len(df)}",
+        f"Columns: {len(df.columns)}",
+        f"Column names: {', '.join(df.columns.tolist())}",
+    ]
+    if "event" in df.columns:
+        event_rate = pd.to_numeric(df["event"], errors="coerce").mean()
+        if pd.notna(event_rate):
+            lines.append(f"Event rate: {float(event_rate):.4f}")
+    if "efs_months" in df.columns:
+        efs = pd.to_numeric(df["efs_months"], errors="coerce")
+        if pd.notna(efs.median()):
+            lines.append(f"EFS median (months): {float(efs.median()):.2f}")
+    return "\n".join(lines)
+
+
+def _generate_llm_insights(
+    *,
+    stem: str,
+    image_path: Path,
+    df: pd.DataFrame,
+    api_key: str,
+) -> dict[str, str]:
+    system_prompt = """\
+You are a senior biomedical data scientist.
+You are given one chart image and cohort metadata.
+Return only strict JSON with these string fields:
+- medical_insight
+- research_insight
+- caveat
+
+Rules:
+- Base claims on visible chart structure and provided cohort context.
+- Keep each field <= 90 words.
+- Avoid causal claims and avoid fabricated p-values/effect sizes.
+- caveat must mention uncertainty, confounding, or data quality limits.
+"""
+    user_text = f"""\
+Chart file stem: {stem}
+
+Cohort context:
+{_cohort_context_for_prompt(df)}
+
+Write concise, chart-specific insights now in strict JSON only.
+"""
+
+    client = anthropic.Anthropic(
+        api_key=api_key,
+        base_url=OPENROUTER_BASE_URL,
+    )
+    text_only_blocks: list[dict[str, object]] = [{"type": "text", "text": user_text}]
+
+    def _call(blocks: list[dict[str, object]]) -> dict[str, str]:
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=MAX_TOKENS,
+            system=system_prompt,
+            messages=[{"role": "user", "content": blocks}],
+        )
+        raw_text = _extract_response_text(response)
+        payload = _extract_json_payload(raw_text)
+        if payload is None:
+            raise ValueError("LLM output was not valid JSON.")
+        return payload
+
+    payload: dict[str, str]
+    if image_path.exists():
+        image_bytes = image_path.read_bytes()
+        image_b64 = base64.b64encode(image_bytes).decode("ascii")
+        image_blocks = text_only_blocks + [
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/png",
+                    "data": image_b64,
+                },
+            }
+        ]
+        try:
+            payload = _call(image_blocks)
+        except Exception:
+            payload = _call(text_only_blocks)
+    else:
+        payload = _call(text_only_blocks)
+
+    medical = str(payload.get("medical_insight", "")).strip()
+    research = str(payload.get("research_insight", "")).strip()
+    caveat = str(payload.get("caveat", "")).strip()
+    if not medical or not research or not caveat:
+        raise ValueError("LLM output omitted one or more required fields.")
+    return {
+        "medical_insight": medical,
+        "research_insight": research,
+        "caveat": caveat,
+    }
+
+
 def _render_markdown_to_html(markdown_text: str) -> str:
     lines = markdown_text.splitlines()
     html_parts: list[str] = []
@@ -183,23 +325,47 @@ def generate_insights_bundle(
     png_artifacts = [artifact for artifact in chart_artifacts if artifact.format == "png"]
     section_paths: list[Path] = []
 
+    api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    llm_enabled = bool(api_key)
+    llm_failures: list[str] = []
+
     for artifact in png_artifacts:
         stem = Path(artifact.name).stem
         section_path = target_dir / f"{stem}.md"
         image_rel_path = f"../images/{artifact.name}"
+        image_path = Path(artifact.path)
+
+        medical_insight = _build_medical_insight(stem, df)
+        research_insight = _build_research_insight(stem, df)
+        caveat = _build_caveat(df)
+
+        if llm_enabled:
+            try:
+                generated = _generate_llm_insights(
+                    stem=stem,
+                    image_path=image_path,
+                    df=df,
+                    api_key=api_key,
+                )
+                medical_insight = generated["medical_insight"]
+                research_insight = generated["research_insight"]
+                caveat = generated["caveat"]
+            except Exception as exc:
+                llm_failures.append(f"{artifact.name}: {exc}")
+
         lines = [
             f"# Insights: {_safe_title(stem)}",
             "",
             f"![{artifact.name}]({image_rel_path})",
             "",
             "## Medical Insight",
-            f"- {_build_medical_insight(stem, df)}",
+            f"- {medical_insight}",
             "",
             "## Research Insight",
-            f"- {_build_research_insight(stem, df)}",
+            f"- {research_insight}",
             "",
             "## Caveat",
-            f"- {_build_caveat(df)}",
+            f"- {caveat}",
             "",
         ]
         section_path.write_text("\n".join(lines), encoding="utf-8")
@@ -210,6 +376,8 @@ def generate_insights_bundle(
         "# Final Biomedical Insights",
         "",
         f"- Generated: {generated_at}",
+        f"- Model setting: {MODEL}",
+        f"- LLM-enabled: {'yes' if llm_enabled else 'no'}",
         f"- Individual insight files: {len(section_paths)}",
         "",
         "## Cohort Context",
@@ -218,6 +386,16 @@ def generate_insights_bundle(
         "## Consolidated Chart Insights",
         "",
     ]
+
+    if llm_failures:
+        merged_lines.extend(
+            [
+                "## Generation Notes",
+                "- LLM generation failed for one or more charts; heuristic fallback was used.",
+                *[f"- {item}" for item in llm_failures],
+                "",
+            ]
+        )
 
     for section_path in section_paths:
         merged_lines.append(f"### {section_path.stem.replace('_', ' ').title()}")

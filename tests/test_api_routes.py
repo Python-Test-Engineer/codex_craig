@@ -144,3 +144,26 @@ def test_generate_and_get_insights() -> None:
     insights_response = client.get("/insights")
     assert insights_response.status_code == 200
     assert "Final Biomedical Insights" in insights_response.json()["content"]
+
+
+def test_generate_response_to_objectives_returns_model_used(
+    tmp_path: Path, monkeypatch
+) -> None:
+    objectives_path = tmp_path / "OBJECTIVES.md"
+    objectives_path.write_text("- 1.1 Test objective\n", encoding="utf-8")
+    monkeypatch.setattr(routes, "OBJECTIVES_PATH", objectives_path)
+
+    output_path = tmp_path / "RESPONSE_TO_OBJECTIVES.md"
+    output_path.write_text("# Response to Objectives\n", encoding="utf-8")
+
+    def _fake_generate_response_to_objectives(_artifacts):
+        return output_path
+
+    monkeypatch.setattr(routes, "generate_response_to_objectives", _fake_generate_response_to_objectives)
+
+    response = client.post("/generate/response-to-objectives")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["path"].endswith("RESPONSE_TO_OBJECTIVES.md")
+    assert body["objectives_found"] == 1
+    assert body["model_used"] == routes.OBJECTIVES_MODEL
