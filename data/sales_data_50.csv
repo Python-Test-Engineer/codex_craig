@@ -1,0 +1,51 @@
+order_id,date,customer_id,customer_name,product_id,product_name,unit_price,quantity,total_price,store_id,store_name,city,payment_method
+ORD0001,2025-04-28,C07,Grace Wilson,P004,Monitor,349.99,10,3499.9,S1,Store Alpha,New York,Debit Card
+ORD0002,2025-09-29,C03,Carol White,P002,Mouse,29.99,5,149.95,S1,Store Alpha,New York,PayPal
+ORD0003,2025-08-04,C02,Bob Smith,P005,Headphones,149.99,8,1199.92,S3,Store Gamma,Chicago,Debit Card
+ORD0004,2025-12-16,C10,Jack Anderson,P005,Headphones,149.99,6,899.94,S1,Store Alpha,New York,PayPal
+ORD0005,2025-02-12,C03,Carol White,P002,Mouse,29.99,3,89.97,S2,Store Beta,Los Angeles,Cash
+ORD0006,2025-01-22,C02,Bob Smith,P005,Headpones,149.99,6,899.94,S2,Store Beta,Los Angeles,PayPal
+ORD0007,2025-07-05,C09,Isabella Taylor,P003,Keyboard,79.99,7,559.93,S1,Store Alpha,New York,Debit Card
+ORD0008,2025-11-07,C02,Bob Smith,P005,Headphones,149.99,9,1349.91,S2,Store Beta,Los Angeles,Debit Card
+ORD0009,2025-03-24,C01,Alice Johnson,P004,Monitor,349.99,3,1049.97,S2,Store Beta,Los Angeles,Debit Card
+ORD0010,2025-01-19,,,P004,Monitor,349.99,9,3149.91,S1,Store Alpha,New York,Debit Card
+ORD0011,2025-02-11,C01,Alice Johnson,P001,Laptop,999.99,8,7999.92,S1,Store Alpha,New York,PayPal
+ORD0012,2025-07-15,C02,Bob Smith,P004,Monitor,349.99,5,1749.95,S1,Store Alpha,New York,Credit Card
+ORD0013,2025-01-29,C03,Carol White,P003,Keyboard,79.99,7,559.93,S3,Store Gamma,Chicago,Debit Card
+ORD0014,2025-03-06,C08,Henry Moore,P002,Mouse,29.99,9,269.91,S2,Store Beta,Los Angeles,PayPal
+ORD0015,2025-11-08,C08,Henry Moore,P003,Keyboard,79.99,3,239.97,S1,Store Alpha,New York,Debit Card
+ORD0016,2025-06-01,C02,Bob Smith,P004,Monitor,349.99,2,699.98,S1,Store Alpha,New York,Debit Card
+ORD0017,2025-10-15,C03,Carol White,P002,Mouse,29.99,3,89.97,S2,Store Beta,Los Angeles,Debit Card
+ORD0018,2025-07-05,C08,Henry Moore,P003,Keyboard,79.99,5,399.95,S1,Store Alpha,New York,Credit Card
+ORD0019,2025-10-27,C02,Bob Smith,P002,Mouse,29.99,5,149.95,S3,Store Gamma,Chicago,Credit Card
+ORD0020,2025-06-22,C06,Frank Miller,P001,Laptop,999.99,7,6999.93,S1,Store Alpha,New York,PayPal
+ORD0021,2025-04-03,C07,Grace Wilson,P004,Monitor,349.99,6,2099.94,S2,Store Beta,Los Angeles,Credit Card
+ORD0022,2025-04-28,C06,Frank Miller,P001,Laptop,999.99,7,6999.93,S3,Store Gamma,Chicago,PayPal
+ORD0023,2025-12-19,C04,David Brown,P003,Keyboard,79.99,5,399.95,S3,Store Gamma,Chicago,Credit Card
+ORD0024,2025-06-01,C04,David Brown,P003,Keyboard,79.99,4,319.96,S3,Store Gamma,Chicago,PayPal
+ORD0025,2025-02-05,C02,Bob Smith,P004,Monitor,349.99,7,2449.93,S2,Store Beta,Los Angeles,Cash
+ORD0026,2025-10-01,C05,Emma Davis,P005,Headphones,149.99,6,899.94,S3,Store Gamma,Chicago,PayPal
+ORD0027,2025-12-04,C05,Emma Davis,P002,Mouse,29.99,5,149.95,S2,Store Beta,Los Angeles,PayPal
+ORD0028,2025-04-10,C03,Carol White,P005,Headphones,149.99,7,1049.93,S2,Store Beta,Los Angeles,PayPal
+ORD0029,2025-12-08,C06,Frank Miller,P004,Monitor,349.99,6,2099.94,S1,Store Alpha,New York,Credit Card
+ORD0030,2025-12-03,C05,Emma Davis,P003,Keyboard,79.99,3,239.97,S1,Store Alpha,New York,Cash
+ORD0031,2025-01-02,C04,David Brown,P004,Monitor,349.99,6,2099.94,S2,Store Beta,Los Angeles,PayPal
+ORD0032,2025-09-25,C09,Isabella Taylor,P001,Laptop,999.99,4,3999.96,S3,Store Gamma,Chicago,Credit Card
+ORD0033,2025-05-16,C03,Carol White,P003,Keyboard,79.99,8,639.92,S3,Store Gamma,Chicago,Debit Card
+ORD0034,2025-04-13,C08,Henry Moore,P004,Monitor,349.99,9,3149.91,S3,Store Gamma,Chicago,Cash
+ORD0035,2025-01-30,C02,Bob Smith,P001,Laptop,999.99,-1,,S2,Store Beta,Los Angeles,Credit Card
+ORD0036,2025-04-10,C05,Emma Davis,P004,Monitor,349.99,9,3149.91,S2,Store Beta,Los Angeles,Cash
+ORD0037,2025-08-24,C07,Grace Wilson,P001,Laptop,999.99,3,2999.97,S2,Store Beta,Los Angeles,Cash
+ORD0038,2025-08-03,C03,Carol White,P003,Keyboard,79.99,8,639.92,S1,Store Alpha,New York,PayPal
+ORD0039,2025-05-21,C03,Carol White,P005,Headphones,149.99,5,749.95,S2,Store Beta,Los Angeles,Debit Card
+ORD0040,2025-09-03,C10,Jack Anderson,P004,Monitor,349.99,7,2449.93,S3,Store Gamma,Chicago,Debit Card
+ORD0041,2025-09-30,C08,Henry Moore,P005,Headphones,149.99,3,449.97,S3,Store Gamma,Chicago,Credit Card
+ORD0042,2025-06-18,C08,Henry Moore,P002,Mouse,29.99,1,29.99,S3,Store Gamma,Chicago,Credit Card
+ORD0043,2025-11-21,C02,Bob Smith,P004,Monitor,349.99,1,349.99,S2,Store Beta,Los Angeles,Cash
+ORD0044,2025-03-26,C10,Jack Anderson,P001,Laptop,999.99,7,6999.93,S2,Store Beta,Los Angeles,Cash
+ORD0045,2025-01-25,C10,Jack Anderson,P002,Mouse,29.99,7,209.93,S1,Store Alpha,New York,Credit Card
+ORD0046,2025-03-23,C09,Isabella Taylor,P003,Keyboard,79.99,9,719.91,S1,Store Alpha,New York,Cash
+ORD0047,2025-04-07,C01,Alice Johnson,P004,Monitor,349.99,7,2449.93,S3,Store Gamma,Chicago,Debit Card
+ORD0048,2025-12-03,C08,Henry Moore,P001,Laptop,999.99,5,4999.95,S1,Store Alpha,New York,Cash
+ORD0049,2025-12-26,C02,Bob Smith,P003,Keyboard,79.99,4,319.96,S3,Store Gamma,Chicago,Debit Card
+ORD0050,2025-03-12,C09,Isabella Taylor,P003,Keyboard,79.99,2,159.98,S1,Store Alpha,New York,Debit Card

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from io import BytesIO
 from pathlib import Path
 
@@ -41,10 +42,23 @@ from csv_analyser.services.insight_service import generate_insights_bundle, read
 from csv_analyser.services.objectives_service import MODEL as OBJECTIVES_MODEL
 from csv_analyser.services.objectives_service import OPENROUTER_BASE_URL, generate_response_to_objectives
 from csv_analyser.services.report_service import generate_report, read_report
+from csv_analyser.services.dirty_service import save_dirty_report
 
 
 OBJECTIVES_PATH = DATA_PATH.parent.parent / "OBJECTIVES.md"
 router = APIRouter()
+
+
+def _clear_output() -> None:
+    """Delete all generated output so a fresh dataset starts clean."""
+    for folder in (OUTPUT_DIR / "images", OUTPUT_DIR / "insights"):
+        if folder.exists():
+            for child in folder.iterdir():
+                child.unlink() if child.is_file() else shutil.rmtree(child)
+    for fname in ("report.md", "dirty.csv", "dirty_rows.md", "RESPONSE_TO_OBJECTIVES.md"):
+        f = OUTPUT_DIR / fname
+        if f.exists():
+            f.unlink()
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parents[1] / "templates"))
 
 
@@ -113,6 +127,7 @@ async def upload_csv(file: UploadFile = File(...)) -> CsvUploadResponse:
 
         DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
         DATA_PATH.write_bytes(content)
+        _clear_output()
 
         df = load_dataset(DATA_PATH)
         summary = build_summary(df)
@@ -226,6 +241,7 @@ def execute_plan(payload: ExecutePlanRequest) -> ExecutePlanResponse:
             clean_output=payload.clean_output,
             write_png=payload.write_png,
         )
+        save_dirty_report(df)
         report_path = generate_report(df, artifacts)
         insights_md_path, insights_html_path, _ = generate_insights_bundle(df, artifacts)
         html_count = sum(1 for artifact in artifacts if artifact.format == "html")

@@ -436,7 +436,14 @@
           document.getElementById("dataset-description").innerHTML = renderInlineMd(body.description);
           document.getElementById("dataset-description-wrap").style.display = "block";
         }
-        await refreshReport();
+        // Clear all stale output from the previous dataset
+        document.getElementById("report").style.display = "none";
+        document.getElementById("report-placeholder").style.display = "";
+        document.getElementById("image-grid").innerHTML = '<div class="small">No charts generated yet.</div>';
+        qaThread.innerHTML = "";
+        qaCard.style.display = "none";
+        viewInsightsBtn.disabled = true;
+        downloadResponseBtn.disabled = true;
       } catch (error) {
         setStatus(uploadStatus, String(error), true);
       }
@@ -466,6 +473,12 @@
     document.getElementById("execute-btn").addEventListener("click", async () => {
       setPipelineRunning(true);
       setStatus(executeStatus, "Running analysis pipeline...");
+      // Clear previous output immediately so stale data isn't shown during the run
+      document.getElementById("report").style.display = "none";
+      document.getElementById("report-placeholder").style.display = "";
+      document.getElementById("image-grid").innerHTML = '<div class="small">No charts generated yet.</div>';
+      qaThread.innerHTML = "";
+      qaCard.style.display = "none";
       try {
         const response = await fetch("/execute", {
           method: "POST",
@@ -555,6 +568,7 @@
     const qaThread = document.getElementById("qa-thread");
 
     function appendQA(question, answer, modelUsed) {
+      qaThread.innerHTML = "";
       qaCard.style.display = "";
       const entry = document.createElement("div");
       entry.style.cssText = "border-top:1px solid var(--line);padding-top:10px;";
@@ -602,11 +616,27 @@
       }
     });
 
-    document.addEventListener("DOMContentLoaded", () => {
-      resetPageState();
-      refreshSummary();
-      loadObjectives();
-    });
+    async function initPageState() {
+      // Restore whatever output already exists on disk
+      await refreshSummary();
+      await refreshReport();
+      await refreshImages();
+      await loadObjectives();
+
+      // Enable insights button if insights file exists
+      try {
+        const res = await fetch("/insights");
+        if (res.ok) viewInsightsBtn.disabled = false;
+      } catch { /* no insights yet */ }
+
+      // Enable download button if response file exists
+      try {
+        const res = await fetch("/output/RESPONSE_TO_OBJECTIVES.md", { method: "HEAD" });
+        if (res.ok) downloadResponseBtn.disabled = false;
+      } catch { /* no response yet */ }
+    }
+
+    document.addEventListener("DOMContentLoaded", initPageState);
 
   </script>
 </body>

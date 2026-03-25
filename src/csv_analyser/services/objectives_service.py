@@ -17,7 +17,7 @@ DOTENV_PATH = _HERE / ".env"
 
 load_dotenv(dotenv_path=DOTENV_PATH, override=False)
 
-MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet")
+MODEL = os.environ.get("OPENROUTER_MODEL", "minimax/minimax-m2.5:free")
 MAX_TOKENS = 16_000
 OPENROUTER_BASE_URL = "https://openrouter.ai/api"
 
@@ -76,7 +76,9 @@ For each objective:
   technically grounded. Do not hedge unnecessarily.
 
 Format the output as clean Markdown:
-- One `## Objective X.Y` heading per objective (matching the IDs in the objectives document).
+- Start with a `## TL;DR` section: 3–5 concise bullet points summarising the overall picture \
+  — what the data shows, what is addressed, and the single most important next step.
+- Then one `## Objective X.Y` heading per objective (matching the IDs in the objectives document).
 - Use `### Current Pipeline Evidence`, `### Gaps & Recommended Analyses`, and \
   `### Interpretation` sub-sections for each.
 - End with a `## Summary Table` that lists each objective ID, a one-line status \
@@ -126,12 +128,24 @@ Please write the full detailed Response to Objectives document now.\
     )
 
     if not response.content:
-        raise RuntimeError(f"Model returned no content (stop_reason={response.stop_reason!r}).")
+        raise RuntimeError(
+            f"Model returned no content (stop_reason={response.stop_reason!r})."
+        )
     text_content = next(
         (block.text for block in response.content if block.type == "text"),
         "",
     )
 
-    header = f"# Response to Objectives\n\n_Generated: {generated_at} · Model: {MODEL}_\n\n---\n\n"
+    objectives_block = (
+        f"## Original Objectives\n\n{objectives_text}\n\n---\n\n"
+        if objectives_text.strip()
+        else ""
+    )
+    header = (
+        f"# Response to Objectives\n\n"
+        f"_Generated: {generated_at} · Model: {MODEL}_\n\n"
+        f"---\n\n"
+        f"{objectives_block}"
+    )
     out_path.write_text(header + text_content, encoding="utf-8")
     return out_path

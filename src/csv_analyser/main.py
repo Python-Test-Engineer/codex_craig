@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -15,31 +14,17 @@ from csv_analyser.api.routes import router
 
 
 OUTPUT_DIR = Path("output")
-STARTUP_CLEAN_DIRS = ("images", "insights")
-STARTUP_CLEAN_FILES = ("report.md", "RESPONSE_TO_OBJECTIVES.md")
 
 
-def _reset_output_dirs() -> None:
+def _ensure_output_dirs() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-    for dir_name in STARTUP_CLEAN_DIRS:
-        folder = OUTPUT_DIR / dir_name
-        folder.mkdir(parents=True, exist_ok=True)
-        for child in folder.iterdir():
-            if child.is_dir():
-                shutil.rmtree(child)
-            else:
-                child.unlink()
-
-    for file_name in STARTUP_CLEAN_FILES:
-        file_path = OUTPUT_DIR / file_name
-        if file_path.exists() and file_path.is_file():
-            file_path.unlink()
+    (OUTPUT_DIR / "images").mkdir(parents=True, exist_ok=True)
+    (OUTPUT_DIR / "insights").mkdir(parents=True, exist_ok=True)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    _reset_output_dirs()
+    _ensure_output_dirs()
     yield
 
 
