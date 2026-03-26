@@ -232,6 +232,10 @@
           <input id="csv-file" type="file" accept=".csv" />
           <button id="upload-btn" type="button">Upload Dataset</button>
           <div id="upload-status" class="status"></div>
+          <div id="sql-agent-status" style="display:none;margin-top:6px;font-size:0.82rem;font-family:'IBM Plex Mono',monospace;color:var(--muted);display:flex;align-items:center;gap:6px;">
+            <span id="sql-agent-spinner" class="spinner" style="display:none;"></span>
+            <span id="sql-agent-text"></span>
+          </div>
           <hr style="border:none;border-top:1px solid var(--line);margin:12px 0;" />
           <label for="objectives-text" style="font-size:0.88rem;color:var(--muted);display:block;margin-bottom:4px;">Analysis Objectives (<code>OBJECTIVES.md</code>)</label>
           <textarea id="objectives-text" rows="8" placeholder="Describe what you want to analyse. e.g. 1. Identify the top-selling products by revenue. 2. Find seasonal trends in monthly sales. This will be saved as OBJECTIVES.md."></textarea>
@@ -242,7 +246,10 @@
         <article class="card">
           <h2>2) Run Analysis Pipeline</h2>
           <p class="small">Generates charts and a summary report from the uploaded dataset.</p>
-          <button id="execute-btn" type="button">Run Full Pipeline</button>
+          <div style="display:flex;gap:8px;">
+            <button id="execute-btn" type="button" style="flex:1;">Run Full Pipeline</button>
+            <button id="cancel-btn" type="button" style="flex:0 0 auto;width:auto;padding:10px 14px;background:#8f2f20;display:none;">Cancel</button>
+          </div>
           <div id="pipeline-busy" class="busy"><span class="spinner"></span><span>Pipeline running...</span></div>
           <div id="execute-status" class="status"></div>
         </article>
@@ -328,6 +335,51 @@
 
   <script>
     const uploadStatus = document.getElementById("upload-status");
+    const cancelBtn = document.getElementById("cancel-btn");
+    const sqlAgentStatus = document.getElementById("sql-agent-status");
+    const sqlAgentSpinner = document.getElementById("sql-agent-spinner");
+    const sqlAgentText = document.getElementById("sql-agent-text");
+    let sqlPollInterval = null;
+
+    function setSqlStatus(status, queryCount) {
+      if (status === "not_started") {
+        sqlAgentStatus.style.display = "none";
+        return;
+      }
+      sqlAgentStatus.style.display = "flex";
+      if (status === "running") {
+        sqlAgentSpinner.style.display = "";
+        sqlAgentText.textContent = "SQL catalog: building...";
+        sqlAgentText.style.color = "var(--muted)";
+      } else if (status === "ready") {
+        sqlAgentSpinner.style.display = "none";
+        sqlAgentText.textContent = queryCount > 0
+          ? `SQL catalog ready — ${queryCount} queries`
+          : "SQL catalog ready";
+        sqlAgentText.style.color = "#3a6b3a";
+      } else if (status === "error") {
+        sqlAgentSpinner.style.display = "none";
+        sqlAgentText.textContent = "SQL catalog: build failed";
+        sqlAgentText.style.color = "var(--warn)";
+      }
+    }
+
+    function startSqlPolling() {
+      if (sqlPollInterval) clearInterval(sqlPollInterval);
+      sqlPollInterval = setInterval(async () => {
+        try {
+          const res = await fetch("/sql-status");
+          if (!res.ok) return;
+          const data = await res.json();
+          setSqlStatus(data.status, data.query_count);
+          if (data.status === "ready" || data.status === "error") {
+            clearInterval(sqlPollInterval);
+            sqlPollInterval = null;
+          }
+        } catch { /* ignore poll errors */ }
+      }, 2000);
+    }
+
     const objectivesStatus = document.getElementById("objectives-status");
     const executeStatus = document.getElementById("execute-status");
     const executeBtn = document.getElementById("execute-btn");
@@ -350,6 +402,9 @@
       executeBtn.disabled = isRunning;
       executeBtn.style.opacity = isRunning ? "0.7" : "1";
       executeBtn.style.cursor = isRunning ? "not-allowed" : "pointer";
+      cancelBtn.style.display = isRunning ? "" : "none";
+      cancelBtn.disabled = false;
+      cancelBtn.textContent = "Cancel";
     }
 
     function formatPct(val) {
@@ -433,6 +488,7 @@
           throw new Error(body.detail || "Upload failed.");
         }
         setStatus(uploadStatus, `${body.message} rows=${body.row_count}, cols=${body.column_count}`);
+        startSqlPolling();
         document.getElementById("rows").textContent = body.row_count;
         document.getElementById("cols").textContent = body.column_count;
         document.getElementById("missing").textContent = body.missing_cells;
@@ -495,6 +551,10 @@
           body: JSON.stringify({ clean_output: true, write_png: true })
         });
         const body = await response.json();
+        if (response.status === 499) {
+          setStatus(executeStatus, "Pipeline cancelled.");
+          return;
+        }
         if (!response.ok) {
           throw new Error(body.detail || "Execution failed.");
         }
@@ -509,6 +569,14 @@
       } finally {
         setPipelineRunning(false);
       }
+    });
+
+    cancelBtn.addEventListener("click", async () => {
+      cancelBtn.disabled = true;
+      cancelBtn.textContent = "Cancelling...";
+      try {
+        await fetch("/cancel-pipeline", { method: "POST" });
+      } catch { /* ignore — server will still cancel */ }
     });
 
     viewInsightsBtn.addEventListener("click", () => {
@@ -592,15 +660,18 @@
     const qaCard = document.getElementById("qa-card");
     const qaThread = document.getElementById("qa-thread");
 
-    function appendQA(question, answer, modelUsed) {
+    function appendQA(question, answer, modelUsed, contextFiles) {
       qaThread.innerHTML = "";
       qaCard.style.display = "";
       const entry = document.createElement("div");
       entry.style.cssText = "border-top:1px solid var(--line);padding-top:10px;";
+      const filesHtml = contextFiles && contextFiles.length
+        ? `<div style="font-size:0.74rem;color:var(--muted);margin-top:4px;">${contextFiles.map(f => `<code style="font-size:0.72rem;background:var(--surface,#f4f4f4);padding:1px 4px;border-radius:3px;">${escapeHtml(f)}</code>`).join(" ")}</div>`
+        : "";
       entry.innerHTML = `
         <div style="font-size:0.74rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:4px;">Question</div>
         <p style="margin:0 0 8px;font-size:0.9rem;font-weight:600;">${escapeHtml(question)}</p>
-        <div style="font-size:0.74rem;text-transform:uppercase;letter-spacing:0.06em;color:#3a5a4a;margin-bottom:4px;">Answer <span style="text-transform:none;font-weight:400;color:var(--muted);">· ${escapeHtml(modelUsed)}</span></div>
+        <div style="font-size:0.74rem;text-transform:uppercase;letter-spacing:0.06em;color:#3a5a4a;margin-bottom:4px;">Answer <span style="text-transform:none;font-weight:400;color:var(--muted);">· ${escapeHtml(modelUsed)}</span>${filesHtml}</div>
         <p style="margin:0;font-size:0.88rem;line-height:1.6;white-space:pre-wrap;">${escapeHtml(answer)}</p>`;
       qaThread.appendChild(entry);
       qaCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -631,7 +702,7 @@
         });
         const body = await res.json();
         if (!res.ok) throw new Error(body.detail || "Request failed.");
-        appendQA(body.question, body.answer, body.model_used);
+        appendQA(body.question, body.answer, body.model_used, body.context_files || []);
         document.getElementById("ask-text").value = "";
       } catch (error) {
         setStatus(askStatus, String(error), true);
@@ -647,6 +718,19 @@
       await refreshReport();
       await refreshImages();
       await loadObjectives();
+
+      // Restore SQL agent status if catalog exists
+      try {
+        const res = await fetch("/sql-status");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status !== "not_started") {
+            setSqlStatus(data.status, data.query_count);
+            // Resume polling if still running
+            if (data.status === "running") startSqlPolling();
+          }
+        }
+      } catch { /* ignore */ }
 
       // Enable insights + response buttons if pipeline was previously run
       try {

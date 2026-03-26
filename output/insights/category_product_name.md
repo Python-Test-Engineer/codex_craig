@@ -3,10 +3,10 @@
 ![category_product_name.png](../images/category_product_name.png)
 
 ## Data Insight
-- The chart displays product-level sales data with 20 orders spanning multiple product categories. Unit prices range broadly (mean=403.49, std=370.34) indicating diverse product pricing tiers. Order quantities cluster tightly around 6-7 units (mean=6.65, std=1.95), suggesting standardized bulk purchasing. Total price variation (mean=2695.93, std=2567.29) reflects the combined effect of price and quantity variability across transactions.
+- The dataset contains 39 transactions across 17 variables, tracking sales by product and store. Unit price (mean=344.86, std=358.32) shows high variability, indicating diverse product pricing. Average quantity per order is 6.05 units (std=3.01), suggesting consistent order sizes. Total cost averages 1206.41 with substantial variation (std=1764.62).
 
 ## Analysis Insight
-- High total price variability (coefficient of variation ~0.95) indicates significant revenue disparity across orders. Tight quantity distribution implies consistent ordering patterns despite price differences. The ratio of unit_price std to mean (~0.92) suggests products span multiple price segments, likely reflecting different product categories or tiers visible in the chart grouping.
+- The chart appears to display products grouped by category or name. Wide spreads in unit cost (std=241.86) and unit price (std=358.32) suggest a heterogeneous product portfolio with varying price points. The margin between unit price and unit cost (ratio ~1.74x) implies consistent markup across items. Transaction data links orders to specific stores, customers, and payment methods.
 
 ## Caveat
-- The 20-row sample limits generalizability; small sample size increases uncertainty in mean estimates. City variable was not visualized, preventing regional analysis. Unit price variation could reflect different product categories rather than within-category pricing diversity. Causal interpretations between price, quantity, and total revenue are not supported without additional contextual variables.
+- No chart image was provided for direct visual analysis; insights are derived solely from metadata. Without seeing the actual chart, I cannot confirm category distributions, top products, or specific patterns. The 39-row sample limits generalizability. Confounding factors like seasonal effects, customer segments, or store locations are not visible in summary statistics.

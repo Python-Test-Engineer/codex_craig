@@ -125,6 +125,13 @@ class AskResponse(BaseModel):
     question: str
     answer: str
     model_used: str
+    context_files: list[str] = []
+
+
+class SqlStatusResponse(BaseModel):
+    status: str  # "not_started" | "running" | "ready" | "error"
+    message: str = ""
+    query_count: int = 0
 
 
 class ErrorResponse(BaseModel):

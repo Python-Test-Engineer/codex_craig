@@ -425,6 +425,167 @@ def get_sql_catalog_with_results() -> list[dict[str, str]]:
     return entries
 
 
+def run_tests_and_merge(queries_path: Path, csv_path: Path) -> dict[str, int]:
+    """
+    Execute every query in queries_path against csv_path via in-memory SQLite,
+    write a log file alongside the queries file, and merge results inline.
+    Returns {"passed": N, "failed": N, "skipped": N}.
+    """
+    import sqlite3
+
+    table = _table_name(csv_path)
+    df = pd.read_csv(csv_path)
+    con = sqlite3.connect(":memory:")
+    df.to_sql(table, con, if_exists="replace", index=False)
+    con.row_factory = sqlite3.Row
+
+    text = queries_path.read_text(encoding="utf-8")
+
+    # Parse entries
+    entries: list[dict] = []
+    current_title: str | None = None
+    in_sql = False
+    sql_lines: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("## ") and not stripped.startswith("### "):
+            if current_title and sql_lines:
+                entries.append({"title": current_title, "sql": "\n".join(sql_lines).strip()})
+            current_title = stripped[3:].strip()
+            sql_lines = []
+            in_sql = False
+        elif stripped == "```sql":
+            in_sql = True
+        elif stripped == "```" and in_sql:
+            in_sql = False
+        elif in_sql:
+            sql_lines.append(line)
+    if current_title and sql_lines:
+        entries.append({"title": current_title, "sql": "\n".join(sql_lines).strip()})
+
+    # Execute
+    results: list[dict] = []
+    for entry in entries:
+        sql_str = entry["sql"]
+        if ":" in sql_str and any(f":{w}" in sql_str for w in sql_str.split(":")):
+            results.append({**entry, "status": "skipped",
+                            "reason": "Query requires runtime arguments (:param)", "rows": []})
+            continue
+        try:
+            cur = con.execute(sql_str)
+            cols = [d[0] for d in cur.description] if cur.description else []
+            rows = [dict(zip(cols, row)) for row in cur.fetchall()]
+            results.append({**entry, "status": "ok", "columns": cols, "rows": rows})
+        except Exception as exc:
+            results.append({**entry, "status": "error", "reason": str(exc), "rows": []})
+    con.close()
+
+    passed  = sum(1 for r in results if r["status"] == "ok")
+    failed  = sum(1 for r in results if r["status"] == "error")
+    skipped = sum(1 for r in results if r["status"] == "skipped")
+
+    # Write log file
+    log_lines: list[str] = [
+        "# SQL Test Results",
+        f"\nQueries file: `{queries_path}`  ",
+        f"Source CSV: `{csv_path}` (in-memory SQLite)  ",
+        f"Queries run: **{len(results)}** (all)\n",
+        "---\n",
+        f"**Summary:** {passed} passed · {failed} failed · {skipped} skipped\n",
+        "---\n",
+    ]
+    for i, r in enumerate(results, 1):
+        log_lines.append(f"## {i}. {r['title']}")
+        log_lines.append(f"\n**Status:** {r['status'].upper()}\n")
+        log_lines.append("```sql")
+        log_lines.append(r["sql"])
+        log_lines.append("```\n")
+        if r["status"] == "ok":
+            rows, cols = r["rows"], r.get("columns", [])
+            log_lines.append(f"**Rows returned:** {len(rows)}\n")
+            if rows:
+                log_lines.append("| " + " | ".join(cols) + " |")
+                log_lines.append("| " + " | ".join("---" for _ in cols) + " |")
+                for row in rows[:20]:
+                    log_lines.append("| " + " | ".join(str(row.get(c, "")) for c in cols) + " |")
+                if len(rows) > 20:
+                    log_lines.append(f"\n*…{len(rows) - 20} more rows not shown*")
+            else:
+                log_lines.append("*(no rows returned)*")
+        elif r["status"] == "error":
+            log_lines.append(f"**Error:** `{r['reason']}`")
+        else:
+            log_lines.append(f"**Skipped:** {r['reason']}")
+        log_lines.append("\n---\n")
+
+    log_path = queries_path.with_name("log_test_at_" + queries_path.stem + ".md")
+    log_path.write_text("\n".join(log_lines), encoding="utf-8")
+
+    # Merge results inline into queries file
+    result_map: dict[str, dict] = {}
+    for r in results:
+        body_parts = []
+        if r["status"] == "ok":
+            rows, cols = r["rows"], r.get("columns", [])
+            body_parts.append(f"**Rows returned:** {len(rows)}\n")
+            if rows:
+                body_parts.append("| " + " | ".join(cols) + " |")
+                body_parts.append("| " + " | ".join("---" for _ in cols) + " |")
+                for row in rows[:20]:
+                    body_parts.append("| " + " | ".join(str(row.get(c, "")) for c in cols) + " |")
+                if len(rows) > 20:
+                    body_parts.append(f"\n*…{len(rows) - 20} more rows not shown*")
+            else:
+                body_parts.append("*(no rows returned)*")
+        elif r["status"] == "error":
+            body_parts.append(f"**Error:** `{r['reason']}`")
+        else:
+            body_parts.append(f"**Skipped:** {r['reason']}")
+        result_map[r["title"]] = {"status": r["status"].upper(), "body": "\n".join(body_parts)}
+
+    q_lines = text.splitlines()
+    out: list[str] = []
+    i = 0
+    cur_title: str | None = None
+    in_sql2 = False
+    skip_old = False
+    while i < len(q_lines):
+        line = q_lines[i]
+        stripped = line.strip()
+        if stripped.startswith("## ") and not stripped.startswith("### "):
+            cur_title = stripped[3:].strip()
+            skip_old = False
+        if stripped == "```sql":
+            in_sql2 = True
+            skip_old = False
+            out.append(line)
+            i += 1
+            continue
+        if stripped == "```" and in_sql2:
+            in_sql2 = False
+            skip_old = True
+            out.append(line)
+            if cur_title and cur_title in result_map:
+                r = result_map[cur_title]
+                out.append("")
+                out.append(f"**Status:** {r['status']}")
+                if r["body"]:
+                    out.append("")
+                    out.append(r["body"])
+            i += 1
+            continue
+        if skip_old and (stripped == "---" or stripped.startswith("## ") or stripped.startswith("### ")):
+            skip_old = False
+        if skip_old:
+            i += 1
+            continue
+        out.append(line)
+        i += 1
+    queries_path.write_text("\n".join(out), encoding="utf-8")
+
+    return {"passed": passed, "failed": failed, "skipped": skipped}
+
+
 def run_query_against_db(sql: str, params: dict[str, str] | None = None, limit: int = 30) -> list[dict]:
     """Execute SQL against an in-memory SQLite loaded from the source CSV."""
     import sqlite3

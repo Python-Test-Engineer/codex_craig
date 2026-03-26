@@ -1,0 +1,20 @@
+order_id,date,customer_id,customer_name,product_id,product_name,unit_cost,unit_price,quantity,total_cost,total_revenue,profit,margin_pct,store_id,store_name,city,payment_method
+ORD0001,2025-02-28,C06,Frank Miller,P003,Keyboard,28.0,79.99,4,112.0,319.96,207.96,65.0,S1,Store Alpha,New York,Debit Card
+ORD0002,2025-03-16,C08,Henry Moore,P003,Keyboard,28.0,79.99,10,280.0,799.9,519.9,65.0,S3,Store Gamma,Chicago,Debit Card
+ORD0003,2025-09-12,C09,Isabella Taylor,P005,Headphones,55.0,149.99,5,275.0,749.95,474.95,63.3,S1,Store Alpha,New York,Credit Card
+ORD0004,2025-06-19,C04,David Brown,P002,Mouse,8.5,29.99,7,59.5,209.93,150.43,71.7,S3,Store Gamma,Chicago,Debit Card
+ORD0005,2025-10-01,C02,Bob Smith,P003,Keyboard,28.0,79.99,9,252.0,719.91,467.91,65.0,S1,Store Alpha,New York,Cash
+ORD0006,2025-02-11,C04,David Brown,P004,Monitor,180.0,349.99,4,720.0,1399.96,679.96,48.6,S1,Store Alpha,New York,Credit Card
+ORD0007,2025-02-21,C09,Isabella Taylor,P002,Mouse,8.5,29.99,10,85.0,299.9,214.9,71.7,S2,Store Beta,Los Angeles,Credit Card
+ORD0008,2025-02-10,C06,Frank Miller,P002,Mouse,8.5,29.99,2,17.0,59.98,42.98,71.7,S1,Store Alpha,New York,PayPal
+ORD0009,2025-06-29,C02,Bob Smith,P005,Headphones,55.0,149.99,8,440.0,1199.92,759.92,63.3,S2,Store Beta,Los Angeles,Credit Card
+ORD0039,2025-06-16,C04,David Brown,P004,Monitor,180.0,349.99,10,1800.0,3499.9,1699.9,48.6,S3,Store Gamma,Chicago,Cash
+ORD0011,2025-01-07,C08,Henry Moore,P005,Headphones,55.0,149.99,3,165.0,449.97,284.97,63.3,S2,Store Beta,Los Angeles,PayPal
+ORD0012,2025-08-10,C01,Alice Johnson,P001,Laptop,650.0,999.99,1,650.0,999.99,349.99,35.0,S2,Store Beta,Los Angeles,Cash
+ORD0013,2025-01-29,C05,Emma Davis,P001,Laptop,650.0,999.99,10,6500.0,9999.9,3499.9,35.0,S3,Store Gamma,Chicago,PayPal
+ORD0014,2025-01-09,C02,Bob Smith,P004,Monitor,180.0,349.99,5,900.0,1749.95,849.95,48.6,S1,Store Alpha,New York,Credit Card
+ORD0015,2025-02-01,C06,Frank Miller,P004,Monitor,180.0,349.99,10,1800.0,3499.9,1699.9,48.6,S2,Store Beta,Los Angeles,Credit Card
+ORD0016,2025-02-15,C03,Carol White,P004,Monitor,180.0,349.99,1,180.0,349.99,169.99,48.6,S1,Store Alpha,New York,Debit Card
+ORD0017,2025-03-11,C02,Bob Smith,P004,Monitor,180.0,349.99,8,1440.0,2799.92,1359.92,48.6,S2,Store Beta,Los Angeles,Credit Card
+ORD0018,2025-03-26,C05,Emma Davis,P002,Mouse,8.5,29.99,2,17.0,59.98,42.98,71.7,S1,Store Alpha,New York,Debit Card
+ORD0019,2025-10-23,C01,Alice Johnson,P002,Mouse,8.5,29.99,4,34.0,119.96,85.96,71.7,S1,Store Alpha,New York,PayPal

@@ -3,10 +3,10 @@
 ![overview_numeric_distributions.png](../images/overview_numeric_distributions.png)
 
 ## Data Insight
-- The numeric variables show distinct distribution patterns. Unit price exhibits high variability (CV=92%) with mean 403.49 and substantial right skew likely present. Total price mirrors this pattern with mean 2695.93 and CV of 95%, indicating a few high-value transactions driving the distribution. Quantity shows tighter clustering around mean 6.65 with lower relative variability (CV=29%).
+- The numeric variables show right-skewed distributions typical of sales data. Unit cost and unit price have high standard deviations relative to their means (std/mean ratios of 1.22 and 1.04 respectively), indicating substantial variability with a long tail of high-value transactions. Quantity is more normally distributed with a lower coefficient of variation (0.50), clustering around the mean of 6 units per order.
 
 ## Analysis Insight
-- The distributions suggest most transactions involve moderate unit prices and quantities, with outlier high-value orders inflating totals. Unit price and total price distributions likely exhibit positive skew given the ratio of standard deviation to mean exceeding 0.9. Quantity's lower dispersion indicates more consistent order sizes across transactions compared to monetary variables.
+- Total cost exhibits the largest absolute dispersion (std=1764.62) driven by the multiplicative effect of quantity and unit cost. The margin between unit price and unit cost (mean spread of ~146) suggests consistent profitability per unit, though profit distribution likely mirrors the right-skew of revenue-generating transactions. Outliers in unit price and total cost likely represent bulk orders or premium product purchases.
 
 ## Caveat
-- Inferences are limited by small sample size (n=20) and lack of visible chart details; distributional shapes cannot be confirmed without histogram or boxplot visualization. Summary statistics alone cannot capture potential multimodality or specific outlier values driving the high variance in monetary fields.
+- Distribution shapes are inferred from summary statistics without access to raw data points or visualization. The small sample size (n=39) limits statistical power and may not represent broader population patterns. Standard deviation estimates are themselves uncertain with limited observations.

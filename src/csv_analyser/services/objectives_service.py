@@ -17,6 +17,7 @@ OBJECTIVES_PATH = _HERE / "OBJECTIVES.md"
 RESPONSE_PATH = _HERE / "output" / "RESPONSE_TO_OBJECTIVES.md"
 RESPONSE_HTML_PATH = _HERE / "output" / "RESPONSE_TO_OBJECTIVES.html"
 DOTENV_PATH = _HERE / ".env"
+_SQL_DIR = _HERE / "output" / "sql"
 
 load_dotenv(dotenv_path=DOTENV_PATH, override=False)
 
@@ -27,6 +28,12 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api"
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+def _read_sql_catalog() -> str:
+    """Return the content of the SQL queries file (with inline results if present)."""
+    files = sorted(_SQL_DIR.glob("sql_queries_*.md"))
+    return files[-1].read_text(encoding="utf-8") if files else ""
 
 
 def count_objectives(text: str) -> int:
@@ -195,6 +202,7 @@ def generate_response_to_objectives(
 
     report_text = _read(_HERE / "output" / "report.md")
     insights_text = _read(_HERE / "output" / "insights" / "insights.md")
+    sql_catalog_text = _read_sql_catalog()
     chart_index = _chart_index(chart_artifacts)
     generated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
@@ -207,7 +215,8 @@ statistical modelling, data visualisation, and business intelligence.
 You will be given:
 1. Analysis objectives — these may be numbered/bulleted lists OR free-form prose. \
    There are {n_objectives} distinct objective(s) to address.
-2. Pipeline outputs: a statistical report, chart insights, and a list of generated visualisations.
+2. Pipeline outputs: a statistical report, chart insights, a list of generated visualisations, \
+   and a SQL query catalog with pre-computed results against the dataset.
 
 Your task is to write a **rigorous, detailed response** to every objective. \
 Parse the objectives carefully regardless of format. For each objective:
@@ -215,7 +224,8 @@ Parse the objectives carefully regardless of format. For each objective:
 - Restate it clearly as a heading so the reader knows which objective is being addressed.
 - Assess what the current pipeline outputs *directly address* vs. what *remains to be done*.
 - Provide specific data interpretation of the available findings (summary statistics, \
-  distributions, correlations, trends, category breakdowns).
+  distributions, correlations, trends, category breakdowns). \
+  Cite exact values from the SQL query results where available.
 - Recommend the precise analytical method(s) needed to fully address the objective.
 - Note any data quality considerations (sample size, missing data, outliers, confounders).
 - Write in the style of a professional data analysis report — clear, precise, and technically grounded.
@@ -237,6 +247,12 @@ Be thorough. This is a professional analysis document.\
 ## Analysis Objectives
 
 {objectives_text}
+
+---
+
+## SQL Query Catalog (with pre-computed results)
+
+{sql_catalog_text if sql_catalog_text else "No SQL catalog available. Upload a CSV to generate one."}
 
 ---
 

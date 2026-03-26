@@ -3,10 +3,10 @@
 ![distribution_unit_price.png](../images/distribution_unit_price.png)
 
 ## Data Insight
-- The distribution of 'unit price' reveals the spread and shape of values. Skewed distributions or outliers may warrant transformation before modelling.
+- The unit price distribution shows right-skewed behavior with mean=344.86 and high variability (std=358.32). The standard deviation exceeding the mean indicates substantial spread, likely driven by premium products or outliers. Unit prices appear to span a wide range from low-cost items to high-value transactions.
 
 ## Analysis Insight
-- Highly skewed distributions may benefit from log or Box-Cox transformation before statistical modelling.
+- The high standard deviation relative to the mean suggests unit prices are not uniformly distributed—likely comprising both low-value commodities and high-margin premium products. This skewness may affect average-based analyses; median might better represent typical transactions.
 
 ## Caveat
-- Insights are exploratory and non-causal. Missing cells in source data: 0. Sample size, data quality, and unmeasured variables may affect conclusions.
+- Chart interpretation relies on visual binning assumptions; exact distribution shape depends on chosen axis scales. Outliers may distort the apparent distribution. Payment method and store location confounding not addressed. Small sample size (n=39) limits generalizability.

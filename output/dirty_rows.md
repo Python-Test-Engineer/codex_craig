@@ -1,8 +1,8 @@
 # Dirty Row Report
 
-- **Total rows in dataset:** 20
-- **Dirty rows identified:** 0
-- **Clean rows:** 20
+- **Total rows in dataset:** 39
+- **Dirty rows identified:** 1
+- **Clean rows:** 38
 
 ## Criteria Used
 
@@ -15,6 +15,12 @@ A row is flagged as **dirty** if it satisfies one or more of the following condi
 | 3 | **Numeric outlier** | A numeric value falls outside +/- 3 standard deviations from the column mean |
 | 4 | **Negative in non-negative column** | A numeric value is negative in a column whose name implies non-negative values (price, quantity, total, etc.) |
 
-## Result
+## Summary by Criterion
 
-No dirty rows were detected. The dataset appears clean.
+- **Exact duplicates:** 1 row(s)
+
+## Row-by-Row Detail
+
+### Row 38
+- Exact duplicate of a previous row
+

@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import threading
 from datetime import UTC, datetime
 from html import escape
 from pathlib import Path
@@ -190,6 +191,7 @@ def _generate_llm_insights(
     image_path: Path,
     df: pd.DataFrame,
     api_key: str,
+    cancel_event: threading.Event | None = None,
 ) -> dict[str, str]:
     system_prompt = """\
 You are a senior data analyst.
@@ -217,17 +219,23 @@ Write concise, chart-specific insights now in strict JSON only.
     client = anthropic.Anthropic(
         api_key=api_key,
         base_url=OPENROUTER_BASE_URL,
+        timeout=25.0,
     )
     text_only_blocks: list[dict[str, object]] = [{"type": "text", "text": user_text}]
 
-    def _call(blocks: list[dict[str, object]]) -> dict[str, str]:
-        response = client.messages.create(
+    def _call_streaming(blocks: list[dict[str, object]]) -> dict[str, str]:
+        """Stream response token-by-token, checking for cancellation between chunks."""
+        raw_text = ""
+        with client.messages.stream(
             model=MODEL,
             max_tokens=MAX_TOKENS,
             system=system_prompt,
             messages=[{"role": "user", "content": blocks}],
-        )
-        raw_text = _extract_response_text(response)
+        ) as stream:
+            for chunk in stream.text_stream:
+                if cancel_event and cancel_event.is_set():
+                    raise RuntimeError("Pipeline cancelled.")
+                raw_text += chunk
         payload = _extract_json_payload(raw_text)
         if payload is None:
             raise ValueError("LLM output was not valid JSON.")
@@ -248,11 +256,13 @@ Write concise, chart-specific insights now in strict JSON only.
             }
         ]
         try:
-            payload = _call(image_blocks)
+            payload = _call_streaming(image_blocks)
+        except RuntimeError:
+            raise  # propagate cancellation
         except Exception:
-            payload = _call(text_only_blocks)
+            payload = _call_streaming(text_only_blocks)
     else:
-        payload = _call(text_only_blocks)
+        payload = _call_streaming(text_only_blocks)
 
     data_insight = str(payload.get("data_insight", "")).strip()
     analysis_insight = str(payload.get("analysis_insight", "")).strip()
@@ -336,6 +346,7 @@ def generate_insights_bundle(
     df: pd.DataFrame,
     chart_artifacts: list[ChartArtifact],
     insights_dir: str | Path | None = None,
+    cancel_event: threading.Event | None = None,
 ) -> tuple[Path, Path, list[Path]]:
     target_dir = Path(insights_dir) if insights_dir is not None else INSIGHTS_DIR
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -348,6 +359,8 @@ def generate_insights_bundle(
     llm_failures: list[str] = []
 
     for artifact in png_artifacts:
+        if cancel_event and cancel_event.is_set():
+            raise RuntimeError("Pipeline cancelled.")
         stem = Path(artifact.name).stem
         section_path = target_dir / f"{stem}.md"
         image_rel_path = f"../images/{artifact.name}"
@@ -364,10 +377,13 @@ def generate_insights_bundle(
                     image_path=image_path,
                     df=df,
                     api_key=api_key,
+                    cancel_event=cancel_event,
                 )
                 data_insight = generated["data_insight"]
                 analysis_insight = generated["analysis_insight"]
                 caveat = generated["caveat"]
+            except RuntimeError:
+                raise  # propagate cancellation out of the loop
             except Exception as exc:
                 llm_failures.append(f"{artifact.name}: {exc}")
 

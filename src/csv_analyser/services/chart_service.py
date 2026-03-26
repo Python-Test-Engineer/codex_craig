@@ -30,6 +30,9 @@ def _safe_category_from_name(name: str) -> str:
     return "other"
 
 
+_CLEAN_SKIP = {"sql"}  # subdirectories that must never be wiped by the chart pipeline
+
+
 def ensure_output_dir(output_dir: str | Path | None = None, clean: bool = False) -> Path:
     directory = Path(output_dir) if output_dir is not None else OUTPUT_DIR
     directory.mkdir(parents=True, exist_ok=True)
@@ -37,6 +40,9 @@ def ensure_output_dir(output_dir: str | Path | None = None, clean: bool = False)
     if clean:
         for item in directory.rglob("*"):
             if item.name == ".gitkeep":
+                continue
+            # Never touch protected subdirectories or their contents
+            if any(part in _CLEAN_SKIP for part in item.parts):
                 continue
             if item.is_file():
                 item.unlink()

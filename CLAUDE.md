@@ -32,6 +32,7 @@ uv run uvicorn csv_analyser.main:app --reload
 | AI insight generation | `src/csv_analyser/services/insight_service.py` |
 | Objectives response | `src/csv_analyser/services/objectives_service.py` |
 | Statistical report | `src/csv_analyser/services/report_service.py` |
+| SQL catalog + test execution | `src/csv_analyser/services/sql_service.py` |
 | Pydantic schemas | `src/csv_analyser/models/schemas.py` |
 | HTML templates | `src/csv_analyser/templates/` |
 
@@ -44,6 +45,10 @@ uv run uvicorn csv_analyser.main:app --reload
 | `output/sql/` | SQL query catalog (`sql_title.md`, `sql_queries_*.md`) | **No** |
 | `data/` | Source CSV files | No |
 
+`output/sql/` is also protected **during pipeline runs**: `chart_service.py` uses
+`_CLEAN_SKIP = {"sql"}` so `ensure_output_dir(clean=True)` never touches files whose
+path contains `sql/`. Do not remove this guard.
+
 ## SQL commands
 
 The SQL workflow is a key part of this project. Always look here first when a user asks
@@ -54,18 +59,47 @@ about SQL queries or wants to query a dataset:
 
 Retrieve a query: `Grep pattern: "## <Title>"` in the queries file.
 
-## Pipeline workflow — REQUIRED
+## SQL workflow
 
-Whenever the chart pipeline runs (POST `/execute`, POST `/generate/charts`, or any action
-that triggers chart generation), you MUST automatically continue with the SQL workflow in
-this exact order — **without waiting to be asked**:
+### Server-side auto-build (always happens)
 
-1. Run `/sql-titles data/data.csv`
-2. Run `/sql-create output/sql/sql_title.md`
-3. Run `/sql-test all`
+On every CSV upload, `routes.py` schedules `_build_sql_catalog_bg(csv_path)` as a
+FastAPI `BackgroundTask`. This calls `sql_service.generate_sql_catalog()` and
+`sql_service.run_tests_and_merge()` — no LLM key required. It writes
+`output/sql/.status.json` at start (`{"status": "running"}`) and completion
+(`{"status": "ready"}`). The gallery UI polls `GET /sql-status` every 2 s and shows
+a live status indicator.
 
-Do not skip these steps. Do not ask for confirmation. Run them immediately after charts are
-generated.
+### Claude sql-agent (LLM-enhanced, supplementary)
+
+When you are in a Claude Code session and a CSV upload completes, also launch the
+`sql-agent` to produce an LLM-authored query catalog with better titles and
+business-context-aware queries:
+
+```
+Agent tool → subagent_type: sql-agent
+```
+
+The agent runs:
+1. `/sql-titles data/<csv>` — generates `output/sql/sql_title.md`
+2. `/sql-create output/sql/sql_title.md` — generates SQL catalog with inline test results
+
+Do **not** call `/sql-test` via the Skill tool — nested Skill invocations silently fail.
+`/sql-create` embeds its own test execution via direct Bash scripts.
+
+### Context usage
+
+Both `/ask` and `/generate/response-to-objectives` load `output/sql/sql_queries_*.md`
+as their primary context (SQL results contain exact computed values). `insights.md` is
+secondary context. Never load raw CSV data as context.
+
+## Pipeline cancellation
+
+`POST /cancel-pipeline` sets a `threading.Event` that is checked:
+- Between every step in `execute_plan`
+- Between every token chunk in the streaming LLM calls in `insight_service.py`
+
+This gives ~100–300 ms cancellation latency. The pipeline returns HTTP 499 when cancelled.
 
 ## LLM / API keys
 
@@ -87,3 +121,6 @@ Ruff line length: 100. Target: Python 3.11.
 - Do not touch `src/biomed_api` unless the user explicitly asks
 - Do not commit files from `output/images/` or `output/insights/`
 - Do not add API keys to source files or tests
+- Do not remove `_CLEAN_SKIP = {"sql"}` from `chart_service.py` — it prevents the pipeline from deleting SQL catalog files
+- Do not call `/sql-test` via the Skill tool from inside another skill — nested Skill invocations silently fail; use direct Bash scripts instead
+- Do not call `generate_sql_catalog()` from inside `execute_plan` or `generate_charts` — the catalog is built on upload; the pipeline should only read existing SQL files

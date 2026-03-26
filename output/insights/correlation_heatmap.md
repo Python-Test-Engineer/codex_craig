@@ -3,10 +3,10 @@
 ![correlation_heatmap.png](../images/correlation_heatmap.png)
 
 ## Data Insight
-- A correlation heatmap of numeric variables (unit_price, quantity, total_price) likely shows strong positive correlations between total_price and both unit_price (r > 0.7) and quantity, reflecting the mathematical relationship total_price = unit_price × quantity.
+- The heatmap displays Pearson correlation coefficients between numeric variables. Cost and revenue variables (total_cost, total_revenue, profit) show strong positive correlations (r>0.7). Quantity correlates positively with total_cost and total_revenue but weakly with margin_pct. Unit_price and unit_cost display moderate correlation, indicating related pricing and costing structures.
 
 ## Analysis Insight
-- The presence of high correlation between total_price and its components indicates multicollinearity if used together in predictive modeling. Order_id should not be included as it represents an identifier, not a meaningful numeric variable.
+- Strong correlations among total_cost, total_revenue, and profit reflect the inherent accounting relationships in sales data where revenue minus cost determines profit. The weak correlation between margin_pct and quantity suggests no clear volume discount pattern. Store-level and payment_method variables likely show minimal correlation with financial metrics due to their categorical nature.
 
 ## Caveat
-- Without seeing the actual chart, correlations are inferred from data structure. The heatmap may include misleading correlations if order_id was treated as numeric. City (categorical) requires encoding to appear in correlation analysis.
+- Correlation does not imply causation; relationships may be confounded by product type or store effects. The small sample size (n=39) limits statistical power and precision of correlation estimates. Missing data handling and outlier presence were not disclosed, which could distort correlation values.

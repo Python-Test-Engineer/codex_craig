@@ -1,12 +1,12 @@
 # SQL Test Results
 
-Queries file: `output\sql\sql_queries_data.md`  
+Queries file: `C:\Users\mrcra\Desktop\data-intelligence-agent\output\sql\sql_queries_data.md`  
 Source CSV: `data\data.csv` (in-memory SQLite)  
-Queries run: **24** (all)
+Queries run: **27** (all)
 
 ---
 
-**Summary:** 21 passed · 0 failed · 3 skipped
+**Summary:** 25 passed · 0 failed · 2 skipped
 
 ---
 
@@ -23,7 +23,7 @@ FROM data;
 
 | row_count |
 | --- |
-| 20 |
+| 39 |
 
 ---
 
@@ -39,22 +39,43 @@ LIMIT 10;
 
 **Rows returned:** 10
 
-| order_id | date | product_name | unit_price | quantity | total_price | city |
-| --- | --- | --- | --- | --- | --- | --- |
-| ORD0001 | 2025-04-28 | Monitor | 349.99 | 10 | 3499.9 | New York |
-| ORD0002 | 2025-09-29 | Mouse | 29.99 | 5 | 149.95 | New York |
-| ORD0003 | 2025-08-04 | Headphones | 149.99 | 8 | 1199.92 | Chicago |
-| ORD0004 | 2025-12-16 | Headphones | 149.99 | 6 | 899.94 | New York |
-| ORD0005 | 2025-02-12 | Mouse | 29.99 | 3 | 89.97 | Los Angeles |
-| ORD0008 | 2025-11-07 | Headphones | 149.99 | 9 | 1349.91 | Los Angeles |
-| ORD0009 | 2025-03-24 | Monitor | 349.99 | 3 | 1049.97 | Los Angeles |
-| ORD0011 | 2025-02-11 | Laptop | 999.99 | 8 | 7999.92 | New York |
-| ORD0012 | 2025-07-15 | Monitor | 349.99 | 5 | 1749.95 | New York |
-| ORD0013 | 2025-01-29 | Keyboard | 79.99 | 7 | 559.93 | Chicago |
+| order_id | date | customer_id | customer_name | product_id | product_name | unit_cost | unit_price | quantity | total_cost | total_revenue | profit | margin_pct | store_id | store_name | city | payment_method |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ORD0001 | 2025-02-28 | C06 | Frank Miller | P003 | Keyboard | 28.0 | 79.99 | 4 | 112.0 | 319.96 | 207.96 | 65.0 | S1 | Store Alpha | New York | Debit Card |
+| ORD0002 | 2025-03-16 | C08 | Henry Moore | P003 | Keyboard | 28.0 | 79.99 | 10 | 280.0 | 799.9 | 519.9 | 65.0 | S3 | Store Gamma | Chicago | Debit Card |
+| ORD0003 | 2025-09-12 | C09 | Isabella Taylor | P005 | Headphones | 55.0 | 149.99 | 5 | 275.0 | 749.95 | 474.95 | 63.3 | S1 | Store Alpha | New York | Credit Card |
+| ORD0004 | 2025-06-19 | C04 | David Brown | P002 | Mouse | 8.5 | 29.99 | 7 | 59.5 | 209.93 | 150.43 | 71.7 | S3 | Store Gamma | Chicago | Debit Card |
+| ORD0005 | 2025-10-01 | C02 | Bob Smith | P003 | Keyboard | 28.0 | 79.99 | 9 | 252.0 | 719.91 | 467.91 | 65.0 | S1 | Store Alpha | New York | Cash |
+| ORD0006 | 2025-02-11 | C04 | David Brown | P004 | Monitor | 180.0 | 349.99 | 4 | 720.0 | 1399.96 | 679.96 | 48.6 | S1 | Store Alpha | New York | Credit Card |
+| ORD0007 | 2025-02-21 | C09 | Isabella Taylor | P002 | Mouse | 8.5 | 29.99 | 10 | 85.0 | 299.9 | 214.9 | 71.7 | S2 | Store Beta | Los Angeles | Credit Card |
+| ORD0008 | 2025-02-10 | C06 | Frank Miller | P002 | Mouse | 8.5 | 29.99 | 2 | 17.0 | 59.98 | 42.98 | 71.7 | S1 | Store Alpha | New York | PayPal |
+| ORD0009 | 2025-06-29 | C02 | Bob Smith | P005 | Headphones | 55.0 | 149.99 | 8 | 440.0 | 1199.92 | 759.92 | 63.3 | S2 | Store Beta | Los Angeles | Credit Card |
+| ORD0039 | 2025-06-16 | C04 | David Brown | P004 | Monitor | 180.0 | 349.99 | 10 | 1800.0 | 3499.9 | 1699.9 | 48.6 | S3 | Store Gamma | Chicago | Cash |
 
 ---
 
-## 3. Summary Stats for unit_price
+## 3. Summary Stats for unit_cost
+
+**Status:** OK
+
+```sql
+SELECT
+    MIN(unit_cost) AS min_val,
+    MAX(unit_cost) AS max_val,
+    ROUND(AVG(unit_cost), 2) AS avg_val,
+    SUM(unit_cost) AS total
+FROM data;
+```
+
+**Rows returned:** 1
+
+| min_val | max_val | avg_val | total |
+| --- | --- | --- | --- |
+| 8.5 | 650.0 | 198.42 | 7738.5 |
+
+---
+
+## 4. Summary Stats for unit_price
 
 **Status:** OK
 
@@ -71,11 +92,11 @@ FROM data;
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
-| 29.99 | 999.99 | 403.49 | 8069.8 |
+| 29.99 | 999.99 | 344.86 | 13449.61 |
 
 ---
 
-## 4. Summary Stats for quantity
+## 5. Summary Stats for quantity
 
 **Status:** OK
 
@@ -92,20 +113,20 @@ FROM data;
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
-| 3 | 10 | 6.65 | 133 |
+| 1 | 10 | 6.05 | 236 |
 
 ---
 
-## 5. Summary Stats for total_price
+## 6. Summary Stats for total_cost
 
 **Status:** OK
 
 ```sql
 SELECT
-    MIN(total_price) AS min_val,
-    MAX(total_price) AS max_val,
-    ROUND(AVG(total_price), 2) AS avg_val,
-    SUM(total_price) AS total
+    MIN(total_cost) AS min_val,
+    MAX(total_cost) AS max_val,
+    ROUND(AVG(total_cost), 2) AS avg_val,
+    SUM(total_cost) AS total
 FROM data;
 ```
 
@@ -113,80 +134,241 @@ FROM data;
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
-| 89.97 | 7999.92 | 2695.93 | 53918.67 |
+| 17.0 | 6500.0 | 1206.41 | 47050.0 |
 
 ---
 
-## 6. Total unit_price by product_name
+## 7. Summary Stats for total_revenue
 
 **Status:** OK
 
 ```sql
-SELECT product_name, SUM(unit_price) AS total_unit_price
+SELECT
+    MIN(total_revenue) AS min_val,
+    MAX(total_revenue) AS max_val,
+    ROUND(AVG(total_revenue), 2) AS avg_val,
+    SUM(total_revenue) AS total
+FROM data;
+```
+
+**Rows returned:** 1
+
+| min_val | max_val | avg_val | total |
+| --- | --- | --- | --- |
+| 59.98 | 9999.9 | 2096.09 | 81747.64 |
+
+---
+
+## 8. Summary Stats for profit
+
+**Status:** OK
+
+```sql
+SELECT
+    MIN(profit) AS min_val,
+    MAX(profit) AS max_val,
+    ROUND(AVG(profit), 2) AS avg_val,
+    SUM(profit) AS total
+FROM data;
+```
+
+**Rows returned:** 1
+
+| min_val | max_val | avg_val | total |
+| --- | --- | --- | --- |
+| 42.98 | 3499.9 | 889.68 | 34697.64 |
+
+---
+
+## 9. Total unit_cost by date
+
+**Status:** OK
+
+```sql
+SELECT date, SUM(unit_cost) AS total_unit_cost
 FROM data
-GROUP BY product_name
+GROUP BY date
+ORDER BY total_unit_cost DESC;
+```
+
+**Rows returned:** 37
+
+| date | total_unit_cost |
+| --- | --- |
+| 2025-10-04 | 650.0 |
+| 2025-09-28 | 650.0 |
+| 2025-08-10 | 650.0 |
+| 2025-08-06 | 650.0 |
+| 2025-04-02 | 650.0 |
+| 2025-03-24 | 650.0 |
+| 2025-01-29 | 650.0 |
+| 2025-01-20 | 650.0 |
+| 2025-06-16 | 360.0 |
+| 2025-11-29 | 180.0 |
+| 2025-08-09 | 180.0 |
+| 2025-06-11 | 180.0 |
+| 2025-03-11 | 180.0 |
+| 2025-02-15 | 180.0 |
+| 2025-02-11 | 180.0 |
+| 2025-02-01 | 180.0 |
+| 2025-01-09 | 180.0 |
+| 2025-01-05 | 180.0 |
+| 2025-02-10 | 63.5 |
+| 2025-11-03 | 55.0 |
+
+*…17 more rows not shown*
+
+---
+
+## 10. Average unit_cost by date
+
+**Status:** OK
+
+```sql
+SELECT date, ROUND(AVG(unit_cost), 2) AS avg_unit_cost
+FROM data
+GROUP BY date
+ORDER BY avg_unit_cost DESC;
+```
+
+**Rows returned:** 37
+
+| date | avg_unit_cost |
+| --- | --- |
+| 2025-10-04 | 650.0 |
+| 2025-09-28 | 650.0 |
+| 2025-08-10 | 650.0 |
+| 2025-08-06 | 650.0 |
+| 2025-04-02 | 650.0 |
+| 2025-03-24 | 650.0 |
+| 2025-01-29 | 650.0 |
+| 2025-01-20 | 650.0 |
+| 2025-11-29 | 180.0 |
+| 2025-08-09 | 180.0 |
+| 2025-06-16 | 180.0 |
+| 2025-06-11 | 180.0 |
+| 2025-03-11 | 180.0 |
+| 2025-02-15 | 180.0 |
+| 2025-02-11 | 180.0 |
+| 2025-02-01 | 180.0 |
+| 2025-01-09 | 180.0 |
+| 2025-01-05 | 180.0 |
+| 2025-11-03 | 55.0 |
+| 2025-09-12 | 55.0 |
+
+*…17 more rows not shown*
+
+---
+
+## 11. Total unit_price by date
+
+**Status:** OK
+
+```sql
+SELECT date, SUM(unit_price) AS total_unit_price
+FROM data
+GROUP BY date
 ORDER BY total_unit_price DESC;
 ```
 
-**Rows returned:** 5
+**Rows returned:** 37
 
-| product_name | total_unit_price |
+| date | total_unit_price |
 | --- | --- |
-| Laptop | 4999.95 |
-| Monitor | 2099.94 |
-| Headphones | 749.95 |
-| Keyboard | 159.98 |
-| Mouse | 59.98 |
+| 2025-10-04 | 999.99 |
+| 2025-09-28 | 999.99 |
+| 2025-08-10 | 999.99 |
+| 2025-08-06 | 999.99 |
+| 2025-04-02 | 999.99 |
+| 2025-03-24 | 999.99 |
+| 2025-01-29 | 999.99 |
+| 2025-01-20 | 999.99 |
+| 2025-06-16 | 699.98 |
+| 2025-11-29 | 349.99 |
+| 2025-08-09 | 349.99 |
+| 2025-06-11 | 349.99 |
+| 2025-03-11 | 349.99 |
+| 2025-02-15 | 349.99 |
+| 2025-02-11 | 349.99 |
+| 2025-02-01 | 349.99 |
+| 2025-01-09 | 349.99 |
+| 2025-01-05 | 349.99 |
+| 2025-02-10 | 179.98000000000002 |
+| 2025-11-03 | 149.99 |
+
+*…17 more rows not shown*
 
 ---
 
-## 7. Average unit_price by product_name
+## 12. Distribution of date
 
 **Status:** OK
 
 ```sql
-SELECT product_name, ROUND(AVG(unit_price), 2) AS avg_unit_price
+SELECT date, COUNT(*) AS row_count
 FROM data
-GROUP BY product_name
-ORDER BY avg_unit_price DESC;
+GROUP BY date
+ORDER BY row_count DESC;
 ```
 
-**Rows returned:** 5
+**Rows returned:** 37
 
-| product_name | avg_unit_price |
+| date | row_count |
 | --- | --- |
-| Laptop | 999.99 |
-| Monitor | 349.99 |
-| Headphones | 149.99 |
-| Keyboard | 79.99 |
-| Mouse | 29.99 |
+| 2025-06-16 | 2 |
+| 2025-02-10 | 2 |
+| 2025-12-23 | 1 |
+| 2025-11-29 | 1 |
+| 2025-11-03 | 1 |
+| 2025-10-31 | 1 |
+| 2025-10-23 | 1 |
+| 2025-10-04 | 1 |
+| 2025-10-01 | 1 |
+| 2025-09-28 | 1 |
+| 2025-09-16 | 1 |
+| 2025-09-12 | 1 |
+| 2025-08-24 | 1 |
+| 2025-08-10 | 1 |
+| 2025-08-09 | 1 |
+| 2025-08-06 | 1 |
+| 2025-06-29 | 1 |
+| 2025-06-19 | 1 |
+| 2025-06-11 | 1 |
+| 2025-04-02 | 1 |
+
+*…17 more rows not shown*
 
 ---
 
-## 8. Total quantity by product_name
+## 13. Distribution of customer_name
 
 **Status:** OK
 
 ```sql
-SELECT product_name, SUM(quantity) AS total_quantity
+SELECT customer_name, COUNT(*) AS row_count
 FROM data
-GROUP BY product_name
-ORDER BY total_quantity DESC;
+GROUP BY customer_name
+ORDER BY row_count DESC;
 ```
 
-**Rows returned:** 5
+**Rows returned:** 10
 
-| product_name | total_quantity |
+| customer_name | row_count |
 | --- | --- |
-| Monitor | 40 |
-| Headphones | 36 |
-| Laptop | 33 |
-| Keyboard | 16 |
-| Mouse | 8 |
+| Bob Smith | 10 |
+| Emma Davis | 5 |
+| David Brown | 5 |
+| Isabella Taylor | 4 |
+| Henry Moore | 3 |
+| Frank Miller | 3 |
+| Alice Johnson | 3 |
+| Jack Anderson | 2 |
+| Grace Wilson | 2 |
+| Carol White | 2 |
 
 ---
 
-## 9. Distribution of product_name
+## 14. Distribution of product_name
 
 **Status:** OK
 
@@ -197,19 +379,41 @@ GROUP BY product_name
 ORDER BY row_count DESC;
 ```
 
-**Rows returned:** 5
+**Rows returned:** 6
 
 | product_name | row_count |
 | --- | --- |
-| Monitor | 6 |
-| Laptop | 5 |
+| Monitor | 11 |
+| Laptop | 8 |
+| Keyboard | 8 |
+| Mouse | 6 |
 | Headphones | 5 |
-| Mouse | 2 |
-| Keyboard | 2 |
+| Mousse | 1 |
 
 ---
 
-## 10. Distribution of city
+## 15. Distribution of store_name
+
+**Status:** OK
+
+```sql
+SELECT store_name, COUNT(*) AS row_count
+FROM data
+GROUP BY store_name
+ORDER BY row_count DESC;
+```
+
+**Rows returned:** 3
+
+| store_name | row_count |
+| --- | --- |
+| Store Beta | 14 |
+| Store Alpha | 13 |
+| Store Gamma | 12 |
+
+---
+
+## 16. Distribution of city
 
 **Status:** OK
 
@@ -224,209 +428,169 @@ ORDER BY row_count DESC;
 
 | city | row_count |
 | --- | --- |
-| Los Angeles | 8 |
-| New York | 7 |
-| Chicago | 5 |
+| Los Angeles | 14 |
+| New York | 13 |
+| Chicago | 12 |
 
 ---
 
-## 11. Top 10 product_name by unit_price
+## 17. Top 10 date by unit_cost
 
 **Status:** OK
 
 ```sql
-SELECT product_name, SUM(unit_price) AS total_unit_price
+SELECT date, SUM(unit_cost) AS total_unit_cost
 FROM data
-GROUP BY product_name
-ORDER BY total_unit_price DESC
+GROUP BY date
+ORDER BY total_unit_cost DESC
 LIMIT 10;
 ```
 
-**Rows returned:** 5
+**Rows returned:** 10
 
-| product_name | total_unit_price |
+| date | total_unit_cost |
 | --- | --- |
-| Laptop | 4999.95 |
-| Monitor | 2099.94 |
-| Headphones | 749.95 |
-| Keyboard | 159.98 |
-| Mouse | 59.98 |
+| 2025-10-04 | 650.0 |
+| 2025-09-28 | 650.0 |
+| 2025-08-10 | 650.0 |
+| 2025-08-06 | 650.0 |
+| 2025-04-02 | 650.0 |
+| 2025-03-24 | 650.0 |
+| 2025-01-29 | 650.0 |
+| 2025-01-20 | 650.0 |
+| 2025-06-16 | 360.0 |
+| 2025-11-29 | 180.0 |
 
 ---
 
-## 12. Bottom 10 product_name by unit_price
+## 18. Bottom 10 date by unit_cost
 
 **Status:** OK
 
 ```sql
-SELECT product_name, SUM(unit_price) AS total_unit_price
+SELECT date, SUM(unit_cost) AS total_unit_cost
 FROM data
-GROUP BY product_name
-ORDER BY total_unit_price ASC
+GROUP BY date
+ORDER BY total_unit_cost ASC
 LIMIT 10;
 ```
 
-**Rows returned:** 5
+**Rows returned:** 10
 
-| product_name | total_unit_price |
+| date | total_unit_cost |
 | --- | --- |
-| Mouse | 59.98 |
-| Keyboard | 159.98 |
-| Headphones | 749.95 |
-| Monitor | 2099.94 |
-| Laptop | 4999.95 |
+| 2025-02-21 | 8.5 |
+| 2025-03-26 | 8.5 |
+| 2025-06-19 | 8.5 |
+| 2025-08-24 | 8.5 |
+| 2025-09-16 | 8.5 |
+| 2025-10-23 | 8.5 |
+| 2025-01-25 | 28.0 |
+| 2025-02-05 | 28.0 |
+| 2025-02-14 | 28.0 |
+| 2025-02-28 | 28.0 |
 
 ---
 
-## 13. Top 10 city by unit_price
+## 19. Top 10 customer_name by unit_cost
 
 **Status:** OK
 
 ```sql
-SELECT city, SUM(unit_price) AS total_unit_price
+SELECT customer_name, SUM(unit_cost) AS total_unit_cost
 FROM data
-GROUP BY city
-ORDER BY total_unit_price DESC
+GROUP BY customer_name
+ORDER BY total_unit_cost DESC
 LIMIT 10;
 ```
 
-**Rows returned:** 3
+**Rows returned:** 10
 
-| city | total_unit_price |
+| customer_name | total_unit_cost |
 | --- | --- |
-| New York | 2959.93 |
-| Los Angeles | 2729.92 |
-| Chicago | 2379.95 |
+| Bob Smith | 1987.5 |
+| David Brown | 1198.5 |
+| Isabella Taylor | 893.5 |
+| Emma Davis | 875.0 |
+| Henry Moore | 733.0 |
+| Alice Johnson | 686.5 |
+| Jack Anderson | 678.0 |
+| Carol White | 360.0 |
+| Frank Miller | 216.5 |
+| Grace Wilson | 110.0 |
 
 ---
 
-## 14. unit_price by product_name and city
+## 20. unit_cost by date and customer_name
 
 **Status:** OK
 
 ```sql
-SELECT product_name, city, SUM(unit_price) AS total_unit_price
+SELECT date, customer_name, SUM(unit_cost) AS total_unit_cost
 FROM data
-GROUP BY product_name, city
-ORDER BY total_unit_price DESC;
+GROUP BY date, customer_name
+ORDER BY total_unit_cost DESC;
 ```
 
-**Rows returned:** 12
+**Rows returned:** 38
 
-| product_name | city | total_unit_price |
+| date | customer_name | total_unit_cost |
 | --- | --- | --- |
-| Laptop | Chicago | 1999.98 |
-| Laptop | New York | 1999.98 |
-| Monitor | Los Angeles | 1399.96 |
-| Laptop | Los Angeles | 999.99 |
-| Monitor | New York | 699.98 |
-| Headphones | Chicago | 299.98 |
-| Headphones | Los Angeles | 299.98 |
-| Headphones | New York | 149.99 |
-| Keyboard | Chicago | 79.99 |
-| Keyboard | New York | 79.99 |
-| Mouse | Los Angeles | 29.99 |
-| Mouse | New York | 29.99 |
+| 2025-01-20 | Bob Smith | 650.0 |
+| 2025-01-29 | Emma Davis | 650.0 |
+| 2025-03-24 | Jack Anderson | 650.0 |
+| 2025-04-02 | Isabella Taylor | 650.0 |
+| 2025-08-06 | Bob Smith | 650.0 |
+| 2025-08-10 | Alice Johnson | 650.0 |
+| 2025-09-28 | David Brown | 650.0 |
+| 2025-10-04 | Henry Moore | 650.0 |
+| 2025-06-16 | David Brown | 360.0 |
+| 2025-01-05 | Bob Smith | 180.0 |
+| 2025-01-09 | Bob Smith | 180.0 |
+| 2025-02-01 | Frank Miller | 180.0 |
+| 2025-02-11 | David Brown | 180.0 |
+| 2025-02-15 | Carol White | 180.0 |
+| 2025-03-11 | Bob Smith | 180.0 |
+| 2025-06-11 | Emma Davis | 180.0 |
+| 2025-08-09 | Carol White | 180.0 |
+| 2025-11-29 | Isabella Taylor | 180.0 |
+| 2025-01-07 | Henry Moore | 55.0 |
+| 2025-02-10 | Grace Wilson | 55.0 |
+
+*…18 more rows not shown*
 
 ---
 
-## 15. Filter by product_name
+## 21. Filter by date
 
 **Status:** SKIPPED
 
 ```sql
 SELECT *
 FROM data
-WHERE product_name = :product_name;
+WHERE date = :date;
 ```
 
 **Skipped:** Query requires runtime arguments (:param)
 
 ---
 
-## 16. Total unit_price for a Specific product_name
+## 22. Total unit_cost for a Specific date
 
 **Status:** SKIPPED
 
 ```sql
-SELECT product_name, SUM(unit_price) AS total_unit_price
+SELECT date, SUM(unit_cost) AS total_unit_cost
 FROM data
-WHERE product_name = :product_name
-GROUP BY product_name;
+WHERE date = :date
+GROUP BY date;
 ```
 
 **Skipped:** Query requires runtime arguments (:param)
 
 ---
 
-## 17. Monthly unit_price Trend
-
-**Status:** OK
-
-```sql
-SELECT
-    strftime('%Y-%m', date) AS month,
-    SUM(unit_price) AS total_unit_price
-FROM data
-GROUP BY month
-ORDER BY month;
-```
-
-**Rows returned:** 11
-
-| month | total_unit_price |
-| --- | --- |
-| 2025-01 | 429.98 |
-| 2025-02 | 1379.97 |
-| 2025-03 | 1429.97 |
-| 2025-04 | 1849.96 |
-| 2025-06 | 999.99 |
-| 2025-07 | 349.99 |
-| 2025-08 | 149.99 |
-| 2025-09 | 1029.98 |
-| 2025-10 | 149.99 |
-| 2025-11 | 149.99 |
-| 2025-12 | 149.99 |
-
----
-
-## 18. Yearly unit_price Total
-
-**Status:** OK
-
-```sql
-SELECT
-    strftime('%Y', date) AS year,
-    SUM(unit_price) AS total_unit_price
-FROM data
-GROUP BY year
-ORDER BY year;
-```
-
-**Rows returned:** 1
-
-| year | total_unit_price |
-| --- | --- |
-| 2025 | 8069.8 |
-
----
-
-## 19. Date Range Filter
-
-**Status:** SKIPPED
-
-```sql
-SELECT *
-FROM data
-WHERE date BETWEEN :start_date AND :end_date
-ORDER BY date;
-```
-
-**Skipped:** Query requires runtime arguments (:param)
-
----
-
-## 20. Missing Values per Column
+## 23. Missing Values per Column
 
 **Status:** OK
 
@@ -435,33 +599,48 @@ SELECT 'order_id' AS column_name, COUNT(*) AS null_count FROM data WHERE order_i
 UNION ALL
 SELECT 'date' AS column_name, COUNT(*) AS null_count FROM data WHERE date IS NULL
 UNION ALL
+SELECT 'customer_id' AS column_name, COUNT(*) AS null_count FROM data WHERE customer_id IS NULL
+UNION ALL
+SELECT 'customer_name' AS column_name, COUNT(*) AS null_count FROM data WHERE customer_name IS NULL
+UNION ALL
+SELECT 'product_id' AS column_name, COUNT(*) AS null_count FROM data WHERE product_id IS NULL
+UNION ALL
 SELECT 'product_name' AS column_name, COUNT(*) AS null_count FROM data WHERE product_name IS NULL
+UNION ALL
+SELECT 'unit_cost' AS column_name, COUNT(*) AS null_count FROM data WHERE unit_cost IS NULL
 UNION ALL
 SELECT 'unit_price' AS column_name, COUNT(*) AS null_count FROM data WHERE unit_price IS NULL
 UNION ALL
 SELECT 'quantity' AS column_name, COUNT(*) AS null_count FROM data WHERE quantity IS NULL
 UNION ALL
-SELECT 'total_price' AS column_name, COUNT(*) AS null_count FROM data WHERE total_price IS NULL
+SELECT 'total_cost' AS column_name, COUNT(*) AS null_count FROM data WHERE total_cost IS NULL
 UNION ALL
-SELECT 'city' AS column_name, COUNT(*) AS null_count FROM data WHERE city IS NULL
+SELECT 'total_revenue' AS column_name, COUNT(*) AS null_count FROM data WHERE total_revenue IS NULL
+UNION ALL
+SELECT 'profit' AS column_name, COUNT(*) AS null_count FROM data WHERE profit IS NULL
 ORDER BY null_count DESC;
 ```
 
-**Rows returned:** 7
+**Rows returned:** 12
 
 | column_name | null_count |
 | --- | --- |
 | order_id | 0 |
 | date | 0 |
+| customer_id | 0 |
+| customer_name | 0 |
+| product_id | 0 |
 | product_name | 0 |
+| unit_cost | 0 |
 | unit_price | 0 |
 | quantity | 0 |
-| total_price | 0 |
-| city | 0 |
+| total_cost | 0 |
+| total_revenue | 0 |
+| profit | 0 |
 
 ---
 
-## 21. Duplicate order_id Values
+## 24. Duplicate order_id Values
 
 **Status:** OK
 
@@ -473,13 +652,32 @@ HAVING COUNT(*) > 1
 ORDER BY occurrences DESC;
 ```
 
+**Rows returned:** 1
+
+| order_id | occurrences |
+| --- | --- |
+| ORD0039 | 2 |
+
+---
+
+## 25. Negative unit_cost Values
+
+**Status:** OK
+
+```sql
+SELECT *
+FROM data
+WHERE unit_cost < 0
+ORDER BY unit_cost;
+```
+
 **Rows returned:** 0
 
 *(no rows returned)*
 
 ---
 
-## 22. Negative unit_price Values
+## 26. Negative unit_price Values
 
 **Status:** OK
 
@@ -496,7 +694,7 @@ ORDER BY unit_price;
 
 ---
 
-## 23. Negative quantity Values
+## 27. Negative quantity Values
 
 **Status:** OK
 
@@ -505,23 +703,6 @@ SELECT *
 FROM data
 WHERE quantity < 0
 ORDER BY quantity;
-```
-
-**Rows returned:** 0
-
-*(no rows returned)*
-
----
-
-## 24. Negative total_price Values
-
-**Status:** OK
-
-```sql
-SELECT *
-FROM data
-WHERE total_price < 0
-ORDER BY total_price;
 ```
 
 **Rows returned:** 0

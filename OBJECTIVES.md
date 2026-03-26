@@ -1,1 +1,1 @@
-Gain insights into which are the most poular products
+Gain insights into which are the most popular products and most profitable

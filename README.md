@@ -33,7 +33,8 @@ src/csv_analyser/
 │   ├── dirty_service.py      data quality detection (nulls, dupes, outliers)
 │   ├── report_service.py     statistical summary report
 │   ├── insight_service.py    LLM-powered per-chart insights (OpenRouter)
-│   └── objectives_service.py LLM response to user-defined objectives
+│   ├── objectives_service.py LLM response to user-defined objectives
+│   └── sql_service.py        in-memory SQLite query execution against uploaded CSV
 └── templates/
     ├── gallery.html
     └── viewer.html
@@ -44,6 +45,7 @@ src/csv_analyser/
 ```
 POST /upload/csv
     └─► data_service   — normalise columns, coerce types, detect domain
+    └─► sql_service    — builds SQL catalog in background (automatic, no LLM needed)
 POST /generate/charts
     └─► chart_service  — distributions, correlations, time series, scatter
 POST /generate/report
@@ -52,10 +54,11 @@ POST /generate/insights
     └─► insight_service — per-chart AI commentary → insights.md + insights.html
 POST /generate/response-to-objectives
     └─► objectives_service — detailed analytical response to OBJECTIVES.md
+                             (uses SQL catalog + insights as primary context)
 POST /ask
-    └─► OpenRouter — context-aware Q&A grounded in generated insights
+    └─► OpenRouter — context-aware Q&A grounded in SQL results + insights
 POST /execute
-    └─► runs charts + report + insights in one call
+    └─► runs charts + report + insights in one call (cancellable via POST /cancel-pipeline)
 ```
 
 ### Endpoints
@@ -77,10 +80,14 @@ POST /execute
 | POST | `/upload/objectives` | Save `OBJECTIVES.md` content |
 | GET | `/objectives` | Read current objectives |
 | POST | `/generate/response-to-objectives` | Generate `output/RESPONSE_TO_OBJECTIVES.md` |
-| GET | `/response-to-objectives/download` | Download objectives response |
+| GET | `/response-to-objectives/download` | Download objectives response (Markdown) |
+| GET | `/response-to-objectives/download-html` | Download objectives response (HTML) |
 | POST | `/ask` | Ask a question grounded in generated insights |
 | POST | `/execute` | Run full charts + report + insights pipeline |
+| POST | `/cancel-pipeline` | Cancel a running `/execute` pipeline |
+| GET | `/sql-status` | Poll SQL catalog build status (`not_started` / `running` / `ready`) |
 | GET | `/viewer/{name}` | Single-chart viewer page |
+| GET | `/gallery` | Full-page chart gallery |
 
 ### Output Lifecycle
 
@@ -89,10 +96,14 @@ On every API startup the app resets transient outputs:
 - `output/images/` — emptied
 - `output/insights/` — emptied
 - `output/report.md` — removed
+- `output/dirty.csv` — removed
+- `output/dirty_rows.md` — removed
 - `output/RESPONSE_TO_OBJECTIVES.md` — removed
+- `output/RESPONSE_TO_OBJECTIVES.html` — removed
 
 Files under `output/sql/` are **not** reset — they are durable artifacts produced by the
-SQL commands below.
+SQL commands below. They are also protected during pipeline runs: `chart_service.py` uses
+`_CLEAN_SKIP = {"sql"}` to prevent `rglob` from deleting any file whose path contains `sql/`.
 
 ### Environment Variables
 
@@ -102,17 +113,42 @@ SQL commands below.
 
 ---
 
-## SQL Workflow — Claude Code Commands
+## SQL Workflow
 
-The SQL pipeline turns any CSV into a searchable, executable query library.
+The SQL pipeline turns any uploaded CSV into a searchable, executable query library. It
+operates in two tiers:
+
+### Tier 1 — Server-side auto-build (always runs, no Claude Code required)
+
+When a CSV is uploaded, `sql_service.py` runs as a FastAPI `BackgroundTask`. It builds a
+schema-based query catalog automatically and runs all queries against an in-memory SQLite
+database, merging results inline. No LLM key is needed.
 
 ```
-/sql-titles data/sales_data_100.csv
-    └─► output/sql/sql_title.md          (titled + described query catalog)
-
-/sql-create output/sql/sql_title.md
-    └─► output/sql/sql_queries_<table>.md  (SQL for every title, AI-retrievable)
+POST /upload/csv
+    └─► sql_service (BackgroundTask)
+            ├─► generates output/sql/sql_queries_<table>.md   (SQL + inline results)
+            └─► writes output/sql/.status.json                (polled by GET /sql-status)
 ```
+
+### Tier 2 — Claude sql-agent (LLM-enhanced, optional)
+
+When Claude Code is active and a CSV upload is detected, the `sql-agent` runs
+`/sql-titles` + `/sql-create` to produce a richer LLM-authored query catalog with
+descriptive titles and business-context-aware queries.
+
+```
+POST /upload/csv
+    └─► sql-agent (if Claude Code session is active)
+            ├─► /sql-titles data/<csv>
+            │       └─► output/sql/sql_title.md       (LLM-authored titles + descriptions)
+            └─► /sql-create output/sql/sql_title.md
+                    ├─► output/sql/sql_queries_<table>.md   (SQL + inline test results)
+                    └─► output/sql/log_test_at_sql_queries_<table>.md
+```
+
+Both tiers write `output/sql/.status.json`. The gallery UI polls `GET /sql-status` every
+2 seconds and shows a live status indicator in the upload card.
 
 Each entry in the query file is structured for instant Grep retrieval:
 
@@ -158,6 +194,7 @@ ORDER BY total_revenue DESC
 |---|---|
 | `/uv` | `uv sync` and activate the virtual environment |
 | `/commit-message` | Draft a commit message from the current git diff |
+| `/show-convo` | Show conversation history |
 | `/rsi` | Recursive self-improvement — improve commands/skills/agents |
 | `/style` | Select an output style for the conversation |
 
@@ -167,6 +204,7 @@ ORDER BY total_revenue DESC
 
 | Agent | Trigger | Role |
 |---|---|---|
+| `sql-agent` | When Claude Code is active and a CSV is uploaded | LLM-enhanced SQL catalog: runs `/sql-titles` → `/sql-create` with business-context queries (supplements the server-side auto-build) |
 | `data-cleaner` | Before analysis | Scans dataset for dirty rows: nulls, duplicates, outliers |
 | `statistician` | After cleaning | Per-column mean/std, top-performing column, plain-English summary |
 | `visualizer` | After statistics | Chart titles and one-sentence visual insights |

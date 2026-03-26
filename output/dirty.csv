@@ -1,1 +1,2 @@
-,order_id,date,product_name,unit_price,quantity,total_price,city
+,order_id,date,customer_id,customer_name,product_id,product_name,unit_cost,unit_price,quantity,total_cost,total_revenue,profit,margin_pct,store_id,store_name,city,payment_method
+38,ORD0039,2025-06-16,C04,David Brown,P004,Monitor,180.0,349.99,10,1800.0,3499.9,1699.9,48.6,S3,Store Gamma,Chicago,Cash
