@@ -261,6 +261,7 @@
           <div id="response-busy" class="busy"><span class="spinner"></span><span>{{ objectives_model }} thinking… this may take 30–60 s</span></div>
           <div id="response-status" class="status"></div>
           <button id="view-response-html-btn" class="btn-secondary" type="button" disabled style="margin-top:6px;">Open Response in Browser</button>
+          <button id="download-response-html-btn" class="btn-secondary" type="button" disabled style="margin-top:6px;">Download HTML Report</button>
           <button id="download-response-btn" class="btn-secondary" type="button" disabled style="margin-top:6px;">Download RESPONSE_TO_OBJECTIVES.md</button>
         </article>
 
@@ -336,6 +337,7 @@
     const responseBusy = document.getElementById("response-busy");
     const responseStatus = document.getElementById("response-status");
     const viewResponseHtmlBtn = document.getElementById("view-response-html-btn");
+    const downloadResponseHtmlBtn = document.getElementById("download-response-html-btn");
     const downloadResponseBtn = document.getElementById("download-response-btn");
 
     function setStatus(el, text, isError = false) {
@@ -448,6 +450,7 @@
         viewInsightsBtn.disabled = true;
         responseBtn.disabled = true;
         viewResponseHtmlBtn.disabled = true;
+        downloadResponseHtmlBtn.disabled = true;
         downloadResponseBtn.disabled = true;
       } catch (error) {
         setStatus(uploadStatus, String(error), true);
@@ -525,6 +528,7 @@
           `${body.message} (${body.objectives_found} objectives found) | model: ${body.model_used}`
         );
         viewResponseHtmlBtn.disabled = false;
+        downloadResponseHtmlBtn.disabled = false;
         downloadResponseBtn.disabled = false;
       } catch (error) {
         setStatus(responseStatus, String(error), true);
@@ -536,6 +540,10 @@
 
     viewResponseHtmlBtn.addEventListener("click", () => {
       window.open("/output/RESPONSE_TO_OBJECTIVES.html", "_blank", "noopener,noreferrer");
+    });
+
+    downloadResponseHtmlBtn.addEventListener("click", () => {
+      window.location.href = "/response-to-objectives/download-html";
     });
 
     downloadResponseBtn.addEventListener("click", () => {
@@ -651,6 +659,7 @@
         const res = await fetch("/output/RESPONSE_TO_OBJECTIVES.html", { method: "HEAD" });
         if (res.ok) {
           viewResponseHtmlBtn.disabled = false;
+          downloadResponseHtmlBtn.disabled = false;
           downloadResponseBtn.disabled = false;
         }
       } catch { /* no response yet */ }

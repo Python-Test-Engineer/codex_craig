@@ -8,7 +8,8 @@ import pandas as pd
 
 from csv_analyser.services.data_service import DATA_PATH
 
-SQL_DIR = Path("output/sql")
+_HERE = Path(__file__).resolve().parents[3]  # project root
+SQL_DIR = _HERE / "output" / "sql"
 
 
 def _table_name(csv_path: Path) -> str:
@@ -255,6 +256,7 @@ def generate_sql_catalog(df: pd.DataFrame, csv_path: Path | None = None) -> tupl
 
     entries = _entries(df, table)
     SQL_DIR.mkdir(parents=True, exist_ok=True)
+    create_sqlite_db(df, src)
 
     # ── sql_title.md ──────────────────────────────────────────────────────────
     title_lines: list[str] = [
@@ -312,3 +314,79 @@ def generate_sql_catalog(df: pd.DataFrame, csv_path: Path | None = None) -> tupl
     queries_path.write_text("\n".join(query_lines), encoding="utf-8")
 
     return title_path, queries_path
+
+
+DB_PATH = SQL_DIR / "data.db"
+
+
+def create_sqlite_db(df: pd.DataFrame, csv_path: Path | None = None) -> Path:
+    """Write the DataFrame to output/sql/data.db as a SQLite table."""
+    import sqlite3
+
+    src = csv_path or DATA_PATH
+    table = _table_name(src)
+    SQL_DIR.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(DB_PATH) as conn:
+        df.to_sql(table, conn, if_exists="replace", index=False)
+    return DB_PATH
+
+
+def get_sql_catalog_entries() -> list[dict[str, str]]:
+    """Parse sql_queries_*.md and return list of {title, description, sql, args} dicts."""
+    files = sorted(SQL_DIR.glob("sql_queries_*.md"))
+    if not files:
+        return []
+    text = files[-1].read_text(encoding="utf-8")
+    entries: list[dict[str, str]] = []
+    current: dict[str, str] | None = None
+    in_sql = False
+    sql_lines: list[str] = []
+
+    for line in text.splitlines():
+        if line.startswith("## "):
+            if current is not None:
+                if sql_lines:
+                    current["sql"] = "\n".join(sql_lines)
+                if current.get("sql"):
+                    entries.append(current)
+            current = {"title": line[3:].strip(), "args": "—", "description": "", "sql": ""}
+            in_sql = False
+            sql_lines = []
+        elif current is None:
+            continue
+        elif line.startswith("**ARGS:**"):
+            current["args"] = line.removeprefix("**ARGS:**").strip()
+        elif line.startswith("**Description:**"):
+            current["description"] = line.removeprefix("**Description:**").strip()
+        elif line.strip() == "```sql":
+            in_sql = True
+            sql_lines = []
+        elif line.strip() == "```" and in_sql:
+            in_sql = False
+        elif in_sql:
+            sql_lines.append(line)
+
+    if current is not None:
+        if sql_lines:
+            current["sql"] = "\n".join(sql_lines)
+        if current.get("sql"):
+            entries.append(current)
+
+    return entries
+
+
+def run_query_against_db(sql: str, params: dict[str, str] | None = None, limit: int = 30) -> list[dict]:
+    """Execute SQL against data.db and return up to `limit` rows as list of dicts."""
+    import sqlite3
+
+    if not DB_PATH.exists():
+        raise FileNotFoundError("data.db not found — upload a CSV first.")
+
+    sql_core = sql.rstrip().rstrip(";")
+    if "limit" not in sql_core.lower():
+        sql_core += f"\nLIMIT {limit}"
+
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.execute(sql_core, params or {})
+        return [dict(row) for row in cursor.fetchall()]

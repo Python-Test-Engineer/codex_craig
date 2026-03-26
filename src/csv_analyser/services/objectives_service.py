@@ -29,6 +29,20 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
+def count_objectives(text: str) -> int:
+    """Count distinct objectives in text regardless of format."""
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    bullets = [l for l in lines if l.startswith("- ") or l.startswith("* ")]
+    if bullets:
+        return len(bullets)
+    numbered = [l for l in lines if re.match(r"^\d+[.):]", l)]
+    if numbered:
+        return len(numbered)
+    # Free-form prose: count non-empty paragraphs
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    return len(paragraphs)
+
+
 def _inline(text: str) -> str:
     """Apply inline markdown (bold, italic, code) to already-escaped HTML text."""
     out = escape(text)
@@ -174,42 +188,49 @@ def generate_response_to_objectives(
         )
 
     objectives_text = _read(obj_path)
+    if not objectives_text.strip():
+        raise RuntimeError(
+            "OBJECTIVES.md is empty. Add your analysis objectives before generating a response."
+        )
+
     report_text = _read(_HERE / "output" / "report.md")
     insights_text = _read(_HERE / "output" / "insights" / "insights.md")
     chart_index = _chart_index(chart_artifacts)
     generated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
-    system_prompt = """\
+    n_objectives = count_objectives(objectives_text)
+
+    system_prompt = f"""\
 You are a senior data analyst with deep expertise in exploratory data analysis, \
 statistical modelling, data visualisation, and business intelligence.
 
 You will be given:
-1. A set of analysis objectives for a CSV dataset.
+1. Analysis objectives — these may be numbered/bulleted lists OR free-form prose. \
+   There are {n_objectives} distinct objective(s) to address.
 2. Pipeline outputs: a statistical report, chart insights, and a list of generated visualisations.
 
-Your task is to write a **rigorous, detailed response** to every numbered/bulleted objective. \
-For each objective:
+Your task is to write a **rigorous, detailed response** to every objective. \
+Parse the objectives carefully regardless of format. For each objective:
 
-- State clearly what the objective requires.
+- Restate it clearly as a heading so the reader knows which objective is being addressed.
 - Assess what the current pipeline outputs *directly address* vs. what *remains to be done*.
 - Provide specific data interpretation of the available findings (summary statistics, \
   distributions, correlations, trends, category breakdowns).
-- Recommend the precise analytical method(s) needed to fully address the objective \
-  (e.g. regression, clustering, time-series decomposition, A/B test, cohort analysis).
+- Recommend the precise analytical method(s) needed to fully address the objective.
 - Note any data quality considerations (sample size, missing data, outliers, confounders).
-- Write in the style of a professional data analysis report — clear, precise, and \
-  technically grounded. Do not hedge unnecessarily.
+- Write in the style of a professional data analysis report — clear, precise, and technically grounded.
+
+If no pipeline report or insights are available, say so clearly and work only from the objective text.
 
 Format the output as clean Markdown:
-- Start with a `## TL;DR` section: 3–5 concise bullet points summarising the overall picture \
-  — what the data shows, what is addressed, and the single most important next step.
-- Then one `## Objective X.Y` heading per objective (matching the IDs in the objectives document).
-- Use `### Current Pipeline Evidence`, `### Gaps & Recommended Analyses`, and \
-  `### Interpretation` sub-sections for each.
-- End with a `## Summary Table` that lists each objective ID, a one-line status \
-  (Addressed / Partially Addressed / Not Yet Addressed), and the key method needed.
+- Start with a `## TL;DR` section: 3–5 bullet points — what the data shows, what is addressed, \
+  and the single most important next step.
+- Then one `## Objective N` heading per objective.
+- Use `### Evidence`, `### Gaps & Recommended Analyses`, and `### Interpretation` sub-sections.
+- End with a `## Summary Table` listing each objective, its status \
+  (Addressed / Partially Addressed / Not Yet Addressed), and the key next step.
 
-Be thorough. This is a professional analysis document, not a summary.\
+Be thorough. This is a professional analysis document.\
 """
 
     user_message = f"""\

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json as _json
 import shutil
 from io import BytesIO
 from pathlib import Path
@@ -40,10 +41,19 @@ from csv_analyser.services.data_service import DATA_PATH, build_summary, load_da
 from csv_analyser.services.insight_service import MODEL as INSIGHTS_MODEL
 from csv_analyser.services.insight_service import generate_insights_bundle, read_final_insights
 from csv_analyser.services.objectives_service import MODEL as OBJECTIVES_MODEL
-from csv_analyser.services.objectives_service import OPENROUTER_BASE_URL, generate_response_to_objectives
+from csv_analyser.services.objectives_service import (
+    OPENROUTER_BASE_URL,
+    count_objectives,
+    generate_response_to_objectives,
+)
 from csv_analyser.services.report_service import generate_report, read_report
 from csv_analyser.services.dirty_service import save_dirty_report
-from csv_analyser.services.sql_service import generate_sql_catalog
+from csv_analyser.services.sql_service import (
+    create_sqlite_db,
+    generate_sql_catalog,
+    get_sql_catalog_entries,
+    run_query_against_db,
+)
 
 
 OBJECTIVES_PATH = DATA_PATH.parent.parent / "OBJECTIVES.md"
@@ -131,6 +141,10 @@ async def upload_csv(file: UploadFile = File(...)) -> CsvUploadResponse:
         _clear_output()
 
         df = load_dataset(DATA_PATH)
+        try:
+            create_sqlite_db(df, DATA_PATH)
+        except Exception:
+            pass  # non-fatal; DB will be recreated on next pipeline run
         summary = build_summary(df)
         return CsvUploadResponse(
             message="CSV uploaded successfully and saved as data/data.csv.",
@@ -169,15 +183,8 @@ async def generate_response_to_objectives_endpoint() -> ResponseToObjectivesResp
         artifacts = list_chart_artifacts()
         loop = asyncio.get_event_loop()
         out_path, html_path = await loop.run_in_executor(None, generate_response_to_objectives, artifacts)
-        objectives_count = len(
-            [
-                line
-                for line in (
-                    OBJECTIVES_PATH.read_text(encoding="utf-8") if OBJECTIVES_PATH.exists() else ""
-                ).splitlines()
-                if line.strip().startswith("- ") or (line.strip() and line.strip()[0].isdigit())
-            ]
-        )
+        objectives_text = OBJECTIVES_PATH.read_text(encoding="utf-8") if OBJECTIVES_PATH.exists() else ""
+        objectives_count = count_objectives(objectives_text)
         return ResponseToObjectivesResponse(
             message="RESPONSE_TO_OBJECTIVES.md generated successfully.",
             path=str(out_path),
@@ -198,6 +205,18 @@ def download_response_to_objectives() -> FileResponse:
         path=str(RESPONSE_PATH),
         media_type="text/markdown",
         headers={"Content-Disposition": 'attachment; filename="RESPONSE_TO_OBJECTIVES.md"'},
+    )
+
+
+@router.get("/response-to-objectives/download-html")
+def download_response_to_objectives_html() -> FileResponse:
+    from csv_analyser.services.objectives_service import RESPONSE_HTML_PATH
+    if not RESPONSE_HTML_PATH.exists():
+        raise HTTPException(status_code=404, detail="RESPONSE_TO_OBJECTIVES.html has not been generated yet.")
+    return FileResponse(
+        path=str(RESPONSE_HTML_PATH),
+        media_type="text/html",
+        headers={"Content-Disposition": 'attachment; filename="RESPONSE_TO_OBJECTIVES.html"'},
     )
 
 
@@ -374,51 +393,113 @@ async def ask_question(payload: AskRequest) -> AskResponse:
     if not api_key:
         raise HTTPException(status_code=400, detail="OPENROUTER_API_KEY is not set.")
 
-    def _annotate(file_path: Path) -> str:
-        """Return file content with every line prefixed by its 1-based line number."""
-        lines = file_path.read_text(encoding="utf-8").splitlines()
-        return "\n".join(f"L{i + 1}: {line}" for i, line in enumerate(lines))
-
-    context_parts: list[str] = []
-
-    # 1. SQL query catalog — highest priority; never send raw CSV data
-    sql_dir = OUTPUT_DIR / "sql"
-    if sql_dir.exists():
-        for sql_file in sorted(sql_dir.glob("sql_queries_*.md")):
-            try:
-                context_parts.append(f"FILE: {sql_file.name}\n{_annotate(sql_file)}")
-            except Exception:
-                pass
-
-    # 2. Chart insights — summarised observations from generated plots
     try:
-        insights_path, _ = read_final_insights()
-        context_parts.append(f"FILE: {Path(insights_path).name}\n{_annotate(Path(insights_path))}")
+        _, insights_content = read_final_insights()
     except FileNotFoundError:
-        pass
-
-    if not context_parts:
         raise HTTPException(
             status_code=400,
             detail=(
-                "No SQL queries or chart insights found. "
-                "Please run the pipeline (sections 1–4) and generate SQL queries first."
+                "No insights have been generated yet. "
+                "Please run all sections (1–4) first to generate insights before asking questions."
             ),
         )
+
+    loop = asyncio.get_event_loop()
+
+    # ── Step 1: pick the best SQL query and run it against data.db ───────────
+    sql_result_text = ""
+    try:
+        entries = get_sql_catalog_entries()
+        if entries:
+            catalog_summary = "\n".join(
+                f"{i + 1}. {e['title']} (ARGS: {e['args']}) — {e['description']}"
+                for i, e in enumerate(entries)
+            )
+
+            def _select_query() -> dict:
+                import httpx
+                resp = httpx.post(
+                    f"{OPENROUTER_BASE_URL}/v1/messages",
+                    json={
+                        "model": OBJECTIVES_MODEL,
+                        "max_tokens": 200,
+                        "system": (
+                            "Select the single SQL query from the catalog that best answers the user question. "
+                            "Return ONLY valid JSON: {\"title\": \"<exact title or null>\", \"params\": {\"key\": \"value\"}}. "
+                            "Prefer queries with ARGS: — (no parameters needed). "
+                            "Extract any required param values from the question text."
+                        ),
+                        "messages": [
+                            {"role": "user", "content": f"Question: {question}\n\nCatalog:\n{catalog_summary}"},
+                        ],
+                    },
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                        "anthropic-version": "2023-06-01",
+                    },
+                    timeout=30.0,
+                )
+                if not resp.is_success:
+                    return {}
+                blocks = resp.json().get("content", [])
+                text = next((b["text"] for b in blocks if b.get("type") == "text"), "")
+                start, end = text.find("{"), text.rfind("}") + 1
+                if start < 0 or end <= start:
+                    return {}
+                try:
+                    return _json.loads(text[start:end])
+                except _json.JSONDecodeError:
+                    return {}
+
+            selection = await loop.run_in_executor(None, _select_query)
+            title = selection.get("title")
+            params = selection.get("params") or {}
+
+            if title:
+                entry = next((e for e in entries if e["title"] == title), None)
+                if entry:
+                    rows = run_query_against_db(entry["sql"], params if params else None)
+                    if rows:
+                        col_headers = list(rows[0].keys())
+                        col_widths = [
+                            max(len(str(h)), max(len(str(r.get(h, ""))) for r in rows))
+                            for h in col_headers
+                        ]
+                        header_line = " | ".join(str(h).ljust(w) for h, w in zip(col_headers, col_widths))
+                        sep_line = "-+-".join("-" * w for w in col_widths)
+                        data_lines = [
+                            " | ".join(str(r.get(h, "")).ljust(w) for h, w in zip(col_headers, col_widths))
+                            for r in rows
+                        ]
+                        sql_result_text = (
+                            f"SQL query executed: {title}\n\n"
+                            + header_line + "\n" + sep_line + "\n"
+                            + "\n".join(data_lines)
+                        )
+    except Exception:
+        pass  # SQL step is best-effort; fall through to insights-only context
+
+    # ── Step 2: build context and generate the answer ────────────────────────
+    context_parts: list[str] = []
+    if sql_result_text:
+        context_parts.append(sql_result_text)
+    context_parts.append(f"Chart insights:\n{insights_content}")
+    try:
+        artifacts = list_chart_artifacts()
+        if artifacts:
+            context_parts.append("Available charts: " + ", ".join(a.name for a in artifacts))
+    except Exception:
+        pass
 
     context_block = "\n\n".join(context_parts)
 
     system_prompt = (
         "You are a data analysis assistant. "
-        "You have access to a pre-generated SQL query catalog and chart insights — use these as your sole sources. "
-        "Each line in every file is prefixed with its line number (e.g. 'L42: ...'). "
-        "When a question can be answered by a SQL query, include the full query in a ```sql block. "
-        "When a question relates to visual patterns or trends, use the chart insights. "
+        "When SQL query results are provided, use them as the primary source for specific data questions. "
+        "Answer strictly based on the provided context. "
         "Do not fabricate data, statistics, or conclusions beyond what is stated in the context. "
-        "Never request or use raw CSV data. "
-        "If the context is insufficient to answer the question, say so clearly. "
-        "ALWAYS end your answer with a '### Sources' section listing each source as: "
-        "`- <filename>:<line-range> — <query title or insight heading>`"
+        "If the context is insufficient to answer the question, say so clearly."
     )
     user_message = f"Context:\n{context_block}\n\nQuestion: {question}"
 
@@ -452,7 +533,6 @@ async def ask_question(payload: AskRequest) -> AskResponse:
         return next((b["text"] for b in content if b.get("type") == "text"), "")
 
     try:
-        loop = asyncio.get_event_loop()
         answer = await loop.run_in_executor(None, _call)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"AI request failed: {exc}") from exc
