@@ -64,6 +64,10 @@ _tbl_match  = _re.search(r"<!--.*?table:\s*(\S+?)[\s|]",  _header_text)
 csv_path    = pathlib.Path(_src_match.group(1)) if _src_match else pathlib.Path("data/data.csv")
 _catalog_table = _tbl_match.group(1).rstrip("|").strip() if _tbl_match else csv_path.stem.lower()
 
+# If the path has no directory component, look inside data/
+if not csv_path.exists() and csv_path.parent == pathlib.Path("."):
+    csv_path = pathlib.Path("data") / csv_path
+
 if not csv_path.exists():
     raise SystemExit(f"CSV not found: {csv_path}. Check the source path in the queries file header.")
 

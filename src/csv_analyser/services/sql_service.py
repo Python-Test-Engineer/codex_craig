@@ -360,6 +360,71 @@ def get_sql_catalog_entries() -> list[dict[str, str]]:
     return entries
 
 
+def get_sql_catalog_with_results() -> list[dict[str, str]]:
+    """Parse sql_queries_*.md returning entries with pre-computed test results when available."""
+    files = sorted(SQL_DIR.glob("sql_queries_*.md"))
+    if not files:
+        return []
+    queries_file = files[-1]
+    text = queries_file.read_text(encoding="utf-8")
+    entries: list[dict[str, str]] = []
+    current: dict[str, str] | None = None
+    in_sql = False
+    post_sql = False
+    sql_lines: list[str] = []
+    result_lines: list[str] = []
+
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("## ") and not stripped.startswith("### "):
+            if current is not None:
+                if sql_lines:
+                    current["sql"] = "\n".join(sql_lines)
+                current["result"] = "\n".join(result_lines).strip()
+                if current.get("sql"):
+                    entries.append(current)
+            current = {
+                "title": stripped[3:].strip(),
+                "args": "—",
+                "description": "",
+                "sql": "",
+                "result": "",
+                "source_file": queries_file.name,
+            }
+            in_sql = False
+            post_sql = False
+            sql_lines = []
+            result_lines = []
+        elif current is None:
+            continue
+        elif stripped.startswith("**ARGS:**"):
+            current["args"] = line.removeprefix("**ARGS:**").strip()
+        elif stripped.startswith("**Description:**"):
+            current["description"] = line.removeprefix("**Description:**").strip()
+        elif stripped == "```sql":
+            in_sql = True
+            sql_lines = []
+        elif stripped == "```" and in_sql:
+            in_sql = False
+            post_sql = True
+        elif in_sql:
+            sql_lines.append(line)
+        elif post_sql:
+            if stripped == "---" or stripped.startswith("### "):
+                post_sql = False
+            else:
+                result_lines.append(line)
+
+    if current is not None:
+        if sql_lines:
+            current["sql"] = "\n".join(sql_lines)
+        current["result"] = "\n".join(result_lines).strip()
+        if current.get("sql"):
+            entries.append(current)
+
+    return entries
+
+
 def run_query_against_db(sql: str, params: dict[str, str] | None = None, limit: int = 30) -> list[dict]:
     """Execute SQL against an in-memory SQLite loaded from the source CSV."""
     import sqlite3

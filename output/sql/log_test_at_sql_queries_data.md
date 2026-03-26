@@ -1,37 +1,41 @@
-# SQL Query Catalog
-<!-- source: data.csv | table: data | generated: 2026-03-26 | queries: 24 -->
+# SQL Test Results
+
+Queries file: `output\sql\sql_queries_data.md`  
+Source CSV: `data\data.csv` (in-memory SQLite)  
+Queries run: **24** (all)
 
 ---
 
-### Overview
+**Summary:** 21 passed · 0 failed · 3 skipped
 
-## Row Count
-**ARGS:** —
-**Description:** Returns the total number of rows in the dataset.
+---
+
+## 1. Row Count
+
+**Status:** OK
+
 ```sql
 SELECT COUNT(*) AS row_count
 FROM data;
 ```
-
-**Status:** OK
 
 **Rows returned:** 1
 
 | row_count |
 | --- |
 | 20 |
+
 ---
 
-## Column Sample
-**ARGS:** —
-**Description:** Returns the first 10 rows to preview the dataset structure.
+## 2. Column Sample
+
+**Status:** OK
+
 ```sql
 SELECT *
 FROM data
 LIMIT 10;
 ```
-
-**Status:** OK
 
 **Rows returned:** 10
 
@@ -47,13 +51,13 @@ LIMIT 10;
 | ORD0011 | 2025-02-11 | Laptop | 999.99 | 8 | 7999.92 | New York |
 | ORD0012 | 2025-07-15 | Monitor | 349.99 | 5 | 1749.95 | New York |
 | ORD0013 | 2025-01-29 | Keyboard | 79.99 | 7 | 559.93 | Chicago |
+
 ---
 
-### Numeric Summaries
+## 3. Summary Stats for unit_price
 
-## Summary Stats for unit_price
-**ARGS:** —
-**Description:** Returns min, max, average, and total for unit_price.
+**Status:** OK
+
 ```sql
 SELECT
     MIN(unit_price) AS min_val,
@@ -63,18 +67,18 @@ SELECT
 FROM data;
 ```
 
-**Status:** OK
-
 **Rows returned:** 1
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
 | 29.99 | 999.99 | 403.49 | 8069.8 |
+
 ---
 
-## Summary Stats for quantity
-**ARGS:** —
-**Description:** Returns min, max, average, and total for quantity.
+## 4. Summary Stats for quantity
+
+**Status:** OK
+
 ```sql
 SELECT
     MIN(quantity) AS min_val,
@@ -84,18 +88,18 @@ SELECT
 FROM data;
 ```
 
-**Status:** OK
-
 **Rows returned:** 1
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
 | 3 | 10 | 6.65 | 133 |
+
 ---
 
-## Summary Stats for total_price
-**ARGS:** —
-**Description:** Returns min, max, average, and total for total_price.
+## 5. Summary Stats for total_price
+
+**Status:** OK
+
 ```sql
 SELECT
     MIN(total_price) AS min_val,
@@ -105,26 +109,24 @@ SELECT
 FROM data;
 ```
 
-**Status:** OK
-
 **Rows returned:** 1
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
 | 89.97 | 7999.92 | 2695.93 | 53918.67 |
+
 ---
 
-## Total unit_price by product_name
-**ARGS:** —
-**Description:** Ranks each product_name by total unit_price, highest first.
+## 6. Total unit_price by product_name
+
+**Status:** OK
+
 ```sql
 SELECT product_name, SUM(unit_price) AS total_unit_price
 FROM data
 GROUP BY product_name
 ORDER BY total_unit_price DESC;
 ```
-
-**Status:** OK
 
 **Rows returned:** 5
 
@@ -135,19 +137,19 @@ ORDER BY total_unit_price DESC;
 | Headphones | 749.95 |
 | Keyboard | 159.98 |
 | Mouse | 59.98 |
+
 ---
 
-## Average unit_price by product_name
-**ARGS:** —
-**Description:** Compares average unit_price across each product_name.
+## 7. Average unit_price by product_name
+
+**Status:** OK
+
 ```sql
 SELECT product_name, ROUND(AVG(unit_price), 2) AS avg_unit_price
 FROM data
 GROUP BY product_name
 ORDER BY avg_unit_price DESC;
 ```
-
-**Status:** OK
 
 **Rows returned:** 5
 
@@ -158,19 +160,19 @@ ORDER BY avg_unit_price DESC;
 | Headphones | 149.99 |
 | Keyboard | 79.99 |
 | Mouse | 29.99 |
+
 ---
 
-## Total quantity by product_name
-**ARGS:** —
-**Description:** Ranks each product_name by total quantity, highest first.
+## 8. Total quantity by product_name
+
+**Status:** OK
+
 ```sql
 SELECT product_name, SUM(quantity) AS total_quantity
 FROM data
 GROUP BY product_name
 ORDER BY total_quantity DESC;
 ```
-
-**Status:** OK
 
 **Rows returned:** 5
 
@@ -181,21 +183,19 @@ ORDER BY total_quantity DESC;
 | Laptop | 33 |
 | Keyboard | 16 |
 | Mouse | 8 |
+
 ---
 
-### Categorical Distributions
+## 9. Distribution of product_name
 
-## Distribution of product_name
-**ARGS:** —
-**Description:** Counts rows for each distinct value of product_name, ordered by frequency.
+**Status:** OK
+
 ```sql
 SELECT product_name, COUNT(*) AS row_count
 FROM data
 GROUP BY product_name
 ORDER BY row_count DESC;
 ```
-
-**Status:** OK
 
 **Rows returned:** 5
 
@@ -206,19 +206,19 @@ ORDER BY row_count DESC;
 | Headphones | 5 |
 | Mouse | 2 |
 | Keyboard | 2 |
+
 ---
 
-## Distribution of city
-**ARGS:** —
-**Description:** Counts rows for each distinct value of city, ordered by frequency.
+## 10. Distribution of city
+
+**Status:** OK
+
 ```sql
 SELECT city, COUNT(*) AS row_count
 FROM data
 GROUP BY city
 ORDER BY row_count DESC;
 ```
-
-**Status:** OK
 
 **Rows returned:** 3
 
@@ -227,13 +227,13 @@ ORDER BY row_count DESC;
 | Los Angeles | 8 |
 | New York | 7 |
 | Chicago | 5 |
+
 ---
 
-### Rankings
+## 11. Top 10 product_name by unit_price
 
-## Top 10 product_name by unit_price
-**ARGS:** —
-**Description:** Lists the 10 product_name values with the highest total unit_price.
+**Status:** OK
+
 ```sql
 SELECT product_name, SUM(unit_price) AS total_unit_price
 FROM data
@@ -241,8 +241,6 @@ GROUP BY product_name
 ORDER BY total_unit_price DESC
 LIMIT 10;
 ```
-
-**Status:** OK
 
 **Rows returned:** 5
 
@@ -253,11 +251,13 @@ LIMIT 10;
 | Headphones | 749.95 |
 | Keyboard | 159.98 |
 | Mouse | 59.98 |
+
 ---
 
-## Bottom 10 product_name by unit_price
-**ARGS:** —
-**Description:** Lists the 10 product_name values with the lowest total unit_price.
+## 12. Bottom 10 product_name by unit_price
+
+**Status:** OK
+
 ```sql
 SELECT product_name, SUM(unit_price) AS total_unit_price
 FROM data
@@ -266,8 +266,6 @@ ORDER BY total_unit_price ASC
 LIMIT 10;
 ```
 
-**Status:** OK
-
 **Rows returned:** 5
 
 | product_name | total_unit_price |
@@ -277,11 +275,13 @@ LIMIT 10;
 | Headphones | 749.95 |
 | Monitor | 2099.94 |
 | Laptop | 4999.95 |
+
 ---
 
-## Top 10 city by unit_price
-**ARGS:** —
-**Description:** Lists the 10 city values with the highest total unit_price.
+## 13. Top 10 city by unit_price
+
+**Status:** OK
+
 ```sql
 SELECT city, SUM(unit_price) AS total_unit_price
 FROM data
@@ -290,8 +290,6 @@ ORDER BY total_unit_price DESC
 LIMIT 10;
 ```
 
-**Status:** OK
-
 **Rows returned:** 3
 
 | city | total_unit_price |
@@ -299,21 +297,19 @@ LIMIT 10;
 | New York | 2959.93 |
 | Los Angeles | 2729.92 |
 | Chicago | 2379.95 |
+
 ---
 
-### Multi-Dimensional
+## 14. unit_price by product_name and city
 
-## unit_price by product_name and city
-**ARGS:** —
-**Description:** Shows total unit_price broken down by both product_name and city.
+**Status:** OK
+
 ```sql
 SELECT product_name, city, SUM(unit_price) AS total_unit_price
 FROM data
 GROUP BY product_name, city
 ORDER BY total_unit_price DESC;
 ```
-
-**Status:** OK
 
 **Rows returned:** 12
 
@@ -331,27 +327,27 @@ ORDER BY total_unit_price DESC;
 | Keyboard | New York | 79.99 |
 | Mouse | Los Angeles | 29.99 |
 | Mouse | New York | 29.99 |
+
 ---
 
-### Parametric Lookups
+## 15. Filter by product_name
 
-## Filter by product_name
-**ARGS:** product_name
-**Description:** Returns all rows where product_name matches a given value.
+**Status:** SKIPPED
+
 ```sql
 SELECT *
 FROM data
 WHERE product_name = :product_name;
 ```
 
-**Status:** SKIPPED
-
 **Skipped:** Query requires runtime arguments (:param)
+
 ---
 
-## Total unit_price for a Specific product_name
-**ARGS:** product_name
-**Description:** Returns total unit_price for a single product_name value.
+## 16. Total unit_price for a Specific product_name
+
+**Status:** SKIPPED
+
 ```sql
 SELECT product_name, SUM(unit_price) AS total_unit_price
 FROM data
@@ -359,16 +355,14 @@ WHERE product_name = :product_name
 GROUP BY product_name;
 ```
 
-**Status:** SKIPPED
-
 **Skipped:** Query requires runtime arguments (:param)
+
 ---
 
-### Time-Based Analysis
+## 17. Monthly unit_price Trend
 
-## Monthly unit_price Trend
-**ARGS:** —
-**Description:** Returns total unit_price grouped by year and month.
+**Status:** OK
+
 ```sql
 SELECT
     strftime('%Y-%m', date) AS month,
@@ -377,8 +371,6 @@ FROM data
 GROUP BY month
 ORDER BY month;
 ```
-
-**Status:** OK
 
 **Rows returned:** 11
 
@@ -395,11 +387,13 @@ ORDER BY month;
 | 2025-10 | 149.99 |
 | 2025-11 | 149.99 |
 | 2025-12 | 149.99 |
+
 ---
 
-## Yearly unit_price Total
-**ARGS:** —
-**Description:** Returns total unit_price grouped by year.
+## 18. Yearly unit_price Total
+
+**Status:** OK
+
 ```sql
 SELECT
     strftime('%Y', date) AS year,
@@ -409,18 +403,18 @@ GROUP BY year
 ORDER BY year;
 ```
 
-**Status:** OK
-
 **Rows returned:** 1
 
 | year | total_unit_price |
 | --- | --- |
 | 2025 | 8069.8 |
+
 ---
 
-## Date Range Filter
-**ARGS:** start_date, end_date
-**Description:** Returns rows between a start and end date for date.
+## 19. Date Range Filter
+
+**Status:** SKIPPED
+
 ```sql
 SELECT *
 FROM data
@@ -428,16 +422,14 @@ WHERE date BETWEEN :start_date AND :end_date
 ORDER BY date;
 ```
 
-**Status:** SKIPPED
-
 **Skipped:** Query requires runtime arguments (:param)
+
 ---
 
-### Data Quality Checks
+## 20. Missing Values per Column
 
-## Missing Values per Column
-**ARGS:** —
-**Description:** Counts NULL values in each column to identify data gaps.
+**Status:** OK
+
 ```sql
 SELECT 'order_id' AS column_name, COUNT(*) AS null_count FROM data WHERE order_id IS NULL
 UNION ALL
@@ -455,8 +447,6 @@ SELECT 'city' AS column_name, COUNT(*) AS null_count FROM data WHERE city IS NUL
 ORDER BY null_count DESC;
 ```
 
-**Status:** OK
-
 **Rows returned:** 7
 
 | column_name | null_count |
@@ -468,11 +458,13 @@ ORDER BY null_count DESC;
 | quantity | 0 |
 | total_price | 0 |
 | city | 0 |
+
 ---
 
-## Duplicate order_id Values
-**ARGS:** —
-**Description:** Flags any order_id that appears more than once in the dataset.
+## 21. Duplicate order_id Values
+
+**Status:** OK
+
 ```sql
 SELECT order_id, COUNT(*) AS occurrences
 FROM data
@@ -481,16 +473,16 @@ HAVING COUNT(*) > 1
 ORDER BY occurrences DESC;
 ```
 
-**Status:** OK
-
 **Rows returned:** 0
 
 *(no rows returned)*
+
 ---
 
-## Negative unit_price Values
-**ARGS:** —
-**Description:** Flags rows where unit_price is negative, which may indicate data errors.
+## 22. Negative unit_price Values
+
+**Status:** OK
+
 ```sql
 SELECT *
 FROM data
@@ -498,16 +490,16 @@ WHERE unit_price < 0
 ORDER BY unit_price;
 ```
 
-**Status:** OK
-
 **Rows returned:** 0
 
 *(no rows returned)*
+
 ---
 
-## Negative quantity Values
-**ARGS:** —
-**Description:** Flags rows where quantity is negative, which may indicate data errors.
+## 23. Negative quantity Values
+
+**Status:** OK
+
 ```sql
 SELECT *
 FROM data
@@ -515,16 +507,16 @@ WHERE quantity < 0
 ORDER BY quantity;
 ```
 
-**Status:** OK
-
 **Rows returned:** 0
 
 *(no rows returned)*
+
 ---
 
-## Negative total_price Values
-**ARGS:** —
-**Description:** Flags rows where total_price is negative, which may indicate data errors.
+## 24. Negative total_price Values
+
+**Status:** OK
+
 ```sql
 SELECT *
 FROM data
@@ -532,9 +524,8 @@ WHERE total_price < 0
 ORDER BY total_price;
 ```
 
-**Status:** OK
-
 **Rows returned:** 0
 
 *(no rows returned)*
+
 ---

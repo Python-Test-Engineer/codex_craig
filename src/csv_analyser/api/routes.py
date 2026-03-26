@@ -50,7 +50,7 @@ from csv_analyser.services.report_service import generate_report, read_report
 from csv_analyser.services.dirty_service import save_dirty_report
 from csv_analyser.services.sql_service import (
     generate_sql_catalog,
-    get_sql_catalog_entries,
+    get_sql_catalog_with_results,
     run_query_against_db,
 )
 
@@ -388,23 +388,12 @@ async def ask_question(payload: AskRequest) -> AskResponse:
     if not api_key:
         raise HTTPException(status_code=400, detail="OPENROUTER_API_KEY is not set.")
 
-    try:
-        _, insights_content = read_final_insights()
-    except FileNotFoundError:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "No insights have been generated yet. "
-                "Please run all sections (1–4) first to generate insights before asking questions."
-            ),
-        )
-
     loop = asyncio.get_event_loop()
 
-    # ── Step 1: pick the best SQL query and run it against data.db ───────────
-    sql_result_text = ""
+    # ── Step 1: SQL catalog — pre-computed results first, fresh run as fallback ──
+    sql_context = ""
     try:
-        entries = get_sql_catalog_entries()
+        entries = get_sql_catalog_with_results()
         if entries:
             catalog_summary = "\n".join(
                 f"{i + 1}. {e['title']} (ARGS: {e['args']}) — {e['description']}"
@@ -454,47 +443,90 @@ async def ask_question(payload: AskRequest) -> AskResponse:
             if title:
                 entry = next((e for e in entries if e["title"] == title), None)
                 if entry:
-                    rows = run_query_against_db(entry["sql"], params if params else None)
-                    if rows:
-                        col_headers = list(rows[0].keys())
-                        col_widths = [
-                            max(len(str(h)), max(len(str(r.get(h, ""))) for r in rows))
-                            for h in col_headers
-                        ]
-                        header_line = " | ".join(str(h).ljust(w) for h, w in zip(col_headers, col_widths))
-                        sep_line = "-+-".join("-" * w for w in col_widths)
-                        data_lines = [
-                            " | ".join(str(r.get(h, "")).ljust(w) for h, w in zip(col_headers, col_widths))
-                            for r in rows
-                        ]
-                        sql_result_text = (
-                            f"SQL query executed: {title}\n\n"
-                            + header_line + "\n" + sep_line + "\n"
-                            + "\n".join(data_lines)
+                    source_file = entry.get("source_file", "sql_queries_data.md")
+                    precomputed = entry.get("result", "").strip()
+                    if precomputed and "**Status:** OK" in precomputed:
+                        sql_context = (
+                            f"[Source: output/sql/{source_file} — query: '{title}']\n\n"
+                            f"{precomputed}"
                         )
-    except Exception:
-        pass  # SQL step is best-effort; fall through to insights-only context
-
-    # ── Step 2: build context and generate the answer ────────────────────────
-    context_parts: list[str] = []
-    if sql_result_text:
-        context_parts.append(sql_result_text)
-    context_parts.append(f"Chart insights:\n{insights_content}")
-    try:
-        artifacts = list_chart_artifacts()
-        if artifacts:
-            context_parts.append("Available charts: " + ", ".join(a.name for a in artifacts))
+                    else:
+                        rows = run_query_against_db(entry["sql"], params if params else None)
+                        if rows:
+                            col_headers = list(rows[0].keys())
+                            col_widths = [
+                                max(len(str(h)), max(len(str(r.get(h, ""))) for r in rows))
+                                for h in col_headers
+                            ]
+                            header_line = " | ".join(
+                                str(h).ljust(w) for h, w in zip(col_headers, col_widths)
+                            )
+                            sep_line = "-+-".join("-" * w for w in col_widths)
+                            data_lines = [
+                                " | ".join(
+                                    str(r.get(h, "")).ljust(w)
+                                    for h, w in zip(col_headers, col_widths)
+                                )
+                                for r in rows
+                            ]
+                            sql_context = (
+                                f"[Source: output/sql/{source_file} — query: '{title}'"
+                                " (run against in-memory SQLite)]\n\n"
+                                + header_line + "\n" + sep_line + "\n"
+                                + "\n".join(data_lines)
+                            )
     except Exception:
         pass
 
-    context_block = "\n\n".join(context_parts)
+    # ── Step 2: consolidated insights (insights.html / insights.md) ──────────
+    insights_context = ""
+    try:
+        _, insights_content = read_final_insights()
+        insights_context = "[Source: output/insights/insights.html]\n\n" + insights_content
+    except FileNotFoundError:
+        pass
+
+    # ── Step 3: individual chart insight files ────────────────────────────────
+    individual_insights: list[str] = []
+    insights_dir = Path("output/insights")
+    if insights_dir.exists():
+        for f in sorted(insights_dir.glob("*.md")):
+            if f.name == "insights.md":
+                continue
+            try:
+                content = f.read_text(encoding="utf-8").strip()
+                if content:
+                    individual_insights.append(
+                        f"[Source: output/insights/{f.name}]\n\n{content}"
+                    )
+            except Exception:
+                pass
+
+    # ── Step 4: build context and call LLM ───────────────────────────────────
+    context_parts: list[str] = []
+    if sql_context:
+        context_parts.append(sql_context)
+    if insights_context:
+        context_parts.append(insights_context)
+    context_parts.extend(individual_insights)
+
+    if not context_parts:
+        raise HTTPException(
+            status_code=400,
+            detail="No data sources available. Run the pipeline first to generate SQL queries and insights.",
+        )
+
+    context_block = "\n\n---\n\n".join(context_parts)
 
     system_prompt = (
         "You are a data analysis assistant. "
-        "When SQL query results are provided, use them as the primary source for specific data questions. "
-        "Answer strictly based on the provided context. "
-        "Do not fabricate data, statistics, or conclusions beyond what is stated in the context. "
-        "If the context is insufficient to answer the question, say so clearly."
+        "Answer strictly based on the provided context, using this priority order: "
+        "1) SQL query results, 2) consolidated insights (insights.html), 3) individual chart insights. "
+        "When citing information, reference the source shown in the [Source: ...] label and include "
+        "the query name or section heading. Quote specific values where relevant. "
+        "If the context does not contain enough information to answer the question, respond with exactly: "
+        "'I am unable to answer this question based on the available data.' "
+        "Do not fabricate data, statistics, or conclusions beyond what is stated in the context."
     )
     user_message = f"Context:\n{context_block}\n\nQuestion: {question}"
 
