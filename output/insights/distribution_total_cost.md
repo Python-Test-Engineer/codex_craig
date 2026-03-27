@@ -3,10 +3,10 @@
 ![distribution_total_cost.png](../images/distribution_total_cost.png)
 
 ## Data Insight
-- The total cost distribution shows strong right skewness with mean 1206.41 and high standard deviation 1764.62. Most orders cluster at lower cost levels while a minority generate substantially higher total costs, indicating a non-normal distribution typical of transactional data.
+- The histogram displays total cost distribution with right-skewed pattern, mean at 1341.73 and high standard deviation of 1753.29, indicating wide variance across orders with majority clustered at lower cost values.
 
 ## Analysis Insight
-- The coefficient of variation exceeding 1 suggests high heterogeneity in order values. Combined with quantity mean of 6.05 and unit cost mean of 198.42, variability appears driven by differences in quantity purchased and product cost tiers rather than pricing anomalies.
+- The positive skew suggests a subset of of orders incur substantially higher costs than typical transactions, likely driven by large quantity orders or high unit cost products, creating a long tail toward premium spending levels.
 
 ## Caveat
-- Without visual chart confirmation, interpretations rely on summary statistics. Distribution shape, outlier counts, and potential data entry errors remain unverified. External factors like seasonal demand or product mix changes could confound these observations.
+- Without knowing the median or viewing the actual distribution shape, inferring skewness relies on summary statistics; outlier influence on mean may distort typical cost perception, and payment method or store-level confounding not addressed.

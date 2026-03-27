@@ -3,10 +3,10 @@
 ![distribution_unit_price.png](../images/distribution_unit_price.png)
 
 ## Data Insight
-- The unit price distribution shows right-skewed behavior with mean=344.86 and high variability (std=358.32). The standard deviation exceeding the mean indicates substantial spread, likely driven by premium products or outliers. Unit prices appear to span a wide range from low-cost items to high-value transactions.
+- The chart displays a distribution of unit prices with a mean of approximately $377 and high variability (std ~$371), indicating unit prices span a wide range. The distribution appears right-skewed, with most transactions clustered at lower unit prices while a smaller number of high-value products extend the right tail.
 
 ## Analysis Insight
-- The high standard deviation relative to the mean suggests unit prices are not uniformly distributed—likely comprising both low-value commodities and high-margin premium products. This skewness may affect average-based analyses; median might better represent typical transactions.
+- The substantial standard deviation relative to the mean suggests heterogeneous product pricing in the dataset. The likely right-skew reflects common pricing patterns where lower-cost items dominate transaction volume while premium products contribute disproportionately to revenue tail values.
 
 ## Caveat
-- Chart interpretation relies on visual binning assumptions; exact distribution shape depends on chosen axis scales. Outliers may distort the apparent distribution. Payment method and store location confounding not addressed. Small sample size (n=39) limits generalizability.
+- Distribution shape depends on product mix rather than pricing strategy effectiveness. Store-level or product-category confounding may drive observed patterns. Without temporal context or segment labels, attribution of price variation to specific drivers is uncertain.

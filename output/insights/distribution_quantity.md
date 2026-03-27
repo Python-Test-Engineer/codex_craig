@@ -3,10 +3,10 @@
 ![distribution_quantity.png](../images/distribution_quantity.png)
 
 ## Data Insight
-- The quantity distribution appears right-skewed with most orders containing 3-8 units, clustering around the mean of 6.05. The standard deviation of 3.01 indicates moderate spread, with bulk purchase orders (10+ units) forming a long tail extending toward the maximum.
+- The quantity distribution shows a right-skewed pattern with most transactions involving 4-8 units per order. The mean of 6.12 units and standard deviation of 2.88 indicate moderate variability, with occasional higher-volume orders extending toward the upper range.
 
 ## Analysis Insight
-- The concentration of order quantities in the 3-8 range suggests standard purchasing patterns, while outlier high-volume orders may represent bulk buyers or restocking events. The distribution shape indicates predictable demand sizing for most transactions.
+- The concentration of orders in the 4-8 unit range suggests typical purchasing behavior. The right skew implies bulk orders are uncommon but present, potentially indicating B2B customers or promotional period spikes. This pattern could inform inventory staging and staffing decisions.
 
 ## Caveat
-- Aggregate distribution masks product-level and store-level variation. Quantity patterns may conflate different product categories with distinct ordering norms. Small sample size (n=39) limits precise estimation of tail probabilities and extreme order values.
+- Without seeing the actual chart, insights are based on aggregate statistics only. The 100-row sample may not represent seasonal patterns or longer-term trends. Distribution shape assumptions rely on reported mean and std without access to raw data or visualization.

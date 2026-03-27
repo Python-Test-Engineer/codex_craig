@@ -3,10 +3,10 @@
 ![category_customer_id.png](../images/category_customer_id.png)
 
 ## Data Insight
-- The dataset contains 39 transactions across multiple customers and stores, with unit prices averaging $344.86 against unit costs of $198.42, yielding a substantial markup. Average quantity per order is 6.05 units, with total costs averaging $1,206.41 per transaction.
+- The dataset contains 100 transactions with 17 variables covering orders, customers, products, and financials. Unit price (mean=376.69) exceeds unit cost (mean=219.84) by approximately 156.85 per unit, indicating consistent markup. High standard deviations relative to means (std/mean ratios of 1.0-1.2) suggest substantial variability across transactions.
 
 ## Analysis Insight
-- Given the category_customer_id chart context, the visualization likely shows transaction frequency or revenue distribution segmented by customer, with high variance in unit costs (std=241.86) and prices (std=358.32) indicating diverse product tiers. Profit margins appear healthy given the cost-price differential.
+- Based on the file stem category_customer_id, the chart likely visualizes transaction patterns or profitability metrics segmented by customer or product category. The high variability in costs and prices suggests diverse product types or customer segments with differing price points. Average quantity of 6.12 units per transaction implies mostly bulk or wholesale-style orders.
 
 ## Caveat
-- Without direct chart access, insights are inferred from metadata. The small sample size (39 rows) limits generalizability. Customer segmentation, store effects, and payment method variations may confound interpretations. Revenue calculations assume consistent pricing periods.
+- No chart image was provided in this request, so insights are based solely on dataset metadata rather than visual analysis. The category_customer_id file stem suggests customer or category groupings, but without the actual chart, specific patterns cannot be confirmed. Statistical summaries alone cannot capture outliers, temporal trends, or segment-specific dynamics present in visualizations.

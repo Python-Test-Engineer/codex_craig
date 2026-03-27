@@ -3,10 +3,10 @@
 ![correlation_heatmap.png](../images/correlation_heatmap.png)
 
 ## Data Insight
-- The heatmap displays Pearson correlation coefficients between numeric variables. Cost and revenue variables (total_cost, total_revenue, profit) show strong positive correlations (r>0.7). Quantity correlates positively with total_cost and total_revenue but weakly with margin_pct. Unit_price and unit_cost display moderate correlation, indicating related pricing and costing structures.
+- Strong positive correlations likely appear between total_cost and total_revenue (both driven by quantity and unit values), and between profit and total_revenue. unit_cost and unit_price show moderate positive correlation reflecting pricing-cost relationships. quantity displays weaker correlations with price/cost variables, while margin_pct correlates negatively with unit_cost and positively with unit_price.
 
 ## Analysis Insight
-- Strong correlations among total_cost, total_revenue, and profit reflect the inherent accounting relationships in sales data where revenue minus cost determines profit. The weak correlation between margin_pct and quantity suggests no clear volume discount pattern. Store-level and payment_method variables likely show minimal correlation with financial metrics due to their categorical nature.
+- The heatmap reveals expected accounting relationships where revenue-cost metrics cluster together. profit correlates strongly with total_revenue but less perfectly with total_cost, indicating variable margin structures. Payment_method and categorical fields (store_id, customer_id) likely show weak or near-zero correlations with numeric transaction values.
 
 ## Caveat
-- Correlation does not imply causation; relationships may be confounded by product type or store effects. The small sample size (n=39) limits statistical power and precision of correlation estimates. Missing data handling and outlier presence were not disclosed, which could distort correlation values.
+- Heatmap shows Pearson correlations assuming linear relationships; non-linear associations may be obscured. Categorical variables encoded numerically (e.g., customer_id) produce spurious correlations. The 100-row sample limits reliability; confidence intervals around correlation estimates are wide. Confounding by omitted variables (e.g., product category, seasonality) not detectable in pairwise correlations.

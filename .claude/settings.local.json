@@ -57,7 +57,17 @@
       "Bash(find . -path */output/sql/*.md -type f)",
       "Bash(cd:*)",
       "Bash(uv:*)",
-      "Bash(powershell.exe -Command \"Get-Process | Where-Object { \\\\$_.Path -like '*data-intelligence-agent*' -or \\\\$_.Name -like '*uvicorn*' -or \\\\$_.Name -like '*python*' } | Select-Object Id, Name, Path\")"
-    ]
+      "Bash(powershell.exe -Command \"Get-Process | Where-Object { \\\\$_.Path -like '*data-intelligence-agent*' -or \\\\$_.Name -like '*uvicorn*' -or \\\\$_.Name -like '*python*' } | Select-Object Id, Name, Path\")",
+      "Bash(env)",
+      "Bash(unset OPENROUTER_API_KEY OPENROUTER_MODEL ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_API_KEY ANTHROPIC_MODEL OPENAI_API_KEY)",
+      "Bash(set -a)",
+      "Bash(set +a)",
+      "Bash(unset OPENROUTER_API_KEY OPENROUTER_MODEL ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_API_KEY ANTHROPIC_MODEL)"
+    ],
+    "env": {
+      "ANTHROPIC_BASE_URL": "https://openrouter.ai/api/v1",
+      "ANTHROPIC_API_KEY": "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",
+      "ANTHROPIC_MODEL": "minimax/minimax-m2.5:free"
+    }
   }
 }

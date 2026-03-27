@@ -144,6 +144,84 @@ def _entries(df: pd.DataFrame, table: str) -> list[tuple[str, str, str, str, str
             "—",
         ))
 
+    # ── Multi-metric analysis ─────────────────────────────────────────────────
+    # Identifies "percentage / rate" columns for AVG vs SUM columns for SUM.
+    # Picks the best ordering column (profit > revenue > first numeric).
+    _pct_cols = [n for n in numeric if any(k in n.lower() for k in ["pct", "rate", "margin", "ratio", "score", "avg"])]
+    _sum_cols = [n for n in numeric if n not in _pct_cols]
+    _sort_col = next(
+        (n for n in _sum_cols if any(k in n.lower() for k in ["profit", "total_profit"])),
+        next(
+            (n for n in _sum_cols if any(k in n.lower() for k in ["revenue", "total_revenue"])),
+            _sum_cols[0] if _sum_cols else (numeric[0] if numeric else None),
+        ),
+    )
+
+    if cats and numeric and _sort_col:
+        # Per-category comprehensive breakdown
+        for cat in cats[:3]:
+            metric_lines = ["    COUNT(*) AS transaction_count"]
+            for n in _sum_cols[:6]:
+                metric_lines.append(f"    SUM({n}) AS total_{n}")
+            for n in _pct_cols[:3]:
+                metric_lines.append(f"    ROUND(AVG({n}), 2) AS avg_{n}")
+            metrics_str = ",\n".join(metric_lines)
+            out.append((
+                "Multi-Metric Analysis",
+                f"Performance Breakdown by {cat}",
+                f"Aggregates transaction count and all key metrics (revenue, cost, profit, margins) grouped by {cat}.",
+                (
+                    f"SELECT\n    {cat},\n{metrics_str}\n"
+                    f"FROM {table}\n"
+                    f"GROUP BY {cat}\n"
+                    f"ORDER BY total_{_sort_col} DESC;"
+                ),
+                "—",
+            ))
+
+        # Cross-category breakdown (cat0 × cat1) with multi-metric
+        if len(cats) >= 2:
+            c0, c1 = cats[0], cats[1]
+            metric_lines = ["    COUNT(*) AS transaction_count"]
+            for n in _sum_cols[:4]:
+                metric_lines.append(f"    SUM({n}) AS total_{n}")
+            for n in _pct_cols[:2]:
+                metric_lines.append(f"    ROUND(AVG({n}), 2) AS avg_{n}")
+            metrics_str = ",\n".join(metric_lines)
+            out.append((
+                "Multi-Metric Analysis",
+                f"{c0} × {c1} Performance Matrix",
+                f"Shows performance metrics for every {c0} and {c1} combination, ordered by profitability.",
+                (
+                    f"SELECT\n    {c0},\n    {c1},\n{metrics_str}\n"
+                    f"FROM {table}\n"
+                    f"GROUP BY {c0}, {c1}\n"
+                    f"ORDER BY total_{_sort_col} DESC;"
+                ),
+                "—",
+            ))
+
+    # Distinct ID concentration by category (e.g. unique customers per store)
+    if ids and cats and _sort_col:
+        id0 = ids[0]
+        for cat in cats[:2]:
+            out.append((
+                "Multi-Metric Analysis",
+                f"Unique {id0} Count by {cat}",
+                f"Counts distinct {id0} values and key metrics per {cat} to reveal concentration.",
+                (
+                    f"SELECT\n"
+                    f"    {cat},\n"
+                    f"    COUNT(DISTINCT {id0}) AS unique_{id0},\n"
+                    f"    COUNT(*) AS transaction_count,\n"
+                    f"    SUM({_sort_col}) AS total_{_sort_col}\n"
+                    f"FROM {table}\n"
+                    f"GROUP BY {cat}\n"
+                    f"ORDER BY unique_{id0} DESC;"
+                ),
+                "—",
+            ))
+
     # ── Parametric lookups ───────────────────────────────────────────────────
     if cats and numeric:
         c0, n0 = cats[0], numeric[0]
@@ -205,6 +283,25 @@ def _entries(df: pd.DataFrame, table: str) -> list[tuple[str, str, str, str, str
             f"SELECT *\nFROM {table}\nWHERE {d0} BETWEEN :start_date AND :end_date\nORDER BY {d0};",
             "start_date, end_date",
         ))
+        # Time × category breakdown
+        if cats and _sort_col:
+            c0 = cats[0]
+            out.append((
+                "Time-Based Analysis",
+                f"Monthly {_sort_col} by {c0}",
+                f"Shows monthly {_sort_col} trend broken down by {c0} to reveal seasonal patterns per group.",
+                (
+                    f"SELECT\n"
+                    f"    strftime('%Y-%m', {d0}) AS month,\n"
+                    f"    {c0},\n"
+                    f"    COUNT(*) AS transaction_count,\n"
+                    f"    SUM({_sort_col}) AS total_{_sort_col}\n"
+                    f"FROM {table}\n"
+                    f"GROUP BY month, {c0}\n"
+                    f"ORDER BY month, total_{_sort_col} DESC;"
+                ),
+                "—",
+            ))
 
     # ── Data quality ─────────────────────────────────────────────────────────
     null_union = "\nUNION ALL\n".join(

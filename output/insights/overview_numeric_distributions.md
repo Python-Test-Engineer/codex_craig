@@ -3,10 +3,10 @@
 ![overview_numeric_distributions.png](../images/overview_numeric_distributions.png)
 
 ## Data Insight
-- The numeric variables show right-skewed distributions typical of sales data. Unit cost and unit price have high standard deviations relative to their means (std/mean ratios of 1.22 and 1.04 respectively), indicating substantial variability with a long tail of high-value transactions. Quantity is more normally distributed with a lower coefficient of variation (0.50), clustering around the mean of 6 units per order.
+- The chart displays distributions for unit_cost, unit_price, quantity, and total_cost. Unit_cost shows right-skewed distribution with mean 219.84 and high dispersion (std=252.72). Unit_price exhibits similar positive skew (mean=376.69, std=370.50). Quantity distribution appears more concentrated around mean 6.12 with lower spread (std=2.88). Total_cost shows the widest range with mean 1341.73 and largest standard deviation (1753.29).
 
 ## Analysis Insight
-- Total cost exhibits the largest absolute dispersion (std=1764.62) driven by the multiplicative effect of quantity and unit cost. The margin between unit price and unit cost (mean spread of ~146) suggests consistent profitability per unit, though profit distribution likely mirrors the right-skew of revenue-generating transactions. Outliers in unit price and total cost likely represent bulk orders or premium product purchases.
+- The high standard deviations relative to means for unit_cost, unit_price, and total_cost indicate substantial variability in transaction values. Quantity's tighter distribution suggests more consistent order sizes. The right-skewed patterns imply a majority of transactions involve lower-valued products, with occasional high-value outliers driving up means. Total_cost variability likely combines effects of quantity and unit_price variation.
 
 ## Caveat
-- Distribution shapes are inferred from summary statistics without access to raw data points or visualization. The small sample size (n=39) limits statistical power and may not represent broader population patterns. Standard deviation estimates are themselves uncertain with limited observations.
+- Distribution details depend on binning choices and chart type used. The 100-row sample may not represent broader patterns. Outlier handling and measurement scale assumptions affect observed distributions. Confounding factors like product category, store, or time period are not controlled in this univariate view.

@@ -1,5 +1,5 @@
 # SQL Query Catalog
-<!-- source: data.csv | table: data | generated: 2026-03-26 | queries: 27 -->
+<!-- source: data.csv | table: data | generated: 2026-03-27 | queries: 33 -->
 
 ---
 
@@ -19,7 +19,7 @@ FROM data;
 
 | row_count |
 | --- |
-| 39 |
+| 100 |
 ---
 
 ## Column Sample
@@ -69,7 +69,7 @@ FROM data;
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
-| 8.5 | 650.0 | 198.42 | 7738.5 |
+| 8.5 | 650.0 | 219.84 | 21764.5 |
 ---
 
 ## Summary Stats for unit_price
@@ -90,7 +90,7 @@ FROM data;
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
-| 29.99 | 999.99 | 344.86 | 13449.61 |
+| 29.99 | 999.99 | 376.69 | 37669.0 |
 ---
 
 ## Summary Stats for quantity
@@ -111,7 +111,7 @@ FROM data;
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
-| 1 | 10 | 6.05 | 236 |
+| -1 | 10 | 6.12 | 612 |
 ---
 
 ## Summary Stats for total_cost
@@ -132,7 +132,7 @@ FROM data;
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
-| 17.0 | 6500.0 | 1206.41 | 47050.0 |
+| 17.0 | 6500.0 | 1341.73 | 131490.0 |
 ---
 
 ## Summary Stats for total_revenue
@@ -153,7 +153,7 @@ FROM data;
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
-| 59.98 | 9999.9 | 2096.09 | 81747.64 |
+| 59.98 | 9999.9 | 2308.02 | 228493.87 |
 ---
 
 ## Summary Stats for profit
@@ -174,170 +174,97 @@ FROM data;
 
 | min_val | max_val | avg_val | total |
 | --- | --- | --- | --- |
-| 42.98 | 3499.9 | 889.68 | 34697.64 |
+| 42.98 | 3499.9 | 964.84 | 94553.94 |
 ---
 
-## Total unit_cost by date
+## Total unit_cost by customer_name
 **ARGS:** —
-**Description:** Ranks each date by total unit_cost, highest first.
+**Description:** Ranks each customer_name by total unit_cost, highest first.
 ```sql
-SELECT date, SUM(unit_cost) AS total_unit_cost
+SELECT customer_name, SUM(unit_cost) AS total_unit_cost
 FROM data
-GROUP BY date
+GROUP BY customer_name
 ORDER BY total_unit_cost DESC;
 ```
 
 **Status:** OK
 
-**Rows returned:** 37
+**Rows returned:** 11
 
-| date | total_unit_cost |
+| customer_name | total_unit_cost |
 | --- | --- |
-| 2025-10-04 | 650.0 |
-| 2025-09-28 | 650.0 |
-| 2025-08-10 | 650.0 |
-| 2025-08-06 | 650.0 |
-| 2025-04-02 | 650.0 |
-| 2025-03-24 | 650.0 |
-| 2025-01-29 | 650.0 |
-| 2025-01-20 | 650.0 |
-| 2025-06-16 | 360.0 |
-| 2025-11-29 | 180.0 |
-| 2025-08-09 | 180.0 |
-| 2025-06-11 | 180.0 |
-| 2025-03-11 | 180.0 |
-| 2025-02-15 | 180.0 |
-| 2025-02-11 | 180.0 |
-| 2025-02-01 | 180.0 |
-| 2025-01-09 | 180.0 |
-| 2025-01-05 | 180.0 |
-| 2025-02-10 | 63.5 |
-| 2025-11-03 | 55.0 |
-
-*…17 more rows not shown*
+| Bob Smith | 4200.5 |
+| Alice Johnson | 3378.0 |
+| Isabella Taylor | 3259.5 |
+| David Brown | 2840.0 |
+| Grace Wilson | 1917.5 |
+| Emma Davis | 1735.0 |
+| Frank Miller | 1533.5 |
+| Henry Moore | 1024.0 |
+| Jack Anderson | 913.0 |
+| Carol White | 783.5 |
+| None | 180.0 |
 ---
 
-## Average unit_cost by date
+## Average unit_cost by customer_name
 **ARGS:** —
-**Description:** Compares average unit_cost across each date.
+**Description:** Compares average unit_cost across each customer_name.
 ```sql
-SELECT date, ROUND(AVG(unit_cost), 2) AS avg_unit_cost
+SELECT customer_name, ROUND(AVG(unit_cost), 2) AS avg_unit_cost
 FROM data
-GROUP BY date
+GROUP BY customer_name
 ORDER BY avg_unit_cost DESC;
 ```
 
 **Status:** OK
 
-**Rows returned:** 37
+**Rows returned:** 11
 
-| date | avg_unit_cost |
+| customer_name | avg_unit_cost |
 | --- | --- |
-| 2025-10-04 | 650.0 |
-| 2025-09-28 | 650.0 |
-| 2025-08-10 | 650.0 |
-| 2025-08-06 | 650.0 |
-| 2025-04-02 | 650.0 |
-| 2025-03-24 | 650.0 |
-| 2025-01-29 | 650.0 |
-| 2025-01-20 | 650.0 |
-| 2025-11-29 | 180.0 |
-| 2025-08-09 | 180.0 |
-| 2025-06-16 | 180.0 |
-| 2025-06-11 | 180.0 |
-| 2025-03-11 | 180.0 |
-| 2025-02-15 | 180.0 |
-| 2025-02-11 | 180.0 |
-| 2025-02-01 | 180.0 |
-| 2025-01-09 | 180.0 |
-| 2025-01-05 | 180.0 |
-| 2025-11-03 | 55.0 |
-| 2025-09-12 | 55.0 |
-
-*…17 more rows not shown*
+| Alice Johnson | 337.8 |
+| Isabella Taylor | 296.32 |
+| Bob Smith | 262.53 |
+| Jack Anderson | 228.25 |
+| Frank Miller | 219.07 |
+| David Brown | 202.86 |
+| None | 180.0 |
+| Grace Wilson | 174.32 |
+| Henry Moore | 146.29 |
+| Emma Davis | 144.58 |
+| Carol White | 130.58 |
 ---
 
-## Total unit_price by date
+## Total unit_price by customer_name
 **ARGS:** —
-**Description:** Ranks each date by total unit_price, highest first.
+**Description:** Ranks each customer_name by total unit_price, highest first.
 ```sql
-SELECT date, SUM(unit_price) AS total_unit_price
+SELECT customer_name, SUM(unit_price) AS total_unit_price
 FROM data
-GROUP BY date
+GROUP BY customer_name
 ORDER BY total_unit_price DESC;
 ```
 
 **Status:** OK
 
-**Rows returned:** 37
+**Rows returned:** 11
 
-| date | total_unit_price |
+| customer_name | total_unit_price |
 | --- | --- |
-| 2025-10-04 | 999.99 |
-| 2025-09-28 | 999.99 |
-| 2025-08-10 | 999.99 |
-| 2025-08-06 | 999.99 |
-| 2025-04-02 | 999.99 |
-| 2025-03-24 | 999.99 |
-| 2025-01-29 | 999.99 |
-| 2025-01-20 | 999.99 |
-| 2025-06-16 | 699.98 |
-| 2025-11-29 | 349.99 |
-| 2025-08-09 | 349.99 |
-| 2025-06-11 | 349.99 |
-| 2025-03-11 | 349.99 |
-| 2025-02-15 | 349.99 |
-| 2025-02-11 | 349.99 |
-| 2025-02-01 | 349.99 |
-| 2025-01-09 | 349.99 |
-| 2025-01-05 | 349.99 |
-| 2025-02-10 | 179.98000000000002 |
-| 2025-11-03 | 149.99 |
-
-*…17 more rows not shown*
+| Bob Smith | 7049.84 |
+| Isabella Taylor | 5739.88 |
+| Alice Johnson | 5369.9 |
+| David Brown | 5089.86 |
+| Grace Wilson | 3419.89 |
+| Emma Davis | 3079.88 |
+| Frank Miller | 2519.93 |
+| Henry Moore | 1889.93 |
+| Jack Anderson | 1579.96 |
+| Carol White | 1579.94 |
+| None | 349.99 |
 ---
 
 ### Categorical Distributions
-
-## Distribution of date
-**ARGS:** —
-**Description:** Counts rows for each distinct value of date, ordered by frequency.
-```sql
-SELECT date, COUNT(*) AS row_count
-FROM data
-GROUP BY date
-ORDER BY row_count DESC;
-```
-
-**Status:** OK
-
-**Rows returned:** 37
-
-| date | row_count |
-| --- | --- |
-| 2025-06-16 | 2 |
-| 2025-02-10 | 2 |
-| 2025-12-23 | 1 |
-| 2025-11-29 | 1 |
-| 2025-11-03 | 1 |
-| 2025-10-31 | 1 |
-| 2025-10-23 | 1 |
-| 2025-10-04 | 1 |
-| 2025-10-01 | 1 |
-| 2025-09-28 | 1 |
-| 2025-09-16 | 1 |
-| 2025-09-12 | 1 |
-| 2025-08-24 | 1 |
-| 2025-08-10 | 1 |
-| 2025-08-09 | 1 |
-| 2025-08-06 | 1 |
-| 2025-06-29 | 1 |
-| 2025-06-19 | 1 |
-| 2025-06-11 | 1 |
-| 2025-04-02 | 1 |
-
-*…17 more rows not shown*
----
 
 ## Distribution of customer_name
 **ARGS:** —
@@ -351,20 +278,21 @@ ORDER BY row_count DESC;
 
 **Status:** OK
 
-**Rows returned:** 10
+**Rows returned:** 11
 
 | customer_name | row_count |
 | --- | --- |
-| Bob Smith | 10 |
-| Emma Davis | 5 |
-| David Brown | 5 |
-| Isabella Taylor | 4 |
-| Henry Moore | 3 |
-| Frank Miller | 3 |
-| Alice Johnson | 3 |
-| Jack Anderson | 2 |
-| Grace Wilson | 2 |
-| Carol White | 2 |
+| Bob Smith | 16 |
+| David Brown | 14 |
+| Isabella Taylor | 12 |
+| Emma Davis | 12 |
+| Grace Wilson | 11 |
+| Alice Johnson | 10 |
+| Henry Moore | 7 |
+| Frank Miller | 7 |
+| Carol White | 6 |
+| Jack Anderson | 4 |
+| None | 1 |
 ---
 
 ## Distribution of product_name
@@ -383,11 +311,11 @@ ORDER BY row_count DESC;
 
 | product_name | row_count |
 | --- | --- |
-| Monitor | 11 |
-| Laptop | 8 |
-| Keyboard | 8 |
-| Mouse | 6 |
-| Headphones | 5 |
+| Monitor | 27 |
+| Laptop | 24 |
+| Keyboard | 19 |
+| Headphones | 15 |
+| Mouse | 14 |
 | Mousse | 1 |
 ---
 
@@ -407,9 +335,9 @@ ORDER BY row_count DESC;
 
 | store_name | row_count |
 | --- | --- |
-| Store Beta | 14 |
-| Store Alpha | 13 |
-| Store Gamma | 12 |
+| Store Gamma | 37 |
+| Store Beta | 34 |
+| Store Alpha | 29 |
 ---
 
 ## Distribution of city
@@ -428,70 +356,34 @@ ORDER BY row_count DESC;
 
 | city | row_count |
 | --- | --- |
-| Los Angeles | 14 |
-| New York | 13 |
-| Chicago | 12 |
+| Chicago | 37 |
+| Los Angeles | 34 |
+| New York | 29 |
+---
+
+## Distribution of payment_method
+**ARGS:** —
+**Description:** Counts rows for each distinct value of payment_method, ordered by frequency.
+```sql
+SELECT payment_method, COUNT(*) AS row_count
+FROM data
+GROUP BY payment_method
+ORDER BY row_count DESC;
+```
+
+**Status:** OK
+
+**Rows returned:** 4
+
+| payment_method | row_count |
+| --- | --- |
+| Credit Card | 31 |
+| Cash | 26 |
+| Debit Card | 23 |
+| PayPal | 20 |
 ---
 
 ### Rankings
-
-## Top 10 date by unit_cost
-**ARGS:** —
-**Description:** Lists the 10 date values with the highest total unit_cost.
-```sql
-SELECT date, SUM(unit_cost) AS total_unit_cost
-FROM data
-GROUP BY date
-ORDER BY total_unit_cost DESC
-LIMIT 10;
-```
-
-**Status:** OK
-
-**Rows returned:** 10
-
-| date | total_unit_cost |
-| --- | --- |
-| 2025-10-04 | 650.0 |
-| 2025-09-28 | 650.0 |
-| 2025-08-10 | 650.0 |
-| 2025-08-06 | 650.0 |
-| 2025-04-02 | 650.0 |
-| 2025-03-24 | 650.0 |
-| 2025-01-29 | 650.0 |
-| 2025-01-20 | 650.0 |
-| 2025-06-16 | 360.0 |
-| 2025-11-29 | 180.0 |
----
-
-## Bottom 10 date by unit_cost
-**ARGS:** —
-**Description:** Lists the 10 date values with the lowest total unit_cost.
-```sql
-SELECT date, SUM(unit_cost) AS total_unit_cost
-FROM data
-GROUP BY date
-ORDER BY total_unit_cost ASC
-LIMIT 10;
-```
-
-**Status:** OK
-
-**Rows returned:** 10
-
-| date | total_unit_cost |
-| --- | --- |
-| 2025-02-21 | 8.5 |
-| 2025-03-26 | 8.5 |
-| 2025-06-19 | 8.5 |
-| 2025-08-24 | 8.5 |
-| 2025-09-16 | 8.5 |
-| 2025-10-23 | 8.5 |
-| 2025-01-25 | 28.0 |
-| 2025-02-05 | 28.0 |
-| 2025-02-14 | 28.0 |
-| 2025-02-28 | 28.0 |
----
 
 ## Top 10 customer_name by unit_cost
 **ARGS:** —
@@ -510,69 +402,310 @@ LIMIT 10;
 
 | customer_name | total_unit_cost |
 | --- | --- |
-| Bob Smith | 1987.5 |
-| David Brown | 1198.5 |
-| Isabella Taylor | 893.5 |
-| Emma Davis | 875.0 |
-| Henry Moore | 733.0 |
-| Alice Johnson | 686.5 |
-| Jack Anderson | 678.0 |
-| Carol White | 360.0 |
-| Frank Miller | 216.5 |
-| Grace Wilson | 110.0 |
+| Bob Smith | 4200.5 |
+| Alice Johnson | 3378.0 |
+| Isabella Taylor | 3259.5 |
+| David Brown | 2840.0 |
+| Grace Wilson | 1917.5 |
+| Emma Davis | 1735.0 |
+| Frank Miller | 1533.5 |
+| Henry Moore | 1024.0 |
+| Jack Anderson | 913.0 |
+| Carol White | 783.5 |
+---
+
+## Bottom 10 customer_name by unit_cost
+**ARGS:** —
+**Description:** Lists the 10 customer_name values with the lowest total unit_cost.
+```sql
+SELECT customer_name, SUM(unit_cost) AS total_unit_cost
+FROM data
+GROUP BY customer_name
+ORDER BY total_unit_cost ASC
+LIMIT 10;
+```
+
+**Status:** OK
+
+**Rows returned:** 10
+
+| customer_name | total_unit_cost |
+| --- | --- |
+| None | 180.0 |
+| Carol White | 783.5 |
+| Jack Anderson | 913.0 |
+| Henry Moore | 1024.0 |
+| Frank Miller | 1533.5 |
+| Emma Davis | 1735.0 |
+| Grace Wilson | 1917.5 |
+| David Brown | 2840.0 |
+| Isabella Taylor | 3259.5 |
+| Alice Johnson | 3378.0 |
+---
+
+## Top 10 product_name by unit_cost
+**ARGS:** —
+**Description:** Lists the 10 product_name values with the highest total unit_cost.
+```sql
+SELECT product_name, SUM(unit_cost) AS total_unit_cost
+FROM data
+GROUP BY product_name
+ORDER BY total_unit_cost DESC
+LIMIT 10;
+```
+
+**Status:** OK
+
+**Rows returned:** 6
+
+| product_name | total_unit_cost |
+| --- | --- |
+| Laptop | 15600.0 |
+| Monitor | 4680.0 |
+| Headphones | 825.0 |
+| Keyboard | 532.0 |
+| Mouse | 119.0 |
+| Mousse | 8.5 |
 ---
 
 ### Multi-Dimensional
 
-## unit_cost by date and customer_name
+## unit_cost by customer_name and product_name
 **ARGS:** —
-**Description:** Shows total unit_cost broken down by both date and customer_name.
+**Description:** Shows total unit_cost broken down by both customer_name and product_name.
 ```sql
-SELECT date, customer_name, SUM(unit_cost) AS total_unit_cost
+SELECT customer_name, product_name, SUM(unit_cost) AS total_unit_cost
 FROM data
-GROUP BY date, customer_name
+GROUP BY customer_name, product_name
 ORDER BY total_unit_cost DESC;
 ```
 
 **Status:** OK
 
-**Rows returned:** 38
+**Rows returned:** 46
 
-| date | customer_name | total_unit_cost |
+| customer_name | product_name | total_unit_cost |
 | --- | --- | --- |
-| 2025-01-20 | Bob Smith | 650.0 |
-| 2025-01-29 | Emma Davis | 650.0 |
-| 2025-03-24 | Jack Anderson | 650.0 |
-| 2025-04-02 | Isabella Taylor | 650.0 |
-| 2025-08-06 | Bob Smith | 650.0 |
-| 2025-08-10 | Alice Johnson | 650.0 |
-| 2025-09-28 | David Brown | 650.0 |
-| 2025-10-04 | Henry Moore | 650.0 |
-| 2025-06-16 | David Brown | 360.0 |
-| 2025-01-05 | Bob Smith | 180.0 |
-| 2025-01-09 | Bob Smith | 180.0 |
-| 2025-02-01 | Frank Miller | 180.0 |
-| 2025-02-11 | David Brown | 180.0 |
-| 2025-02-15 | Carol White | 180.0 |
-| 2025-03-11 | Bob Smith | 180.0 |
-| 2025-06-11 | Emma Davis | 180.0 |
-| 2025-08-09 | Carol White | 180.0 |
-| 2025-11-29 | Isabella Taylor | 180.0 |
-| 2025-01-07 | Henry Moore | 55.0 |
-| 2025-02-10 | Grace Wilson | 55.0 |
+| Alice Johnson | Laptop | 3250.0 |
+| Bob Smith | Laptop | 3250.0 |
+| Isabella Taylor | Laptop | 2600.0 |
+| David Brown | Monitor | 1440.0 |
+| David Brown | Laptop | 1300.0 |
+| Emma Davis | Laptop | 1300.0 |
+| Frank Miller | Laptop | 1300.0 |
+| Grace Wilson | Laptop | 1300.0 |
+| Bob Smith | Monitor | 720.0 |
+| Carol White | Monitor | 720.0 |
+| Henry Moore | Laptop | 650.0 |
+| Jack Anderson | Laptop | 650.0 |
+| Isabella Taylor | Monitor | 540.0 |
+| Grace Wilson | Monitor | 360.0 |
+| None | Monitor | 180.0 |
+| Emma Davis | Monitor | 180.0 |
+| Frank Miller | Monitor | 180.0 |
+| Henry Moore | Monitor | 180.0 |
+| Jack Anderson | Monitor | 180.0 |
+| Emma Davis | Headphones | 165.0 |
 
-*…18 more rows not shown*
+*…26 more rows not shown*
+---
+
+### Multi-Metric Analysis
+
+## Performance Breakdown by customer_name
+**ARGS:** —
+**Description:** Aggregates transaction count and all key metrics (revenue, cost, profit, margins) grouped by customer_name.
+```sql
+SELECT
+    customer_name,
+    COUNT(*) AS transaction_count,
+    SUM(unit_cost) AS total_unit_cost,
+    SUM(unit_price) AS total_unit_price,
+    SUM(quantity) AS total_quantity,
+    SUM(total_cost) AS total_total_cost,
+    SUM(total_revenue) AS total_total_revenue,
+    SUM(profit) AS total_profit,
+    ROUND(AVG(margin_pct), 2) AS avg_margin_pct
+FROM data
+GROUP BY customer_name
+ORDER BY total_profit DESC;
+```
+
+**Status:** OK
+
+**Rows returned:** 11
+
+| customer_name | transaction_count | total_unit_cost | total_unit_price | total_quantity | total_total_cost | total_total_revenue | total_profit | avg_margin_pct |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| David Brown | 14 | 2840.0 | 5089.86 | 109 | 22346.0 | 39778.91 | 17432.91 | 52.18 |
+| Isabella Taylor | 12 | 3259.5 | 5739.88 | 98 | 25252.0 | 44469.020000000004 | 16767.09 | 50.07 |
+| Bob Smith | 16 | 4200.5 | 7049.84 | 90 | 24144.5 | 40459.09 | 16314.59 | 50.85 |
+| Grace Wilson | 11 | 1917.5 | 3419.89 | 69 | 12704.0 | 22709.31 | 10005.31 | 56.71 |
+| Alice Johnson | 10 | 3378.0 | 5369.9 | 43 | 12920.0 | 20659.57 | 7739.57 | 51.17 |
+| Emma Davis | 12 | 1735.0 | 3079.88 | 65 | 10186.0 | 17649.35 | 7463.35 | 60.44 |
+| Frank Miller | 7 | 1533.5 | 2519.93 | 39 | 9822.5 | 16209.61 | 6387.11 | 56.96 |
+| Henry Moore | 7 | 1024.0 | 1889.93 | 45 | 6313.0 | 11479.550000000001 | 5166.55 | 57.89 |
+| Carol White | 6 | 783.5 | 1579.94 | 39 | 4523.0 | 9289.61 | 4766.610000000001 | 54.9 |
+| Jack Anderson | 4 | 913.0 | 1579.96 | 10 | 2379.0 | 4039.8999999999996 | 1660.9 | 52.98 |
+| None | 1 | 180.0 | 349.99 | 5 | 900.0 | 1749.95 | 849.95 | 48.6 |
+---
+
+## Performance Breakdown by product_name
+**ARGS:** —
+**Description:** Aggregates transaction count and all key metrics (revenue, cost, profit, margins) grouped by product_name.
+```sql
+SELECT
+    product_name,
+    COUNT(*) AS transaction_count,
+    SUM(unit_cost) AS total_unit_cost,
+    SUM(unit_price) AS total_unit_price,
+    SUM(quantity) AS total_quantity,
+    SUM(total_cost) AS total_total_cost,
+    SUM(total_revenue) AS total_total_revenue,
+    SUM(profit) AS total_profit,
+    ROUND(AVG(margin_pct), 2) AS avg_margin_pct
+FROM data
+GROUP BY product_name
+ORDER BY total_profit DESC;
+```
+
+**Status:** OK
+
+**Rows returned:** 6
+
+| product_name | transaction_count | total_unit_cost | total_unit_price | total_quantity | total_total_cost | total_total_revenue | total_profit | avg_margin_pct |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Laptop | 24 | 15600.0 | 23999.760000000002 | 143 | 92950.0 | 142998.57 | 50048.57 | 35.0 |
+| Monitor | 27 | 4680.0 | 9449.73 | 171 | 29520.0 | 59848.29 | 27878.36 | 48.6 |
+| Headphones | 15 | 825.0 | 2249.8500000000004 | 89 | 4895.0 | 13349.11 | 8454.11 | 63.3 |
+| Keyboard | 19 | 532.0 | 1519.81 | 119 | 3360.0 | 9598.8 | 6238.8 | 65.0 |
+| Mouse | 14 | 119.0 | 419.85999999999996 | 82 | 697.0 | 2459.18 | 1762.1799999999998 | 71.7 |
+| Mousse | 1 | 8.5 | 29.99 | 8 | 68.0 | 239.92 | 171.92 | 71.7 |
+---
+
+## Performance Breakdown by store_name
+**ARGS:** —
+**Description:** Aggregates transaction count and all key metrics (revenue, cost, profit, margins) grouped by store_name.
+```sql
+SELECT
+    store_name,
+    COUNT(*) AS transaction_count,
+    SUM(unit_cost) AS total_unit_cost,
+    SUM(unit_price) AS total_unit_price,
+    SUM(quantity) AS total_quantity,
+    SUM(total_cost) AS total_total_cost,
+    SUM(total_revenue) AS total_total_revenue,
+    SUM(profit) AS total_profit,
+    ROUND(AVG(margin_pct), 2) AS avg_margin_pct
+FROM data
+GROUP BY store_name
+ORDER BY total_profit DESC;
+```
+
+**Status:** OK
+
+**Rows returned:** 3
+
+| store_name | transaction_count | total_unit_cost | total_unit_price | total_quantity | total_total_cost | total_total_revenue | total_profit | avg_margin_pct |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Store Gamma | 37 | 10177.0 | 16789.63 | 254 | 72851.5 | 119797.45 | 46945.95 | 51.91 |
+| Store Beta | 34 | 6322.5 | 11249.66 | 195 | 32758.5 | 59428.05 | 26669.55 | 55.47 |
+| Store Alpha | 29 | 5265.0 | 9629.710000000001 | 163 | 25880.0 | 49268.37 | 20938.44 | 55.15 |
+---
+
+## customer_name × product_name Performance Matrix
+**ARGS:** —
+**Description:** Shows performance metrics for every customer_name and product_name combination, ordered by profitability.
+```sql
+SELECT
+    customer_name,
+    product_name,
+    COUNT(*) AS transaction_count,
+    SUM(unit_cost) AS total_unit_cost,
+    SUM(unit_price) AS total_unit_price,
+    SUM(quantity) AS total_quantity,
+    SUM(total_cost) AS total_total_cost,
+    ROUND(AVG(margin_pct), 2) AS avg_margin_pct
+FROM data
+GROUP BY customer_name, product_name
+ORDER BY total_profit DESC;
+```
+
+**Status:** ERROR
+
+**Error:** `no such column: total_profit`
+---
+
+## Unique order_id Count by customer_name
+**ARGS:** —
+**Description:** Counts distinct order_id values and key metrics per customer_name to reveal concentration.
+```sql
+SELECT
+    customer_name,
+    COUNT(DISTINCT order_id) AS unique_order_id,
+    COUNT(*) AS transaction_count,
+    SUM(profit) AS total_profit
+FROM data
+GROUP BY customer_name
+ORDER BY unique_order_id DESC;
+```
+
+**Status:** OK
+
+**Rows returned:** 11
+
+| customer_name | unique_order_id | transaction_count | total_profit |
+| --- | --- | --- | --- |
+| Bob Smith | 16 | 16 | 16314.59 |
+| David Brown | 13 | 14 | 17432.91 |
+| Isabella Taylor | 12 | 12 | 16767.09 |
+| Emma Davis | 12 | 12 | 7463.35 |
+| Grace Wilson | 11 | 11 | 10005.31 |
+| Alice Johnson | 10 | 10 | 7739.57 |
+| Henry Moore | 7 | 7 | 5166.55 |
+| Frank Miller | 7 | 7 | 6387.11 |
+| Carol White | 6 | 6 | 4766.610000000001 |
+| Jack Anderson | 4 | 4 | 1660.9 |
+| None | 1 | 1 | 849.95 |
+---
+
+## Unique order_id Count by product_name
+**ARGS:** —
+**Description:** Counts distinct order_id values and key metrics per product_name to reveal concentration.
+```sql
+SELECT
+    product_name,
+    COUNT(DISTINCT order_id) AS unique_order_id,
+    COUNT(*) AS transaction_count,
+    SUM(profit) AS total_profit
+FROM data
+GROUP BY product_name
+ORDER BY unique_order_id DESC;
+```
+
+**Status:** OK
+
+**Rows returned:** 6
+
+| product_name | unique_order_id | transaction_count | total_profit |
+| --- | --- | --- | --- |
+| Monitor | 26 | 27 | 27878.36 |
+| Laptop | 24 | 24 | 50048.57 |
+| Keyboard | 19 | 19 | 6238.8 |
+| Headphones | 15 | 15 | 8454.11 |
+| Mouse | 14 | 14 | 1762.1799999999998 |
+| Mousse | 1 | 1 | 171.92 |
 ---
 
 ### Parametric Lookups
 
-## Filter by date
-**ARGS:** date
-**Description:** Returns all rows where date matches a given value.
+## Filter by customer_name
+**ARGS:** customer_name
+**Description:** Returns all rows where customer_name matches a given value.
 ```sql
 SELECT *
 FROM data
-WHERE date = :date;
+WHERE customer_name = :customer_name;
 ```
 
 **Status:** SKIPPED
@@ -580,14 +713,14 @@ WHERE date = :date;
 **Skipped:** Query requires runtime arguments (:param)
 ---
 
-## Total unit_cost for a Specific date
-**ARGS:** date
-**Description:** Returns total unit_cost for a single date value.
+## Total unit_cost for a Specific customer_name
+**ARGS:** customer_name
+**Description:** Returns total unit_cost for a single customer_name value.
 ```sql
-SELECT date, SUM(unit_cost) AS total_unit_cost
+SELECT customer_name, SUM(unit_cost) AS total_unit_cost
 FROM data
-WHERE date = :date
-GROUP BY date;
+WHERE customer_name = :customer_name
+GROUP BY customer_name;
 ```
 
 **Status:** SKIPPED
@@ -633,18 +766,18 @@ ORDER BY null_count DESC;
 
 | column_name | null_count |
 | --- | --- |
+| total_cost | 2 |
+| profit | 2 |
+| customer_id | 1 |
+| customer_name | 1 |
+| unit_cost | 1 |
+| total_revenue | 1 |
 | order_id | 0 |
 | date | 0 |
-| customer_id | 0 |
-| customer_name | 0 |
 | product_id | 0 |
 | product_name | 0 |
-| unit_cost | 0 |
 | unit_price | 0 |
 | quantity | 0 |
-| total_cost | 0 |
-| total_revenue | 0 |
-| profit | 0 |
 ---
 
 ## Duplicate order_id Values
@@ -713,7 +846,9 @@ ORDER BY quantity;
 
 **Status:** OK
 
-**Rows returned:** 0
+**Rows returned:** 1
 
-*(no rows returned)*
+| order_id | date | customer_id | customer_name | product_id | product_name | unit_cost | unit_price | quantity | total_cost | total_revenue | profit | margin_pct | store_id | store_name | city | payment_method |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ORD0056 | 2025-03-30 | C02 | Bob Smith | P003 | Keyboard | 28.0 | 79.99 | -1 | None | None | None | None | S3 | Store Gamma | Chicago | Debit Card |
 ---

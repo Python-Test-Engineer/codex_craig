@@ -74,18 +74,25 @@ def _check_cancel() -> None:
         raise RuntimeError("Pipeline cancelled.")
 
 
-def _build_sql_catalog_bg(csv_path: Path) -> None:
+def _build_sql_catalog_bg(csv_path: Path, original_filename: str = "") -> None:
     """Background task: generate SQL catalog + run tests, updating status file throughout."""
     SQL_STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    SQL_STATUS_PATH.write_text(_json.dumps({"status": "running"}), encoding="utf-8")
+    SQL_STATUS_PATH.write_text(
+        _json.dumps({"status": "running", "original_filename": original_filename}),
+        encoding="utf-8",
+    )
     try:
         df = pd.read_csv(csv_path)
         _title_path, queries_path = generate_sql_catalog(df, csv_path)
         run_tests_and_merge(queries_path, csv_path)
-        SQL_STATUS_PATH.write_text(_json.dumps({"status": "ready"}), encoding="utf-8")
+        SQL_STATUS_PATH.write_text(
+            _json.dumps({"status": "ready", "original_filename": original_filename}),
+            encoding="utf-8",
+        )
     except Exception as exc:
         SQL_STATUS_PATH.write_text(
-            _json.dumps({"status": "error", "message": str(exc)}), encoding="utf-8"
+            _json.dumps({"status": "error", "message": str(exc), "original_filename": original_filename}),
+            encoding="utf-8",
         )
 
 
@@ -194,7 +201,7 @@ async def upload_csv(background_tasks: BackgroundTasks, file: UploadFile = File(
 
         df = load_dataset(DATA_PATH)
         summary = build_summary(df)
-        background_tasks.add_task(_build_sql_catalog_bg, DATA_PATH)
+        background_tasks.add_task(_build_sql_catalog_bg, DATA_PATH, file.filename or "")
         return CsvUploadResponse(
             message="CSV uploaded successfully and saved as data/data.csv.",
             dataset_path=str(DATA_PATH),
@@ -478,6 +485,15 @@ async def ask_question(payload: AskRequest) -> AskResponse:
 
     loop = asyncio.get_event_loop()
 
+    # ── Resolve original filename from SQL status metadata ────────────────────
+    _original_csv_filename = ""
+    try:
+        if SQL_STATUS_PATH.exists():
+            _status_data = _json.loads(SQL_STATUS_PATH.read_text(encoding="utf-8"))
+            _original_csv_filename = _status_data.get("original_filename", "")
+    except Exception:
+        pass
+
     # ── Step 1: SQL catalog — pre-computed results first, fresh run as fallback ──
     sql_context = ""
     try:
@@ -533,9 +549,10 @@ async def ask_question(payload: AskRequest) -> AskResponse:
                 if entry:
                     source_file = entry.get("source_file", "sql_queries_data.md")
                     precomputed = entry.get("result", "").strip()
+                    _dataset_tag = f" — dataset: '{_original_csv_filename}'" if _original_csv_filename else ""
                     if precomputed and "**Status:** OK" in precomputed:
                         sql_context = (
-                            f"[Source: output/sql/{source_file} — query: '{title}']\n\n"
+                            f"[Source: output/sql/{source_file} — query: '{title}'{_dataset_tag}]\n\n"
                             f"{precomputed}"
                         )
                     else:
@@ -559,7 +576,7 @@ async def ask_question(payload: AskRequest) -> AskResponse:
                             ]
                             sql_context = (
                                 f"[Source: output/sql/{source_file} — query: '{title}'"
-                                " (run against in-memory SQLite)]\n\n"
+                                f" (run against in-memory SQLite){_dataset_tag}]\n\n"
                                 + header_line + "\n" + sep_line + "\n"
                                 + "\n".join(data_lines)
                             )
