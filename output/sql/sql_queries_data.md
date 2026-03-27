@@ -1,937 +1,1564 @@
 # SQL Query Catalog
-<!-- source: data.csv | table: data | generated: 2026-03-27 | queries: 36 -->
+<!-- source: data/data.csv | table: data | generated: 2026-03-27 | queries: 100 -->
 
 ---
 
 ### Overview
 
-## Row Count
+## Total Row Count
 **ARGS:** —
-**Description:** Returns the total number of rows in the dataset.
+**Description:** Returns the total number of order line items in the dataset.
 ```sql
 SELECT COUNT(*) AS row_count
 FROM data;
 ```
-
-**Status:** OK
-
-**Rows returned:** 1
-
-| row_count |
-| --- |
-| 100 |
 ---
 
 ## Column Sample
 **ARGS:** —
-**Description:** Returns the first 10 rows to preview the dataset structure.
+**Description:** Returns the first 10 rows to preview the full dataset structure.
 ```sql
 SELECT *
 FROM data
 LIMIT 10;
 ```
-
-**Status:** OK
-
-**Rows returned:** 10
-
-| order_id | date | customer_id | customer_name | product_id | product_name | unit_cost | unit_price | quantity | total_cost | total_revenue | profit | margin_pct | store_id | store_name | city | payment_method |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ORD0001 | 2025-02-28 | C06 | Frank Miller | P003 | Keyboard | 28.0 | 79.99 | 4 | 112.0 | 319.96 | 207.96 | 65.0 | S1 | Store Alpha | New York | Debit Card |
-| ORD0002 | 2025-03-16 | C08 | Henry Moore | P003 | Keyboard | 28.0 | 79.99 | 10 | 280.0 | 799.9 | 519.9 | 65.0 | S3 | Store Gamma | Chicago | Debit Card |
-| ORD0003 | 2025-09-12 | C09 | Isabella Taylor | P005 | Headphones | 55.0 | 149.99 | 5 | 275.0 | 749.95 | 474.95 | 63.3 | S1 | Store Alpha | New York | Credit Card |
-| ORD0004 | 2025-06-19 | C04 | David Brown | P002 | Mouse | 8.5 | 29.99 | 7 | 59.5 | 209.93 | 150.43 | 71.7 | S3 | Store Gamma | Chicago | Debit Card |
-| ORD0005 | 2025-10-01 | C02 | Bob Smith | P003 | Keyboard | 28.0 | 79.99 | 9 | 252.0 | 719.91 | 467.91 | 65.0 | S1 | Store Alpha | New York | Cash |
-| ORD0006 | 2025-02-11 | C04 | David Brown | P004 | Monitor | 180.0 | 349.99 | 4 | 720.0 | 1399.96 | 679.96 | 48.6 | S1 | Store Alpha | New York | Credit Card |
-| ORD0007 | 2025-02-21 | C09 | Isabella Taylor | P002 | Mouse | 8.5 | 29.99 | 10 | 85.0 | 299.9 | 214.9 | 71.7 | S2 | Store Beta | Los Angeles | Credit Card |
-| ORD0008 | 2025-02-10 | C06 | Frank Miller | P002 | Mouse | 8.5 | 29.99 | 2 | 17.0 | 59.98 | 42.98 | 71.7 | S1 | Store Alpha | New York | PayPal |
-| ORD0009 | 2025-06-29 | C02 | Bob Smith | P005 | Headphones | 55.0 | 149.99 | 8 | 440.0 | 1199.92 | 759.92 | 63.3 | S2 | Store Beta | Los Angeles | Credit Card |
-| ORD0039 | 2025-06-16 | C04 | David Brown | P004 | Monitor | 180.0 | 349.99 | 10 | 1800.0 | 3499.9 | 1699.9 | 48.6 | S3 | Store Gamma | Chicago | Cash |
 ---
 
-### Numeric Summaries
-
-## Summary Stats for unit_cost
+## Distinct Value Count per Categorical Column
 **ARGS:** —
-**Description:** Returns min, max, average, and total for unit_cost.
+**Description:** Shows cardinality for PRODUCTLINE, STATUS, TERRITORY, DEALSIZE, COUNTRY, and CITY.
 ```sql
 SELECT
-    MIN(unit_cost) AS min_val,
-    MAX(unit_cost) AS max_val,
-    ROUND(AVG(unit_cost), 2) AS avg_val,
-    SUM(unit_cost) AS total
+    COUNT(DISTINCT PRODUCTLINE) AS distinct_PRODUCTLINE,
+    COUNT(DISTINCT STATUS) AS distinct_STATUS,
+    COUNT(DISTINCT TERRITORY) AS distinct_TERRITORY,
+    COUNT(DISTINCT DEALSIZE) AS distinct_DEALSIZE,
+    COUNT(DISTINCT COUNTRY) AS distinct_COUNTRY,
+    COUNT(DISTINCT CITY) AS distinct_CITY
 FROM data;
 ```
-
-**Status:** OK
-
-**Rows returned:** 1
-
-| min_val | max_val | avg_val | total |
-| --- | --- | --- | --- |
-| 8.5 | 650.0 | 219.84 | 21764.5 |
 ---
 
-## Summary Stats for unit_price
+## Date Range of Orders
 **ARGS:** —
-**Description:** Returns min, max, average, and total for unit_price.
+**Description:** Returns the earliest and latest ORDERDATE in the dataset.
 ```sql
 SELECT
-    MIN(unit_price) AS min_val,
-    MAX(unit_price) AS max_val,
-    ROUND(AVG(unit_price), 2) AS avg_val,
-    SUM(unit_price) AS total
+    MIN(ORDERDATE) AS earliest_order,
+    MAX(ORDERDATE) AS latest_order
 FROM data;
 ```
-
-**Status:** OK
-
-**Rows returned:** 1
-
-| min_val | max_val | avg_val | total |
-| --- | --- | --- | --- |
-| 29.99 | 999.99 | 376.69 | 37669.0 |
 ---
 
-## Summary Stats for quantity
+## Summary Statistics for Key Measures
 **ARGS:** —
-**Description:** Returns min, max, average, and total for quantity.
+**Description:** Returns min, max, avg, and total for SALES, QUANTITYORDERED, and PRICEEACH.
 ```sql
 SELECT
-    MIN(quantity) AS min_val,
-    MAX(quantity) AS max_val,
-    ROUND(AVG(quantity), 2) AS avg_val,
-    SUM(quantity) AS total
+    MIN(SALES) AS min_SALES,
+    MAX(SALES) AS max_SALES,
+    ROUND(AVG(SALES), 2) AS avg_SALES,
+    ROUND(SUM(SALES), 2) AS total_SALES,
+    MIN(QUANTITYORDERED) AS min_QUANTITYORDERED,
+    MAX(QUANTITYORDERED) AS max_QUANTITYORDERED,
+    ROUND(AVG(QUANTITYORDERED), 2) AS avg_QUANTITYORDERED,
+    MIN(PRICEEACH) AS min_PRICEEACH,
+    MAX(PRICEEACH) AS max_PRICEEACH,
+    ROUND(AVG(PRICEEACH), 2) AS avg_PRICEEACH
 FROM data;
 ```
-
-**Status:** OK
-
-**Rows returned:** 1
-
-| min_val | max_val | avg_val | total |
-| --- | --- | --- | --- |
-| -1 | 10 | 6.12 | 612 |
 ---
 
-## Summary Stats for total_cost
+### Revenue & Sales
+
+## Total Sales Revenue
 **ARGS:** —
-**Description:** Returns min, max, average, and total for total_cost.
+**Description:** Shows the combined sum of all SALES across the entire dataset.
+```sql
+SELECT ROUND(SUM(SALES), 2) AS total_revenue
+FROM data;
+```
+---
+
+## Total Revenue by PRODUCTLINE
+**ARGS:** —
+**Description:** Ranks each product line by total SALES generated, highest first.
 ```sql
 SELECT
-    MIN(total_cost) AS min_val,
-    MAX(total_cost) AS max_val,
-    ROUND(AVG(total_cost), 2) AS avg_val,
-    SUM(total_cost) AS total
-FROM data;
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(*) AS order_lines,
+    SUM(QUANTITYORDERED) AS total_units
+FROM data
+GROUP BY PRODUCTLINE
+ORDER BY total_revenue DESC;
 ```
-
-**Status:** OK
-
-**Rows returned:** 1
-
-| min_val | max_val | avg_val | total |
-| --- | --- | --- | --- |
-| 17.0 | 6500.0 | 1341.73 | 131490.0 |
 ---
 
-## Summary Stats for total_revenue
+## Total Revenue by CUSTOMERNAME
 **ARGS:** —
-**Description:** Returns min, max, average, and total for total_revenue.
+**Description:** Ranks each customer by total SALES generated, highest first.
 ```sql
 SELECT
-    MIN(total_revenue) AS min_val,
-    MAX(total_revenue) AS max_val,
-    ROUND(AVG(total_revenue), 2) AS avg_val,
-    SUM(total_revenue) AS total
-FROM data;
+    CUSTOMERNAME,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    SUM(QUANTITYORDERED) AS total_units
+FROM data
+GROUP BY CUSTOMERNAME
+ORDER BY total_revenue DESC;
 ```
-
-**Status:** OK
-
-**Rows returned:** 1
-
-| min_val | max_val | avg_val | total |
-| --- | --- | --- | --- |
-| 59.98 | 9999.9 | 2308.02 | 228493.87 |
 ---
 
-## Summary Stats for profit
+## Total Revenue by COUNTRY
 **ARGS:** —
-**Description:** Returns min, max, average, and total for profit.
+**Description:** Ranks each country by total SALES generated, highest first.
 ```sql
 SELECT
-    MIN(profit) AS min_val,
-    MAX(profit) AS max_val,
-    ROUND(AVG(profit), 2) AS avg_val,
-    SUM(profit) AS total
+    COUNTRY,
+    TERRITORY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY COUNTRY, TERRITORY
+ORDER BY total_revenue DESC;
+```
+---
+
+## Total Revenue by TERRITORY
+**ARGS:** —
+**Description:** Ranks each sales territory (NA, EMEA, APAC, Japan) by total SALES.
+```sql
+SELECT
+    TERRITORY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY TERRITORY
+ORDER BY total_revenue DESC;
+```
+---
+
+## Total Revenue by CITY
+**ARGS:** —
+**Description:** Ranks each city by total SALES, highest first.
+```sql
+SELECT
+    CITY,
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count
+FROM data
+GROUP BY CITY, COUNTRY
+ORDER BY total_revenue DESC;
+```
+---
+
+## Total Revenue by DEALSIZE
+**ARGS:** —
+**Description:** Compares total SALES across Small, Medium, and Large deal sizes.
+```sql
+SELECT
+    DEALSIZE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(*) AS order_lines,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    ROUND(AVG(SALES), 2) AS avg_sale
+FROM data
+GROUP BY DEALSIZE
+ORDER BY total_revenue DESC;
+```
+---
+
+## Total Revenue by PRODUCTCODE
+**ARGS:** —
+**Description:** Ranks each product code by total SALES, highest first.
+```sql
+SELECT
+    PRODUCTCODE,
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    SUM(QUANTITYORDERED) AS total_units
+FROM data
+GROUP BY PRODUCTCODE, PRODUCTLINE
+ORDER BY total_revenue DESC;
+```
+---
+
+## Average Revenue per Order Line
+**ARGS:** —
+**Description:** Shows the mean SALES value per individual order line.
+```sql
+SELECT ROUND(AVG(SALES), 2) AS avg_revenue_per_line
 FROM data;
 ```
-
-**Status:** OK
-
-**Rows returned:** 1
-
-| min_val | max_val | avg_val | total |
-| --- | --- | --- | --- |
-| 42.98 | 3499.9 | 964.84 | 94553.94 |
 ---
 
-## Total unit_cost by customer_name
+## Average PRICEEACH by PRODUCTLINE
 **ARGS:** —
-**Description:** Ranks each customer_name by total unit_cost, highest first.
+**Description:** Compares average unit selling price across product lines.
 ```sql
-SELECT customer_name, SUM(unit_cost) AS total_unit_cost
+SELECT
+    PRODUCTLINE,
+    ROUND(AVG(PRICEEACH), 2) AS avg_price,
+    ROUND(MIN(PRICEEACH), 2) AS min_price,
+    ROUND(MAX(PRICEEACH), 2) AS max_price
 FROM data
-GROUP BY customer_name
-ORDER BY total_unit_cost DESC;
+GROUP BY PRODUCTLINE
+ORDER BY avg_price DESC;
 ```
-
-**Status:** OK
-
-**Rows returned:** 11
-
-| customer_name | total_unit_cost |
-| --- | --- |
-| Bob Smith | 4200.5 |
-| Alice Johnson | 3378.0 |
-| Isabella Taylor | 3259.5 |
-| David Brown | 2840.0 |
-| Grace Wilson | 1917.5 |
-| Emma Davis | 1735.0 |
-| Frank Miller | 1533.5 |
-| Henry Moore | 1024.0 |
-| Jack Anderson | 913.0 |
-| Carol White | 783.5 |
-| None | 180.0 |
 ---
 
-## Average unit_cost by customer_name
+## Revenue by Year
 **ARGS:** —
-**Description:** Compares average unit_cost across each customer_name.
+**Description:** Shows total SALES grouped by YEAR_ID to compare annual performance.
 ```sql
-SELECT customer_name, ROUND(AVG(unit_cost), 2) AS avg_unit_cost
+SELECT
+    YEAR_ID,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    SUM(QUANTITYORDERED) AS total_units
 FROM data
-GROUP BY customer_name
-ORDER BY avg_unit_cost DESC;
+GROUP BY YEAR_ID
+ORDER BY YEAR_ID;
 ```
-
-**Status:** OK
-
-**Rows returned:** 11
-
-| customer_name | avg_unit_cost |
-| --- | --- |
-| Alice Johnson | 337.8 |
-| Isabella Taylor | 296.32 |
-| Bob Smith | 262.53 |
-| Jack Anderson | 228.25 |
-| Frank Miller | 219.07 |
-| David Brown | 202.86 |
-| None | 180.0 |
-| Grace Wilson | 174.32 |
-| Henry Moore | 146.29 |
-| Emma Davis | 144.58 |
-| Carol White | 130.58 |
 ---
 
-## Total unit_price by customer_name
+## Revenue by Quarter
 **ARGS:** —
-**Description:** Ranks each customer_name by total unit_price, highest first.
+**Description:** Shows total SALES grouped by QTR_ID to reveal quarterly patterns.
 ```sql
-SELECT customer_name, SUM(unit_price) AS total_unit_price
+SELECT
+    QTR_ID,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
 FROM data
-GROUP BY customer_name
-ORDER BY total_unit_price DESC;
+GROUP BY QTR_ID
+ORDER BY QTR_ID;
 ```
-
-**Status:** OK
-
-**Rows returned:** 11
-
-| customer_name | total_unit_price |
-| --- | --- |
-| Bob Smith | 7049.84 |
-| Isabella Taylor | 5739.88 |
-| Alice Johnson | 5369.9 |
-| David Brown | 5089.86 |
-| Grace Wilson | 3419.89 |
-| Emma Davis | 3079.88 |
-| Frank Miller | 2519.93 |
-| Henry Moore | 1889.93 |
-| Jack Anderson | 1579.96 |
-| Carol White | 1579.94 |
-| None | 349.99 |
 ---
 
-### Categorical Distributions
+### Volume & Orders
 
-## Distribution of customer_name
+## Total Units Ordered
 **ARGS:** —
-**Description:** Counts rows for each distinct value of customer_name, ordered by frequency.
+**Description:** Shows the sum of QUANTITYORDERED across all order lines.
 ```sql
-SELECT customer_name, COUNT(*) AS row_count
-FROM data
-GROUP BY customer_name
-ORDER BY row_count DESC;
+SELECT SUM(QUANTITYORDERED) AS total_units_ordered
+FROM data;
 ```
-
-**Status:** OK
-
-**Rows returned:** 11
-
-| customer_name | row_count |
-| --- | --- |
-| Bob Smith | 16 |
-| David Brown | 14 |
-| Isabella Taylor | 12 |
-| Emma Davis | 12 |
-| Grace Wilson | 11 |
-| Alice Johnson | 10 |
-| Henry Moore | 7 |
-| Frank Miller | 7 |
-| Carol White | 6 |
-| Jack Anderson | 4 |
-| None | 1 |
 ---
 
-## Distribution of product_name
+## Total Units by PRODUCTLINE
 **ARGS:** —
-**Description:** Counts rows for each distinct value of product_name, ordered by frequency.
+**Description:** Ranks each product line by total QUANTITYORDERED, highest first.
 ```sql
-SELECT product_name, COUNT(*) AS row_count
+SELECT
+    PRODUCTLINE,
+    SUM(QUANTITYORDERED) AS total_units,
+    COUNT(*) AS order_lines,
+    ROUND(SUM(SALES), 2) AS total_revenue
 FROM data
-GROUP BY product_name
-ORDER BY row_count DESC;
+GROUP BY PRODUCTLINE
+ORDER BY total_units DESC;
 ```
-
-**Status:** OK
-
-**Rows returned:** 6
-
-| product_name | row_count |
-| --- | --- |
-| Monitor | 27 |
-| Laptop | 24 |
-| Keyboard | 19 |
-| Headphones | 15 |
-| Mouse | 14 |
-| Mousse | 1 |
 ---
 
-## Distribution of store_name
+## Total Units by CUSTOMERNAME
 **ARGS:** —
-**Description:** Counts rows for each distinct value of store_name, ordered by frequency.
+**Description:** Ranks each customer by total QUANTITYORDERED, highest first.
 ```sql
-SELECT store_name, COUNT(*) AS row_count
+SELECT
+    CUSTOMERNAME,
+    SUM(QUANTITYORDERED) AS total_units,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    ROUND(SUM(SALES), 2) AS total_revenue
 FROM data
-GROUP BY store_name
-ORDER BY row_count DESC;
+GROUP BY CUSTOMERNAME
+ORDER BY total_units DESC;
 ```
-
-**Status:** OK
-
-**Rows returned:** 3
-
-| store_name | row_count |
-| --- | --- |
-| Store Gamma | 37 |
-| Store Beta | 34 |
-| Store Alpha | 29 |
 ---
 
-## Distribution of city
+## Total Units by PRODUCTCODE
 **ARGS:** —
-**Description:** Counts rows for each distinct value of city, ordered by frequency.
+**Description:** Ranks each product code by total QUANTITYORDERED, highest first.
 ```sql
-SELECT city, COUNT(*) AS row_count
+SELECT
+    PRODUCTCODE,
+    PRODUCTLINE,
+    SUM(QUANTITYORDERED) AS total_units,
+    COUNT(*) AS order_lines
 FROM data
-GROUP BY city
-ORDER BY row_count DESC;
+GROUP BY PRODUCTCODE, PRODUCTLINE
+ORDER BY total_units DESC;
 ```
-
-**Status:** OK
-
-**Rows returned:** 3
-
-| city | row_count |
-| --- | --- |
-| Chicago | 37 |
-| Los Angeles | 34 |
-| New York | 29 |
 ---
 
-## Distribution of payment_method
+## Total Distinct Order Count
 **ARGS:** —
-**Description:** Counts rows for each distinct value of payment_method, ordered by frequency.
+**Description:** Returns the number of unique ORDERNUMBER values in the dataset.
 ```sql
-SELECT payment_method, COUNT(*) AS row_count
-FROM data
-GROUP BY payment_method
-ORDER BY row_count DESC;
+SELECT COUNT(DISTINCT ORDERNUMBER) AS distinct_orders
+FROM data;
 ```
-
-**Status:** OK
-
-**Rows returned:** 4
-
-| payment_method | row_count |
-| --- | --- |
-| Credit Card | 31 |
-| Cash | 26 |
-| Debit Card | 23 |
-| PayPal | 20 |
 ---
 
-### Rankings
-
-## Top 10 customer_name by unit_cost
+## Order Line Count by STATUS
 **ARGS:** —
-**Description:** Lists the 10 customer_name values with the highest total unit_cost.
+**Description:** Shows how many order lines fall under each STATUS value.
 ```sql
-SELECT customer_name, SUM(unit_cost) AS total_unit_cost
+SELECT
+    STATUS,
+    COUNT(*) AS order_lines,
+    COUNT(DISTINCT ORDERNUMBER) AS distinct_orders,
+    ROUND(SUM(SALES), 2) AS total_revenue
 FROM data
-GROUP BY customer_name
-ORDER BY total_unit_cost DESC
-LIMIT 10;
+GROUP BY STATUS
+ORDER BY order_lines DESC;
 ```
-
-**Status:** OK
-
-**Rows returned:** 10
-
-| customer_name | total_unit_cost |
-| --- | --- |
-| Bob Smith | 4200.5 |
-| Alice Johnson | 3378.0 |
-| Isabella Taylor | 3259.5 |
-| David Brown | 2840.0 |
-| Grace Wilson | 1917.5 |
-| Emma Davis | 1735.0 |
-| Frank Miller | 1533.5 |
-| Henry Moore | 1024.0 |
-| Jack Anderson | 913.0 |
-| Carol White | 783.5 |
 ---
 
-## Bottom 10 customer_name by unit_cost
+## Average Quantity per Order Line
 **ARGS:** —
-**Description:** Lists the 10 customer_name values with the lowest total unit_cost.
+**Description:** Returns the mean QUANTITYORDERED per line item.
 ```sql
-SELECT customer_name, SUM(unit_cost) AS total_unit_cost
-FROM data
-GROUP BY customer_name
-ORDER BY total_unit_cost ASC
-LIMIT 10;
+SELECT ROUND(AVG(QUANTITYORDERED), 2) AS avg_quantity_per_line
+FROM data;
 ```
-
-**Status:** OK
-
-**Rows returned:** 10
-
-| customer_name | total_unit_cost |
-| --- | --- |
-| None | 180.0 |
-| Carol White | 783.5 |
-| Jack Anderson | 913.0 |
-| Henry Moore | 1024.0 |
-| Frank Miller | 1533.5 |
-| Emma Davis | 1735.0 |
-| Grace Wilson | 1917.5 |
-| David Brown | 2840.0 |
-| Isabella Taylor | 3259.5 |
-| Alice Johnson | 3378.0 |
 ---
 
-## Top 10 product_name by unit_cost
+## Orders with Most Line Items
 **ARGS:** —
-**Description:** Lists the 10 product_name values with the highest total unit_cost.
+**Description:** Ranks orders by number of line items, identifying large complex orders.
 ```sql
-SELECT product_name, SUM(unit_cost) AS total_unit_cost
+SELECT
+    ORDERNUMBER,
+    COUNT(*) AS line_item_count,
+    ROUND(SUM(SALES), 2) AS total_order_revenue,
+    MAX(CUSTOMERNAME) AS customer
 FROM data
-GROUP BY product_name
-ORDER BY total_unit_cost DESC
-LIMIT 10;
+GROUP BY ORDERNUMBER
+ORDER BY line_item_count DESC
+LIMIT 20;
 ```
-
-**Status:** OK
-
-**Rows returned:** 6
-
-| product_name | total_unit_cost |
-| --- | --- |
-| Laptop | 15600.0 |
-| Monitor | 4680.0 |
-| Headphones | 825.0 |
-| Keyboard | 532.0 |
-| Mouse | 119.0 |
-| Mousse | 8.5 |
 ---
+
+### Customer Analysis
+
+## Customers Ranked by Total Revenue
+**ARGS:** —
+**Description:** Ranks all customers by lifetime SALES, highest first, with order count.
+```sql
+SELECT
+    CUSTOMERNAME,
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    SUM(QUANTITYORDERED) AS total_units
+FROM data
+GROUP BY CUSTOMERNAME, COUNTRY
+ORDER BY total_revenue DESC;
+```
+---
+
+## Customers Ranked by Total Units Ordered
+**ARGS:** —
+**Description:** Ranks customers by total QUANTITYORDERED, highest first.
+```sql
+SELECT
+    CUSTOMERNAME,
+    SUM(QUANTITYORDERED) AS total_units,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    ROUND(SUM(SALES), 2) AS total_revenue
+FROM data
+GROUP BY CUSTOMERNAME
+ORDER BY total_units DESC;
+```
+---
+
+## Customers Ranked by Order Count
+**ARGS:** —
+**Description:** Ranks customers by number of distinct orders placed, highest first.
+```sql
+SELECT
+    CUSTOMERNAME,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    ROUND(SUM(SALES), 2) AS total_revenue
+FROM data
+GROUP BY CUSTOMERNAME
+ORDER BY order_count DESC;
+```
+---
+
+## Top 5 Customers by Revenue
+**ARGS:** —
+**Description:** Lists the 5 highest-revenue customers with total SALES and order count.
+```sql
+SELECT
+    CUSTOMERNAME,
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY CUSTOMERNAME, COUNTRY
+ORDER BY total_revenue DESC
+LIMIT 5;
+```
+---
+
+## Bottom 5 Customers by Revenue
+**ARGS:** —
+**Description:** Lists the 5 lowest-revenue customers to identify underperformers.
+```sql
+SELECT
+    CUSTOMERNAME,
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY CUSTOMERNAME, COUNTRY
+ORDER BY total_revenue ASC
+LIMIT 5;
+```
+---
+
+## Customer Count by COUNTRY
+**ARGS:** —
+**Description:** Counts distinct customers per country, ordered by count descending.
+```sql
+SELECT
+    COUNTRY,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count
+FROM data
+GROUP BY COUNTRY
+ORDER BY customer_count DESC;
+```
+---
+
+## Customer Count by TERRITORY
+**ARGS:** —
+**Description:** Counts distinct customers per territory.
+```sql
+SELECT
+    TERRITORY,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count
+FROM data
+GROUP BY TERRITORY
+ORDER BY customer_count DESC;
+```
+---
+
+## Average Revenue per Customer
+**ARGS:** —
+**Description:** Returns mean total lifetime SALES across all customers.
+```sql
+SELECT ROUND(AVG(customer_total), 2) AS avg_revenue_per_customer
+FROM (
+    SELECT CUSTOMERNAME, SUM(SALES) AS customer_total
+    FROM data
+    GROUP BY CUSTOMERNAME
+);
+```
+---
+
+## Repeat vs One-Time Customers
+**ARGS:** —
+**Description:** Counts customers with more than one order versus exactly one order.
+```sql
+SELECT
+    CASE WHEN order_count > 1 THEN 'Repeat' ELSE 'One-Time' END AS customer_type,
+    COUNT(*) AS customer_count
+FROM (
+    SELECT CUSTOMERNAME, COUNT(DISTINCT ORDERNUMBER) AS order_count
+    FROM data
+    GROUP BY CUSTOMERNAME
+)
+GROUP BY customer_type;
+```
+---
+
+## Customers with Total Revenue Above :threshold
+**ARGS:** threshold
+**Description:** Lists customers whose lifetime SALES exceed a given value.
+```sql
+SELECT
+    CUSTOMERNAME,
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY CUSTOMERNAME, COUNTRY
+HAVING SUM(SALES) > :threshold
+ORDER BY total_revenue DESC;
+```
+---
+
+### Product Analysis
 
 ## Products Ranked by Total Revenue
 **ARGS:** —
-**Description:** Ranks each product by total revenue generated, with units sold, profit, and margin.
+**Description:** Ranks each PRODUCTCODE by total SALES, highest first.
 ```sql
-SELECT product_name,
-       COUNT(*) AS transaction_count,
-       SUM(quantity) AS total_units_sold,
-       ROUND(SUM(total_revenue), 2) AS total_revenue,
-       ROUND(SUM(profit), 2) AS total_profit,
-       ROUND(AVG(margin_pct), 1) AS avg_margin_pct
+SELECT
+    PRODUCTCODE,
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    SUM(QUANTITYORDERED) AS total_units,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
 FROM data
-GROUP BY product_name
+GROUP BY PRODUCTCODE, PRODUCTLINE
 ORDER BY total_revenue DESC;
 ```
-
-**Status:** OK
-
-**Rows returned:** 6
-
-| product_name | transaction_count | total_units_sold | total_revenue | total_profit | avg_margin_pct |
-| --- | --- | --- | --- | --- | --- |
-| Laptop | 24 | 143 | 142998.57 | 50048.57 | 35.0 |
-| Monitor | 27 | 171 | 59848.29 | 27878.36 | 48.6 |
-| Headphones | 15 | 89 | 13349.11 | 8454.11 | 63.3 |
-| Keyboard | 19 | 119 | 9598.8 | 6238.8 | 65.0 |
-| Mouse | 14 | 82 | 2459.18 | 1762.18 | 71.7 |
-| Mousse | 1 | 8 | 239.92 | 171.92 | 71.7 |
 ---
 
 ## Products Ranked by Total Units Sold
 **ARGS:** —
-**Description:** Ranks each product by total quantity sold, with transaction count and revenue.
-```sql
-SELECT product_name,
-       SUM(quantity) AS total_units_sold,
-       COUNT(*) AS transaction_count,
-       ROUND(SUM(total_revenue), 2) AS total_revenue
-FROM data
-GROUP BY product_name
-ORDER BY total_units_sold DESC;
-```
-
-**Status:** OK
-
-**Rows returned:** 6
-
-| product_name | total_units_sold | transaction_count | total_revenue |
-| --- | --- | --- | --- |
-| Monitor | 171 | 27 | 59848.29 |
-| Laptop | 143 | 24 | 142998.57 |
-| Keyboard | 119 | 19 | 9598.8 |
-| Headphones | 89 | 15 | 13349.11 |
-| Mouse | 82 | 14 | 2459.18 |
-| Mousse | 8 | 1 | 239.92 |
----
-
-## Products Ranked by Total Profit
-**ARGS:** —
-**Description:** Ranks each product by total profit earned, with revenue and average margin.
-```sql
-SELECT product_name,
-       ROUND(SUM(profit), 2) AS total_profit,
-       ROUND(SUM(total_revenue), 2) AS total_revenue,
-       ROUND(AVG(margin_pct), 1) AS avg_margin_pct
-FROM data
-GROUP BY product_name
-ORDER BY total_profit DESC;
-```
-
-**Status:** OK
-
-**Rows returned:** 6
-
-| product_name | total_profit | total_revenue | avg_margin_pct |
-| --- | --- | --- | --- |
-| Laptop | 50048.57 | 142998.57 | 35.0 |
-| Monitor | 27878.36 | 59848.29 | 48.6 |
-| Headphones | 8454.11 | 13349.11 | 63.3 |
-| Keyboard | 6238.8 | 9598.8 | 65.0 |
-| Mouse | 1762.18 | 2459.18 | 71.7 |
-| Mousse | 171.92 | 239.92 | 71.7 |
----
-
-### Multi-Dimensional
-
-## unit_cost by customer_name and product_name
-**ARGS:** —
-**Description:** Shows total unit_cost broken down by both customer_name and product_name.
-```sql
-SELECT customer_name, product_name, SUM(unit_cost) AS total_unit_cost
-FROM data
-GROUP BY customer_name, product_name
-ORDER BY total_unit_cost DESC;
-```
-
-**Status:** OK
-
-**Rows returned:** 46
-
-| customer_name | product_name | total_unit_cost |
-| --- | --- | --- |
-| Alice Johnson | Laptop | 3250.0 |
-| Bob Smith | Laptop | 3250.0 |
-| Isabella Taylor | Laptop | 2600.0 |
-| David Brown | Monitor | 1440.0 |
-| David Brown | Laptop | 1300.0 |
-| Emma Davis | Laptop | 1300.0 |
-| Frank Miller | Laptop | 1300.0 |
-| Grace Wilson | Laptop | 1300.0 |
-| Bob Smith | Monitor | 720.0 |
-| Carol White | Monitor | 720.0 |
-| Henry Moore | Laptop | 650.0 |
-| Jack Anderson | Laptop | 650.0 |
-| Isabella Taylor | Monitor | 540.0 |
-| Grace Wilson | Monitor | 360.0 |
-| None | Monitor | 180.0 |
-| Emma Davis | Monitor | 180.0 |
-| Frank Miller | Monitor | 180.0 |
-| Henry Moore | Monitor | 180.0 |
-| Jack Anderson | Monitor | 180.0 |
-| Emma Davis | Headphones | 165.0 |
-
-*…26 more rows not shown*
----
-
-### Multi-Metric Analysis
-
-## Performance Breakdown by customer_name
-**ARGS:** —
-**Description:** Aggregates transaction count and all key metrics (revenue, cost, profit, margins) grouped by customer_name.
+**Description:** Ranks each PRODUCTCODE by total QUANTITYORDERED, highest first.
 ```sql
 SELECT
-    customer_name,
-    COUNT(*) AS transaction_count,
-    SUM(unit_cost) AS total_unit_cost,
-    SUM(unit_price) AS total_unit_price,
-    SUM(quantity) AS total_quantity,
-    SUM(total_cost) AS total_total_cost,
-    SUM(total_revenue) AS total_total_revenue,
-    SUM(profit) AS total_profit,
-    ROUND(AVG(margin_pct), 2) AS avg_margin_pct
+    PRODUCTCODE,
+    PRODUCTLINE,
+    SUM(QUANTITYORDERED) AS total_units,
+    ROUND(SUM(SALES), 2) AS total_revenue
 FROM data
-GROUP BY customer_name
-ORDER BY total_profit DESC;
+GROUP BY PRODUCTCODE, PRODUCTLINE
+ORDER BY total_units DESC;
 ```
-
-**Status:** OK
-
-**Rows returned:** 11
-
-| customer_name | transaction_count | total_unit_cost | total_unit_price | total_quantity | total_total_cost | total_total_revenue | total_profit | avg_margin_pct |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| David Brown | 14 | 2840.0 | 5089.86 | 109 | 22346.0 | 39778.91 | 17432.91 | 52.18 |
-| Isabella Taylor | 12 | 3259.5 | 5739.88 | 98 | 25252.0 | 44469.020000000004 | 16767.09 | 50.07 |
-| Bob Smith | 16 | 4200.5 | 7049.84 | 90 | 24144.5 | 40459.09 | 16314.59 | 50.85 |
-| Grace Wilson | 11 | 1917.5 | 3419.89 | 69 | 12704.0 | 22709.31 | 10005.31 | 56.71 |
-| Alice Johnson | 10 | 3378.0 | 5369.9 | 43 | 12920.0 | 20659.57 | 7739.57 | 51.17 |
-| Emma Davis | 12 | 1735.0 | 3079.88 | 65 | 10186.0 | 17649.35 | 7463.35 | 60.44 |
-| Frank Miller | 7 | 1533.5 | 2519.93 | 39 | 9822.5 | 16209.61 | 6387.11 | 56.96 |
-| Henry Moore | 7 | 1024.0 | 1889.93 | 45 | 6313.0 | 11479.550000000001 | 5166.55 | 57.89 |
-| Carol White | 6 | 783.5 | 1579.94 | 39 | 4523.0 | 9289.61 | 4766.610000000001 | 54.9 |
-| Jack Anderson | 4 | 913.0 | 1579.96 | 10 | 2379.0 | 4039.8999999999996 | 1660.9 | 52.98 |
-| None | 1 | 180.0 | 349.99 | 5 | 900.0 | 1749.95 | 849.95 | 48.6 |
 ---
 
-## Performance Breakdown by product_name
+## Top 5 Products by Revenue
 **ARGS:** —
-**Description:** Aggregates transaction count and all key metrics (revenue, cost, profit, margins) grouped by product_name.
+**Description:** Lists the 5 highest-revenue products with total sales and units.
 ```sql
 SELECT
-    product_name,
-    COUNT(*) AS transaction_count,
-    SUM(unit_cost) AS total_unit_cost,
-    SUM(unit_price) AS total_unit_price,
-    SUM(quantity) AS total_quantity,
-    SUM(total_cost) AS total_total_cost,
-    SUM(total_revenue) AS total_total_revenue,
-    SUM(profit) AS total_profit,
-    ROUND(AVG(margin_pct), 2) AS avg_margin_pct
+    PRODUCTCODE,
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    SUM(QUANTITYORDERED) AS total_units
 FROM data
-GROUP BY product_name
-ORDER BY total_profit DESC;
+GROUP BY PRODUCTCODE, PRODUCTLINE
+ORDER BY total_revenue DESC
+LIMIT 5;
 ```
-
-**Status:** OK
-
-**Rows returned:** 6
-
-| product_name | transaction_count | total_unit_cost | total_unit_price | total_quantity | total_total_cost | total_total_revenue | total_profit | avg_margin_pct |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Laptop | 24 | 15600.0 | 23999.760000000002 | 143 | 92950.0 | 142998.57 | 50048.57 | 35.0 |
-| Monitor | 27 | 4680.0 | 9449.73 | 171 | 29520.0 | 59848.29 | 27878.36 | 48.6 |
-| Headphones | 15 | 825.0 | 2249.8500000000004 | 89 | 4895.0 | 13349.11 | 8454.11 | 63.3 |
-| Keyboard | 19 | 532.0 | 1519.81 | 119 | 3360.0 | 9598.8 | 6238.8 | 65.0 |
-| Mouse | 14 | 119.0 | 419.85999999999996 | 82 | 697.0 | 2459.18 | 1762.1799999999998 | 71.7 |
-| Mousse | 1 | 8.5 | 29.99 | 8 | 68.0 | 239.92 | 171.92 | 71.7 |
 ---
 
-## Performance Breakdown by store_name
+## Bottom 5 Products by Revenue
 **ARGS:** —
-**Description:** Aggregates transaction count and all key metrics (revenue, cost, profit, margins) grouped by store_name.
+**Description:** Lists the 5 lowest-revenue products to identify slow sellers.
 ```sql
 SELECT
-    store_name,
-    COUNT(*) AS transaction_count,
-    SUM(unit_cost) AS total_unit_cost,
-    SUM(unit_price) AS total_unit_price,
-    SUM(quantity) AS total_quantity,
-    SUM(total_cost) AS total_total_cost,
-    SUM(total_revenue) AS total_total_revenue,
-    SUM(profit) AS total_profit,
-    ROUND(AVG(margin_pct), 2) AS avg_margin_pct
+    PRODUCTCODE,
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    SUM(QUANTITYORDERED) AS total_units
 FROM data
-GROUP BY store_name
-ORDER BY total_profit DESC;
+GROUP BY PRODUCTCODE, PRODUCTLINE
+ORDER BY total_revenue ASC
+LIMIT 5;
 ```
-
-**Status:** OK
-
-**Rows returned:** 3
-
-| store_name | transaction_count | total_unit_cost | total_unit_price | total_quantity | total_total_cost | total_total_revenue | total_profit | avg_margin_pct |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Store Gamma | 37 | 10177.0 | 16789.63 | 254 | 72851.5 | 119797.45 | 46945.95 | 51.91 |
-| Store Beta | 34 | 6322.5 | 11249.66 | 195 | 32758.5 | 59428.05 | 26669.55 | 55.47 |
-| Store Alpha | 29 | 5265.0 | 9629.710000000001 | 163 | 25880.0 | 49268.37 | 20938.44 | 55.15 |
 ---
 
-## customer_name × product_name Performance Matrix
+## Top 3 Products by Revenue
 **ARGS:** —
-**Description:** Shows performance metrics for every customer_name and product_name combination, ordered by profitability.
+**Description:** Lists the 3 highest-revenue products for quick-reference ranking.
 ```sql
 SELECT
-    customer_name,
-    product_name,
-    COUNT(*) AS transaction_count,
-    SUM(unit_cost) AS total_unit_cost,
-    SUM(unit_price) AS total_unit_price,
-    SUM(quantity) AS total_quantity,
-    SUM(total_cost) AS total_total_cost,
-    ROUND(AVG(margin_pct), 2) AS avg_margin_pct
+    PRODUCTCODE,
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    SUM(QUANTITYORDERED) AS total_units
 FROM data
-GROUP BY customer_name, product_name
-ORDER BY total_profit DESC;
+GROUP BY PRODUCTCODE, PRODUCTLINE
+ORDER BY total_revenue DESC
+LIMIT 3;
 ```
-
-**Status:** ERROR
-
-**Error:** `no such column: total_profit`
 ---
 
-## Unique order_id Count by customer_name
+## Top 10 Products by Revenue
 **ARGS:** —
-**Description:** Counts distinct order_id values and key metrics per customer_name to reveal concentration.
+**Description:** Lists the 10 highest-revenue products for broader analysis.
 ```sql
 SELECT
-    customer_name,
-    COUNT(DISTINCT order_id) AS unique_order_id,
-    COUNT(*) AS transaction_count,
-    SUM(profit) AS total_profit
+    PRODUCTCODE,
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    SUM(QUANTITYORDERED) AS total_units
 FROM data
-GROUP BY customer_name
-ORDER BY unique_order_id DESC;
+GROUP BY PRODUCTCODE, PRODUCTLINE
+ORDER BY total_revenue DESC
+LIMIT 10;
 ```
-
-**Status:** OK
-
-**Rows returned:** 11
-
-| customer_name | unique_order_id | transaction_count | total_profit |
-| --- | --- | --- | --- |
-| Bob Smith | 16 | 16 | 16314.59 |
-| David Brown | 13 | 14 | 17432.91 |
-| Isabella Taylor | 12 | 12 | 16767.09 |
-| Emma Davis | 12 | 12 | 7463.35 |
-| Grace Wilson | 11 | 11 | 10005.31 |
-| Alice Johnson | 10 | 10 | 7739.57 |
-| Henry Moore | 7 | 7 | 5166.55 |
-| Frank Miller | 7 | 7 | 6387.11 |
-| Carol White | 6 | 6 | 4766.610000000001 |
-| Jack Anderson | 4 | 4 | 1660.9 |
-| None | 1 | 1 | 849.95 |
 ---
 
-## Unique order_id Count by product_name
+## Product Lines Ranked by Total Revenue
 **ARGS:** —
-**Description:** Counts distinct order_id values and key metrics per product_name to reveal concentration.
+**Description:** Ranks product lines by total SALES with units and order count.
 ```sql
 SELECT
-    product_name,
-    COUNT(DISTINCT order_id) AS unique_order_id,
-    COUNT(*) AS transaction_count,
-    SUM(profit) AS total_profit
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    SUM(QUANTITYORDERED) AS total_units,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    COUNT(DISTINCT PRODUCTCODE) AS product_count
 FROM data
-GROUP BY product_name
-ORDER BY unique_order_id DESC;
+GROUP BY PRODUCTLINE
+ORDER BY total_revenue DESC;
 ```
+---
 
-**Status:** OK
+## Product Lines Ranked by Total Units Sold
+**ARGS:** —
+**Description:** Ranks product lines by total QUANTITYORDERED, highest first.
+```sql
+SELECT
+    PRODUCTLINE,
+    SUM(QUANTITYORDERED) AS total_units,
+    ROUND(SUM(SALES), 2) AS total_revenue
+FROM data
+GROUP BY PRODUCTLINE
+ORDER BY total_units DESC;
+```
+---
 
-**Rows returned:** 6
+## Average PRICEEACH vs MSRP by PRODUCTCODE
+**ARGS:** —
+**Description:** Compares average actual selling price against MSRP to reveal discount per product.
+```sql
+SELECT
+    PRODUCTCODE,
+    PRODUCTLINE,
+    ROUND(AVG(PRICEEACH), 2) AS avg_price,
+    MAX(MSRP) AS msrp,
+    ROUND(MAX(MSRP) - AVG(PRICEEACH), 2) AS avg_discount,
+    ROUND((MAX(MSRP) - AVG(PRICEEACH)) / MAX(MSRP) * 100, 1) AS discount_pct
+FROM data
+GROUP BY PRODUCTCODE, PRODUCTLINE
+ORDER BY discount_pct DESC;
+```
+---
 
-| product_name | unique_order_id | transaction_count | total_profit |
-| --- | --- | --- | --- |
-| Monitor | 26 | 27 | 27878.36 |
-| Laptop | 24 | 24 | 50048.57 |
-| Keyboard | 19 | 19 | 6238.8 |
-| Headphones | 15 | 15 | 8454.11 |
-| Mouse | 14 | 14 | 1762.1799999999998 |
-| Mousse | 1 | 1 | 171.92 |
+## Products Selling Below MSRP on Average
+**ARGS:** —
+**Description:** Flags products where average PRICEEACH is less than MSRP.
+```sql
+SELECT
+    PRODUCTCODE,
+    PRODUCTLINE,
+    ROUND(AVG(PRICEEACH), 2) AS avg_price,
+    MAX(MSRP) AS msrp,
+    ROUND(MAX(MSRP) - AVG(PRICEEACH), 2) AS avg_discount
+FROM data
+GROUP BY PRODUCTCODE, PRODUCTLINE
+HAVING AVG(PRICEEACH) < MAX(MSRP)
+ORDER BY avg_discount DESC;
+```
+---
+
+### Territory & Country Analysis
+
+## Countries Ranked by Total Revenue
+**ARGS:** —
+**Description:** Ranks each country by total SALES, highest first.
+```sql
+SELECT
+    COUNTRY,
+    TERRITORY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY COUNTRY, TERRITORY
+ORDER BY total_revenue DESC;
+```
+---
+
+## Countries Ranked by Total Units Ordered
+**ARGS:** —
+**Description:** Ranks each country by total QUANTITYORDERED, highest first.
+```sql
+SELECT
+    COUNTRY,
+    SUM(QUANTITYORDERED) AS total_units,
+    ROUND(SUM(SALES), 2) AS total_revenue
+FROM data
+GROUP BY COUNTRY
+ORDER BY total_units DESC;
+```
+---
+
+## Territories Ranked by Total Revenue
+**ARGS:** —
+**Description:** Ranks NA, EMEA, APAC, Japan by total SALES.
+```sql
+SELECT
+    TERRITORY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    SUM(QUANTITYORDERED) AS total_units
+FROM data
+GROUP BY TERRITORY
+ORDER BY total_revenue DESC;
+```
+---
+
+## Revenue by Territory and Country
+**ARGS:** —
+**Description:** Shows total SALES for each country grouped within its territory.
+```sql
+SELECT
+    TERRITORY,
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count
+FROM data
+GROUP BY TERRITORY, COUNTRY
+ORDER BY TERRITORY, total_revenue DESC;
+```
+---
+
+## Cities Ranked by Total Revenue
+**ARGS:** —
+**Description:** Ranks cities by total SALES, highest first.
+```sql
+SELECT
+    CITY,
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count
+FROM data
+GROUP BY CITY, COUNTRY
+ORDER BY total_revenue DESC;
+```
+---
+
+## Top 5 Countries by Revenue
+**ARGS:** —
+**Description:** Lists the 5 highest-revenue countries with total SALES.
+```sql
+SELECT
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count
+FROM data
+GROUP BY COUNTRY
+ORDER BY total_revenue DESC
+LIMIT 5;
+```
+---
+
+## Bottom 5 Countries by Revenue
+**ARGS:** —
+**Description:** Lists the 5 lowest-revenue countries to identify weak markets.
+```sql
+SELECT
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count
+FROM data
+GROUP BY COUNTRY
+ORDER BY total_revenue ASC
+LIMIT 5;
+```
+---
+
+## Customer Count and Revenue by Territory
+**ARGS:** —
+**Description:** Shows distinct customer count and total SALES per territory.
+```sql
+SELECT
+    TERRITORY,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY TERRITORY
+ORDER BY total_revenue DESC;
+```
+---
+
+### Time-Based Analysis
+
+## Monthly Revenue Trend
+**ARGS:** —
+**Description:** Returns total SALES grouped by year-month, ordered chronologically.
+```sql
+SELECT
+    YEAR_ID,
+    MONTH_ID,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY YEAR_ID, MONTH_ID
+ORDER BY YEAR_ID, MONTH_ID;
+```
+---
+
+## Yearly Revenue Total
+**ARGS:** —
+**Description:** Shows total SALES per YEAR_ID to compare 2003, 2004, and 2005.
+```sql
+SELECT
+    YEAR_ID,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    SUM(QUANTITYORDERED) AS total_units
+FROM data
+GROUP BY YEAR_ID
+ORDER BY YEAR_ID;
+```
+---
+
+## Quarterly Revenue by Year
+**ARGS:** —
+**Description:** Shows SALES per quarter per year to reveal seasonal patterns.
+```sql
+SELECT
+    YEAR_ID,
+    QTR_ID,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY YEAR_ID, QTR_ID
+ORDER BY YEAR_ID, QTR_ID;
+```
+---
+
+## Monthly Revenue by PRODUCTLINE
+**ARGS:** —
+**Description:** Shows monthly SALES trend broken down by product line.
+```sql
+SELECT
+    YEAR_ID,
+    MONTH_ID,
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue
+FROM data
+GROUP BY YEAR_ID, MONTH_ID, PRODUCTLINE
+ORDER BY YEAR_ID, MONTH_ID, total_revenue DESC;
+```
+---
+
+## Best Month by Revenue
+**ARGS:** —
+**Description:** Identifies the single year-month with the highest total SALES.
+```sql
+SELECT
+    YEAR_ID,
+    MONTH_ID,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY YEAR_ID, MONTH_ID
+ORDER BY total_revenue DESC
+LIMIT 1;
+```
+---
+
+## Revenue Between :start_date and :end_date
+**ARGS:** start_date, end_date
+**Description:** Returns total SALES within an arbitrary date range.
+```sql
+SELECT
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    SUM(QUANTITYORDERED) AS total_units
+FROM data
+WHERE ORDERDATE >= :start_date AND ORDERDATE <= :end_date;
+```
+---
+
+## Transactions Between :start_date and :end_date
+**ARGS:** start_date, end_date
+**Description:** Returns all order lines within a specified date range.
+```sql
+SELECT *
+FROM data
+WHERE ORDERDATE >= :start_date AND ORDERDATE <= :end_date
+ORDER BY ORDERDATE;
+```
+---
+
+## Revenue for :year
+**ARGS:** year
+**Description:** Returns total SALES for a specific four-digit year.
+```sql
+SELECT
+    YEAR_ID,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    SUM(QUANTITYORDERED) AS total_units
+FROM data
+WHERE YEAR_ID = :year
+GROUP BY YEAR_ID;
+```
+---
+
+## Revenue for :year_month
+**ARGS:** year_id, month_id
+**Description:** Returns total SALES for a specific year and month combination.
+```sql
+SELECT
+    YEAR_ID,
+    MONTH_ID,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+WHERE YEAR_ID = :year_id AND MONTH_ID = :month_id
+GROUP BY YEAR_ID, MONTH_ID;
+```
+---
+
+## Month-over-Month Revenue Change
+**ARGS:** —
+**Description:** Compares each month's total SALES against the prior month using self-join.
+```sql
+SELECT
+    t1.YEAR_ID,
+    t1.MONTH_ID,
+    ROUND(t1.monthly_revenue, 2) AS revenue,
+    ROUND(t2.monthly_revenue, 2) AS prior_month_revenue,
+    ROUND((t1.monthly_revenue - t2.monthly_revenue) / t2.monthly_revenue * 100, 1) AS pct_change
+FROM (
+    SELECT YEAR_ID, MONTH_ID, SUM(SALES) AS monthly_revenue
+    FROM data
+    GROUP BY YEAR_ID, MONTH_ID
+) t1
+LEFT JOIN (
+    SELECT YEAR_ID, MONTH_ID, SUM(SALES) AS monthly_revenue
+    FROM data
+    GROUP BY YEAR_ID, MONTH_ID
+) t2
+ON (t1.YEAR_ID = t2.YEAR_ID AND t1.MONTH_ID = t2.MONTH_ID + 1)
+OR (t1.YEAR_ID = t2.YEAR_ID + 1 AND t1.MONTH_ID = 1 AND t2.MONTH_ID = 12)
+ORDER BY t1.YEAR_ID, t1.MONTH_ID;
+```
+---
+
+### Status & Deal Size Analysis
+
+## Revenue by STATUS
+**ARGS:** —
+**Description:** Shows total SALES grouped by order STATUS (Shipped, Disputed, Cancelled, etc.).
+```sql
+SELECT
+    STATUS,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(*) AS order_lines,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+GROUP BY STATUS
+ORDER BY total_revenue DESC;
+```
+---
+
+## Order Count by STATUS
+**ARGS:** —
+**Description:** Counts order lines per STATUS to show order pipeline distribution.
+```sql
+SELECT
+    STATUS,
+    COUNT(*) AS order_lines,
+    COUNT(DISTINCT ORDERNUMBER) AS distinct_orders
+FROM data
+GROUP BY STATUS
+ORDER BY order_lines DESC;
+```
+---
+
+## Disputed Orders by CUSTOMERNAME
+**ARGS:** —
+**Description:** Lists customers with Disputed status orders and their total disputed SALES.
+```sql
+SELECT
+    CUSTOMERNAME,
+    COUNT(DISTINCT ORDERNUMBER) AS disputed_orders,
+    ROUND(SUM(SALES), 2) AS total_disputed_revenue
+FROM data
+WHERE STATUS = 'Disputed'
+GROUP BY CUSTOMERNAME
+ORDER BY total_disputed_revenue DESC;
+```
+---
+
+## Revenue by DEALSIZE
+**ARGS:** —
+**Description:** Shows total SALES, order count, and avg SALES per deal size category.
+```sql
+SELECT
+    DEALSIZE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    ROUND(AVG(SALES), 2) AS avg_sale_per_line
+FROM data
+GROUP BY DEALSIZE
+ORDER BY total_revenue DESC;
+```
+---
+
+## DEALSIZE Distribution by PRODUCTLINE
+**ARGS:** —
+**Description:** Shows count of Small, Medium, Large deals for each product line.
+```sql
+SELECT
+    PRODUCTLINE,
+    DEALSIZE,
+    COUNT(*) AS order_lines,
+    ROUND(SUM(SALES), 2) AS total_revenue
+FROM data
+GROUP BY PRODUCTLINE, DEALSIZE
+ORDER BY PRODUCTLINE, DEALSIZE;
+```
+---
+
+## Cancelled or On Hold Orders
+**ARGS:** —
+**Description:** Returns all order lines with STATUS = Cancelled or On Hold.
+```sql
+SELECT
+    ORDERNUMBER,
+    CUSTOMERNAME,
+    PRODUCTCODE,
+    SALES,
+    QUANTITYORDERED,
+    ORDERDATE,
+    STATUS
+FROM data
+WHERE STATUS IN ('Cancelled', 'On Hold')
+ORDER BY ORDERNUMBER;
+```
 ---
 
 ### Parametric Lookups
 
-## Filter by customer_name
+## All Transactions for CUSTOMERNAME = :customer_name
 **ARGS:** customer_name
-**Description:** Returns all rows where customer_name matches a given value.
+**Description:** Returns all order lines for a specific customer ordered by date.
 ```sql
 SELECT *
 FROM data
-WHERE customer_name = :customer_name;
+WHERE CUSTOMERNAME = :customer_name
+ORDER BY ORDERDATE;
 ```
-
-**Status:** SKIPPED
-
-**Skipped:** Query requires runtime arguments (:param)
 ---
 
-## Total unit_cost for a Specific customer_name
+## Revenue Summary for CUSTOMERNAME = :customer_name
 **ARGS:** customer_name
-**Description:** Returns total unit_cost for a single customer_name value.
+**Description:** Returns total SALES, orders, and units for one specific customer.
 ```sql
-SELECT customer_name, SUM(unit_cost) AS total_unit_cost
+SELECT
+    CUSTOMERNAME,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    SUM(QUANTITYORDERED) AS total_units,
+    ROUND(AVG(SALES), 2) AS avg_sale_per_line
 FROM data
-WHERE customer_name = :customer_name
-GROUP BY customer_name;
+WHERE CUSTOMERNAME = :customer_name
+GROUP BY CUSTOMERNAME;
 ```
+---
 
-**Status:** SKIPPED
+## Full Performance for CUSTOMERNAME = :customer_name
+**ARGS:** customer_name
+**Description:** Shows SALES, units, avg price, and order count for one customer.
+```sql
+SELECT
+    CUSTOMERNAME,
+    COUNTRY,
+    TERRITORY,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    COUNT(*) AS order_lines,
+    SUM(QUANTITYORDERED) AS total_units,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    ROUND(AVG(SALES), 2) AS avg_line_revenue,
+    ROUND(AVG(PRICEEACH), 2) AS avg_price
+FROM data
+WHERE CUSTOMERNAME = :customer_name
+GROUP BY CUSTOMERNAME, COUNTRY, TERRITORY;
+```
+---
 
-**Skipped:** Query requires runtime arguments (:param)
+## Top Products for CUSTOMERNAME = :customer_name
+**ARGS:** customer_name
+**Description:** Ranks products by SALES for one specific customer.
+```sql
+SELECT
+    PRODUCTCODE,
+    PRODUCTLINE,
+    SUM(QUANTITYORDERED) AS total_units,
+    ROUND(SUM(SALES), 2) AS total_revenue
+FROM data
+WHERE CUSTOMERNAME = :customer_name
+GROUP BY PRODUCTCODE, PRODUCTLINE
+ORDER BY total_revenue DESC;
+```
+---
+
+## Monthly Revenue Trend for CUSTOMERNAME = :customer_name
+**ARGS:** customer_name
+**Description:** Shows monthly SALES trend for one customer.
+```sql
+SELECT
+    YEAR_ID,
+    MONTH_ID,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    SUM(QUANTITYORDERED) AS total_units
+FROM data
+WHERE CUSTOMERNAME = :customer_name
+GROUP BY YEAR_ID, MONTH_ID
+ORDER BY YEAR_ID, MONTH_ID;
+```
+---
+
+## All Transactions for PRODUCTCODE = :product_code
+**ARGS:** product_code
+**Description:** Returns all order lines for a specific product code.
+```sql
+SELECT *
+FROM data
+WHERE PRODUCTCODE = :product_code
+ORDER BY ORDERDATE;
+```
+---
+
+## Revenue Summary for PRODUCTCODE = :product_code
+**ARGS:** product_code
+**Description:** Returns total SALES, units, and avg price for one product.
+```sql
+SELECT
+    PRODUCTCODE,
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    SUM(QUANTITYORDERED) AS total_units,
+    ROUND(AVG(PRICEEACH), 2) AS avg_price,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+WHERE PRODUCTCODE = :product_code
+GROUP BY PRODUCTCODE, PRODUCTLINE;
+```
+---
+
+## Top Customers for PRODUCTCODE = :product_code
+**ARGS:** product_code
+**Description:** Ranks customers by SALES for a specific product code.
+```sql
+SELECT
+    CUSTOMERNAME,
+    COUNTRY,
+    SUM(QUANTITYORDERED) AS total_units,
+    ROUND(SUM(SALES), 2) AS total_revenue
+FROM data
+WHERE PRODUCTCODE = :product_code
+GROUP BY CUSTOMERNAME, COUNTRY
+ORDER BY total_revenue DESC;
+```
+---
+
+## All Transactions for COUNTRY = :country
+**ARGS:** country
+**Description:** Returns all order lines for a specific country ordered by date.
+```sql
+SELECT *
+FROM data
+WHERE COUNTRY = :country
+ORDER BY ORDERDATE;
+```
+---
+
+## Revenue Summary for COUNTRY = :country
+**ARGS:** country
+**Description:** Returns total SALES, order count, and units for one country.
+```sql
+SELECT
+    COUNTRY,
+    TERRITORY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    SUM(QUANTITYORDERED) AS total_units,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count
+FROM data
+WHERE COUNTRY = :country
+GROUP BY COUNTRY, TERRITORY;
+```
+---
+
+## Revenue and Orders for PRODUCTLINE = :product_line
+**ARGS:** product_line
+**Description:** Returns total SALES, units, and order count for one product line.
+```sql
+SELECT
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    SUM(QUANTITYORDERED) AS total_units,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    COUNT(DISTINCT PRODUCTCODE) AS product_count
+FROM data
+WHERE PRODUCTLINE = :product_line
+GROUP BY PRODUCTLINE;
+```
+---
+
+## Revenue Summary for TERRITORY = :territory
+**ARGS:** territory
+**Description:** Returns total SALES, customer count, and units for one territory.
+```sql
+SELECT
+    TERRITORY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT CUSTOMERNAME) AS customer_count,
+    SUM(QUANTITYORDERED) AS total_units,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count
+FROM data
+WHERE TERRITORY = :territory
+GROUP BY TERRITORY;
+```
+---
+
+## Revenue and Orders for DEALSIZE = :deal_size
+**ARGS:** deal_size
+**Description:** Returns total SALES and order count for a specific deal size.
+```sql
+SELECT
+    DEALSIZE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    COUNT(*) AS order_lines,
+    ROUND(AVG(SALES), 2) AS avg_sale
+FROM data
+WHERE DEALSIZE = :deal_size
+GROUP BY DEALSIZE;
+```
+---
+
+## Orders Above :min_revenue
+**ARGS:** min_revenue
+**Description:** Returns all order lines where SALES exceed a given minimum threshold.
+```sql
+SELECT
+    ORDERNUMBER,
+    CUSTOMERNAME,
+    PRODUCTCODE,
+    SALES,
+    ORDERDATE,
+    STATUS
+FROM data
+WHERE SALES > :min_revenue
+ORDER BY SALES DESC;
+```
+---
+
+## Revenue for CUSTOMERNAME = :customer_name in COUNTRY = :country
+**ARGS:** customer_name, country
+**Description:** Returns SALES filtered to a specific customer-country combination.
+```sql
+SELECT
+    CUSTOMERNAME,
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    SUM(QUANTITYORDERED) AS total_units
+FROM data
+WHERE CUSTOMERNAME = :customer_name AND COUNTRY = :country
+GROUP BY CUSTOMERNAME, COUNTRY;
+```
+---
+
+### Advanced Analytics
+
+## Revenue Share % by PRODUCTLINE
+**ARGS:** —
+**Description:** Shows each product line's SALES as a percentage of the grand total.
+```sql
+SELECT
+    PRODUCTLINE,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    ROUND(SUM(SALES) * 100.0 / (SELECT SUM(SALES) FROM data), 2) AS revenue_share_pct
+FROM data
+GROUP BY PRODUCTLINE
+ORDER BY revenue_share_pct DESC;
+```
+---
+
+## Revenue Share % by CUSTOMERNAME
+**ARGS:** —
+**Description:** Shows each customer's SALES contribution as a percentage of total revenue.
+```sql
+SELECT
+    CUSTOMERNAME,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    ROUND(SUM(SALES) * 100.0 / (SELECT SUM(SALES) FROM data), 2) AS revenue_share_pct
+FROM data
+GROUP BY CUSTOMERNAME
+ORDER BY revenue_share_pct DESC;
+```
+---
+
+## Revenue Share % by COUNTRY
+**ARGS:** —
+**Description:** Shows each country's SALES as a percentage of the grand total.
+```sql
+SELECT
+    COUNTRY,
+    ROUND(SUM(SALES), 2) AS total_revenue,
+    ROUND(SUM(SALES) * 100.0 / (SELECT SUM(SALES) FROM data), 2) AS revenue_share_pct
+FROM data
+GROUP BY COUNTRY
+ORDER BY revenue_share_pct DESC;
+```
+---
+
+## Cumulative Revenue Over Time
+**ARGS:** —
+**Description:** Shows running total of SALES ordered chronologically using self-join.
+```sql
+SELECT
+    t1.YEAR_ID,
+    t1.MONTH_ID,
+    ROUND(t1.monthly_revenue, 2) AS monthly_revenue,
+    ROUND(SUM(t2.monthly_revenue), 2) AS cumulative_revenue
+FROM (
+    SELECT YEAR_ID, MONTH_ID, SUM(SALES) AS monthly_revenue
+    FROM data
+    GROUP BY YEAR_ID, MONTH_ID
+) t1
+JOIN (
+    SELECT YEAR_ID, MONTH_ID, SUM(SALES) AS monthly_revenue
+    FROM data
+    GROUP BY YEAR_ID, MONTH_ID
+) t2
+ON (t2.YEAR_ID < t1.YEAR_ID)
+OR (t2.YEAR_ID = t1.YEAR_ID AND t2.MONTH_ID <= t1.MONTH_ID)
+GROUP BY t1.YEAR_ID, t1.MONTH_ID, t1.monthly_revenue
+ORDER BY t1.YEAR_ID, t1.MONTH_ID;
+```
+---
+
+## Customer Revenue vs Dataset Average
+**ARGS:** —
+**Description:** Compares each customer's total SALES against the overall dataset average.
+```sql
+SELECT
+    CUSTOMERNAME,
+    ROUND(SUM(SALES), 2) AS customer_revenue,
+    ROUND((SELECT AVG(s) FROM (SELECT SUM(SALES) AS s FROM data GROUP BY CUSTOMERNAME)), 2) AS dataset_avg,
+    ROUND(SUM(SALES) - (SELECT AVG(s) FROM (SELECT SUM(SALES) AS s FROM data GROUP BY CUSTOMERNAME)), 2) AS diff_from_avg
+FROM data
+GROUP BY CUSTOMERNAME
+ORDER BY customer_revenue DESC;
+```
+---
+
+## Product Revenue as % of PRODUCTLINE Total
+**ARGS:** —
+**Description:** Shows each product's SALES share within its own product line.
+```sql
+SELECT
+    p.PRODUCTCODE,
+    p.PRODUCTLINE,
+    ROUND(p.product_revenue, 2) AS product_revenue,
+    ROUND(p.product_revenue * 100.0 / pl.line_total, 2) AS pct_of_productline
+FROM (
+    SELECT PRODUCTCODE, PRODUCTLINE, SUM(SALES) AS product_revenue
+    FROM data
+    GROUP BY PRODUCTCODE, PRODUCTLINE
+) p
+JOIN (
+    SELECT PRODUCTLINE, SUM(SALES) AS line_total
+    FROM data
+    GROUP BY PRODUCTLINE
+) pl ON p.PRODUCTLINE = pl.PRODUCTLINE
+ORDER BY p.PRODUCTLINE, pct_of_productline DESC;
+```
+---
+
+## Average Order Value by CUSTOMERNAME
+**ARGS:** —
+**Description:** Shows average SALES per distinct order for each customer.
+```sql
+SELECT
+    CUSTOMERNAME,
+    COUNT(DISTINCT ORDERNUMBER) AS order_count,
+    ROUND(SUM(SALES) / COUNT(DISTINCT ORDERNUMBER), 2) AS avg_order_value,
+    ROUND(SUM(SALES), 2) AS total_revenue
+FROM data
+GROUP BY CUSTOMERNAME
+ORDER BY avg_order_value DESC;
+```
+---
+
+## Pareto: Customers Generating Top 80% of Revenue
+**ARGS:** —
+**Description:** Identifies the high-value customer segment using CTE and running sum.
+```sql
+WITH customer_revenue AS (
+    SELECT
+        CUSTOMERNAME,
+        SUM(SALES) AS total_revenue
+    FROM data
+    GROUP BY CUSTOMERNAME
+    ORDER BY total_revenue DESC
+),
+running_total AS (
+    SELECT
+        CUSTOMERNAME,
+        total_revenue,
+        SUM(total_revenue) OVER (ORDER BY total_revenue DESC) AS cumulative_revenue,
+        SUM(total_revenue) OVER () AS grand_total
+    FROM customer_revenue
+)
+SELECT
+    CUSTOMERNAME,
+    ROUND(total_revenue, 2) AS total_revenue,
+    ROUND(cumulative_revenue, 2) AS cumulative_revenue,
+    ROUND(cumulative_revenue * 100.0 / grand_total, 1) AS cumulative_pct
+FROM running_total
+WHERE cumulative_revenue - total_revenue < grand_total * 0.8
+ORDER BY total_revenue DESC;
+```
 ---
 
 ### Data Quality Checks
 
-## Missing Values per Column
+## NULL Count per Column
 **ARGS:** —
-**Description:** Counts NULL values in each column to identify data gaps.
+**Description:** Counts NULL values in each column, ordered by count descending.
 ```sql
-SELECT 'order_id' AS column_name, COUNT(*) AS null_count FROM data WHERE order_id IS NULL
-UNION ALL
-SELECT 'date' AS column_name, COUNT(*) AS null_count FROM data WHERE date IS NULL
-UNION ALL
-SELECT 'customer_id' AS column_name, COUNT(*) AS null_count FROM data WHERE customer_id IS NULL
-UNION ALL
-SELECT 'customer_name' AS column_name, COUNT(*) AS null_count FROM data WHERE customer_name IS NULL
-UNION ALL
-SELECT 'product_id' AS column_name, COUNT(*) AS null_count FROM data WHERE product_id IS NULL
-UNION ALL
-SELECT 'product_name' AS column_name, COUNT(*) AS null_count FROM data WHERE product_name IS NULL
-UNION ALL
-SELECT 'unit_cost' AS column_name, COUNT(*) AS null_count FROM data WHERE unit_cost IS NULL
-UNION ALL
-SELECT 'unit_price' AS column_name, COUNT(*) AS null_count FROM data WHERE unit_price IS NULL
-UNION ALL
-SELECT 'quantity' AS column_name, COUNT(*) AS null_count FROM data WHERE quantity IS NULL
-UNION ALL
-SELECT 'total_cost' AS column_name, COUNT(*) AS null_count FROM data WHERE total_cost IS NULL
-UNION ALL
-SELECT 'total_revenue' AS column_name, COUNT(*) AS null_count FROM data WHERE total_revenue IS NULL
-UNION ALL
-SELECT 'profit' AS column_name, COUNT(*) AS null_count FROM data WHERE profit IS NULL
-ORDER BY null_count DESC;
+SELECT
+    SUM(CASE WHEN ORDERNUMBER IS NULL THEN 1 ELSE 0 END) AS null_ORDERNUMBER,
+    SUM(CASE WHEN QUANTITYORDERED IS NULL THEN 1 ELSE 0 END) AS null_QUANTITYORDERED,
+    SUM(CASE WHEN PRICEEACH IS NULL THEN 1 ELSE 0 END) AS null_PRICEEACH,
+    SUM(CASE WHEN SALES IS NULL THEN 1 ELSE 0 END) AS null_SALES,
+    SUM(CASE WHEN ORDERDATE IS NULL THEN 1 ELSE 0 END) AS null_ORDERDATE,
+    SUM(CASE WHEN STATUS IS NULL THEN 1 ELSE 0 END) AS null_STATUS,
+    SUM(CASE WHEN PRODUCTLINE IS NULL THEN 1 ELSE 0 END) AS null_PRODUCTLINE,
+    SUM(CASE WHEN PRODUCTCODE IS NULL THEN 1 ELSE 0 END) AS null_PRODUCTCODE,
+    SUM(CASE WHEN CUSTOMERNAME IS NULL THEN 1 ELSE 0 END) AS null_CUSTOMERNAME,
+    SUM(CASE WHEN COUNTRY IS NULL THEN 1 ELSE 0 END) AS null_COUNTRY,
+    SUM(CASE WHEN TERRITORY IS NULL THEN 1 ELSE 0 END) AS null_TERRITORY,
+    SUM(CASE WHEN DEALSIZE IS NULL THEN 1 ELSE 0 END) AS null_DEALSIZE,
+    SUM(CASE WHEN ADDRESSLINE2 IS NULL THEN 1 ELSE 0 END) AS null_ADDRESSLINE2,
+    SUM(CASE WHEN STATE IS NULL THEN 1 ELSE 0 END) AS null_STATE
+FROM data;
 ```
-
-**Status:** OK
-
-**Rows returned:** 12
-
-| column_name | null_count |
-| --- | --- |
-| total_cost | 2 |
-| profit | 2 |
-| customer_id | 1 |
-| customer_name | 1 |
-| unit_cost | 1 |
-| total_revenue | 1 |
-| order_id | 0 |
-| date | 0 |
-| product_id | 0 |
-| product_name | 0 |
-| unit_price | 0 |
-| quantity | 0 |
 ---
 
-## Duplicate order_id Values
+## Duplicate ORDERNUMBER + ORDERLINENUMBER Combinations
 **ARGS:** —
-**Description:** Flags any order_id that appears more than once in the dataset.
+**Description:** Flags any order line combinations that appear more than once.
 ```sql
-SELECT order_id, COUNT(*) AS occurrences
+SELECT
+    ORDERNUMBER,
+    ORDERLINENUMBER,
+    COUNT(*) AS occurrences
 FROM data
-GROUP BY order_id
+GROUP BY ORDERNUMBER, ORDERLINENUMBER
 HAVING COUNT(*) > 1
 ORDER BY occurrences DESC;
 ```
-
-**Status:** OK
-
-**Rows returned:** 1
-
-| order_id | occurrences |
-| --- | --- |
-| ORD0039 | 2 |
 ---
 
-## Negative unit_cost Values
+## Negative SALES Values
 **ARGS:** —
-**Description:** Flags rows where unit_cost is negative, which may indicate data errors.
+**Description:** Flags rows where SALES is negative, indicating potential data entry errors.
+```sql
+SELECT
+    ORDERNUMBER,
+    ORDERLINENUMBER,
+    CUSTOMERNAME,
+    PRODUCTCODE,
+    SALES,
+    ORDERDATE
+FROM data
+WHERE SALES < 0
+ORDER BY SALES;
+```
+---
+
+## Negative QUANTITYORDERED Values
+**ARGS:** —
+**Description:** Flags rows where QUANTITYORDERED is less than zero.
+```sql
+SELECT
+    ORDERNUMBER,
+    ORDERLINENUMBER,
+    CUSTOMERNAME,
+    PRODUCTCODE,
+    QUANTITYORDERED,
+    ORDERDATE
+FROM data
+WHERE QUANTITYORDERED < 0
+ORDER BY QUANTITYORDERED;
+```
+---
+
+## SALES Calculation Validation
+**ARGS:** —
+**Description:** Flags rows where SALES differs from QUANTITYORDERED × PRICEEACH by more than 1.
+```sql
+SELECT
+    ORDERNUMBER,
+    ORDERLINENUMBER,
+    CUSTOMERNAME,
+    PRODUCTCODE,
+    QUANTITYORDERED,
+    PRICEEACH,
+    SALES,
+    ROUND(QUANTITYORDERED * PRICEEACH, 2) AS calculated_sales,
+    ROUND(SALES - QUANTITYORDERED * PRICEEACH, 2) AS discrepancy
+FROM data
+WHERE ABS(SALES - QUANTITYORDERED * PRICEEACH) > 1
+ORDER BY ABS(SALES - QUANTITYORDERED * PRICEEACH) DESC;
+```
+---
+
+## Price Below MSRP Check
+**ARGS:** —
+**Description:** Lists products where average PRICEEACH is less than MSRP, showing discount magnitude.
+```sql
+SELECT
+    PRODUCTCODE,
+    PRODUCTLINE,
+    ROUND(AVG(PRICEEACH), 2) AS avg_price,
+    MAX(MSRP) AS msrp,
+    ROUND(MAX(MSRP) - AVG(PRICEEACH), 2) AS discount_amount,
+    ROUND((MAX(MSRP) - AVG(PRICEEACH)) / MAX(MSRP) * 100, 1) AS discount_pct
+FROM data
+GROUP BY PRODUCTCODE, PRODUCTLINE
+HAVING AVG(PRICEEACH) < MAX(MSRP)
+ORDER BY discount_pct DESC;
+```
+---
+
+## Outlier SALES Rows
+**ARGS:** —
+**Description:** Returns rows where SALES is more than 3 times the dataset average.
+```sql
+SELECT
+    ORDERNUMBER,
+    ORDERLINENUMBER,
+    CUSTOMERNAME,
+    PRODUCTCODE,
+    SALES,
+    ROUND((SELECT AVG(SALES) FROM data), 2) AS dataset_avg,
+    ROUND(SALES / (SELECT AVG(SALES) FROM data), 1) AS times_avg
+FROM data
+WHERE SALES > (SELECT AVG(SALES) * 3 FROM data)
+ORDER BY SALES DESC;
+```
+---
+
+## Rows with Any NULL in Key Columns
+**ARGS:** —
+**Description:** Flags rows missing values in ORDERNUMBER, SALES, CUSTOMERNAME, or PRODUCTCODE.
 ```sql
 SELECT *
 FROM data
-WHERE unit_cost < 0
-ORDER BY unit_cost;
+WHERE ORDERNUMBER IS NULL
+   OR SALES IS NULL
+   OR CUSTOMERNAME IS NULL
+   OR PRODUCTCODE IS NULL
+ORDER BY ORDERNUMBER;
 ```
-
-**Status:** OK
-
-**Rows returned:** 0
-
-*(no rows returned)*
----
-
-## Negative unit_price Values
-**ARGS:** —
-**Description:** Flags rows where unit_price is negative, which may indicate data errors.
-```sql
-SELECT *
-FROM data
-WHERE unit_price < 0
-ORDER BY unit_price;
-```
-
-**Status:** OK
-
-**Rows returned:** 0
-
-*(no rows returned)*
----
-
-## Negative quantity Values
-**ARGS:** —
-**Description:** Flags rows where quantity is negative, which may indicate data errors.
-```sql
-SELECT *
-FROM data
-WHERE quantity < 0
-ORDER BY quantity;
-```
-
-**Status:** OK
-
-**Rows returned:** 1
-
-| order_id | date | customer_id | customer_name | product_id | product_name | unit_cost | unit_price | quantity | total_cost | total_revenue | profit | margin_pct | store_id | store_name | city | payment_method |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ORD0056 | 2025-03-30 | C02 | Bob Smith | P003 | Keyboard | 28.0 | 79.99 | -1 | None | None | None | None | S3 | Store Gamma | Chicago | Debit Card |
 ---

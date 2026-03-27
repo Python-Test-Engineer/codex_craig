@@ -39,7 +39,7 @@ from csv_analyser.services.chart_service import (
     get_chart_path,
     list_chart_artifacts,
 )
-from csv_analyser.services.data_service import DATA_PATH, build_summary, load_dataset
+from csv_analyser.services.data_service import DATA_PATH, build_summary, load_dataset, read_csv_any_encoding
 from csv_analyser.services.insight_service import MODEL as INSIGHTS_MODEL
 from csv_analyser.services.insight_service import generate_insights_bundle, read_final_insights
 from csv_analyser.services.objectives_service import MODEL as OBJECTIVES_MODEL
@@ -84,7 +84,7 @@ def _build_sql_catalog_bg(csv_path: Path, original_filename: str = "") -> None:
         encoding="utf-8",
     )
     try:
-        df = pd.read_csv(csv_path)
+        df = read_csv_any_encoding(csv_path)
         _title_path, queries_path = generate_sql_catalog(df, csv_path)
         run_tests_and_merge(queries_path, csv_path)
         SQL_STATUS_PATH.write_text(
@@ -202,7 +202,7 @@ async def upload_csv(background_tasks: BackgroundTasks, file: UploadFile = File(
             raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
         try:
-            pd.read_csv(BytesIO(content))
+            read_csv_any_encoding(BytesIO(content))
         except Exception as exc:
             raise HTTPException(status_code=400, detail=f"Malformed CSV: {exc}") from exc
 

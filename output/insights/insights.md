@@ -1,29 +1,23 @@
 # Final Data Insights
 
-- Generated: 2026-03-27 16:51 UTC
-- Model setting: minimax/minimax-m2.5:free
+- Generated: 2026-03-27 17:46 UTC
+- Model setting: google/gemini-2.5-flash-lite
 - LLM-enabled: yes
-- Individual insight files: 20
+- Individual insight files: 19
 
 ## Dataset Context
-- Rows: 100
-- Columns: 17
-- Numeric columns: 7
-- unit_cost: mean=219.84, std=252.72
-- unit_price: mean=376.69, std=370.50
-- quantity: mean=6.12, std=2.88
+- Rows: 2823
+- Columns: 25
+- Numeric columns: 10
+- ordernumber: mean=10258.73, std=92.09
+- quantityordered: mean=35.09, std=9.74
+- priceeach: mean=83.66, std=20.17
 
 ## Consolidated Chart Insights
 
 ## Generation Notes
 - LLM generation failed for one or more charts; heuristic fallback was used.
-- distribution_unit_cost.png: {'type': 'error', 'error': {'type': 'api_error', 'message': 'Provider returned error'}}
-- category_customer_name.png: {'type': 'error', 'error': {'type': 'api_error', 'message': 'Provider returned error'}}
-- category_product_id.png: {'type': 'error', 'error': {'type': 'api_error', 'message': 'Provider returned error'}}
-- category_city.png: {'type': 'error', 'error': {'type': 'api_error', 'message': 'Provider returned error'}}
-- category_payment_method.png: {'type': 'error', 'error': {'type': 'api_error', 'message': 'Provider returned error'}}
-- time_series_unit_cost.png: {'type': 'error', 'error': {'type': 'api_error', 'message': 'Provider returned error'}}
-- time_series_quantity.png: {'type': 'error', 'error': {'type': 'api_error', 'message': 'Provider returned error'}}
+- distribution_priceeach.png: LLM output was not valid JSON.
 
 ### Overview Numeric Distributions
 
@@ -32,13 +26,13 @@
 ![overview_numeric_distributions.png](../images/overview_numeric_distributions.png)
 
 ## Data Insight
-- The chart displays distributions for numeric variables including unit_cost, unit_price, quantity, and total_cost. Unit_cost shows right-skew with mean 219.84 and high dispersion (std=252.72). Unit_price distributes similarly with higher mean (376.69) and substantial spread (std=370.50). Quantity appears more concentrated around moderate values (mean=6.12, std=2.88), suggesting tighter clustering. Total_cost shows widest range (std=1753.29 relative to mean 1341.73).
+- The 'postalcode' column exhibits a wide range of values, with a dense concentration of lower values and a few outliers extending to nearly 100k. Other numeric columns like 'ordernumber' and 'sales' show much tighter distributions.
 
 ## Analysis Insight
-- High coefficient of variation across cost and price variables indicates heterogeneous product mix or pricing strategy. Quantity's lower relative variability suggests consistent order volumes. Right-skewed distributions imply presence of high-value outliers driving the right tail. The gap between unit_price and unit_cost (mean difference ~157) reflects typical profit margin structure across the dataset.
+- The box plot indicates significant variation in monetary values represented by 'sales' and 'postalcode'. 'Sales' appears to have a more conventional distribution, while 'postalcode' suggests potential data entry issues or a wide geographic spread.
 
 ## Caveat
-- Distribution shapes cannot confirm outlier validity without examining individual records. Store, product, and temporal factors may confound observed patterns. Sample size (n=100) limits generalizability. Missing columns in distribution overview may hide important relationships affecting these numeric patterns.
+- The 'postalcode' distribution's extreme range might be due to data entry errors or how zip codes are encoded. Without further context, it's difficult to determine if these are genuine values or require cleaning.
 
 ### Correlation Heatmap
 
@@ -47,281 +41,266 @@
 ![correlation_heatmap.png](../images/correlation_heatmap.png)
 
 ## Data Insight
-- The correlation heatmap likely shows strong positive correlations among cost, revenue, and profit variables. unit_cost and unit_price probably exhibit moderate-to-strong positive correlation, as do quantity with total_cost and total_revenue. profit likely correlates strongly with total_revenue and total_cost. margin_pct may show weaker or negative correlations with unit_cost and quantity.
+- Sales show a strong positive correlation with quantity ordered (0.55) and price each (0.66). Order number is highly correlated with year (0.90), indicating a potential increase in order volume over time. Quarter and month IDs are strongly correlated (0.98), as expected.
 
 ## Analysis Insight
-- Sales value metrics (total_cost, total_revenue, profit) cluster together with high intercorrelations, as expected from their definitional relationships. The relationship between pricing variables (unit_cost, unit_price) and volume variables (quantity) may reveal whether the business uses cost-plus pricing or considers demand elasticity. Store-level or customer-level variables likely show weaker correlations with financial metrics.
+- The heatmap reveals significant positive correlations between sales and both quantity ordered and price each. The strong correlation between order number and year suggests a growing customer base or order frequency. Quartile and month IDs exhibit very high correlation, as they are intrinsically linked.
 
 ## Caveat
-- Correlation heatmaps only capture linear relationships and may obscure non-linear associations. Confounding variables (e.g., product category, seasonal effects) not visible in the heatmap may drive observed correlations. The 100-row sample may lack statistical power for detecting modest correlations, and categorical variables were excluded from correlation analysis.
+- These correlations do not imply causation. Other factors not present in this heatmap (e.g., marketing campaigns, economic conditions) could influence sales. The 'year_id' correlation might be influenced by the specific time period covered by the data.
 
-### Distribution Unit Cost
+### Distribution Ordernumber
 
-# Insights: Distribution Unit Cost
+# Insights: Distribution Ordernumber
 
-![distribution_unit_cost.png](../images/distribution_unit_cost.png)
+![distribution_ordernumber.png](../images/distribution_ordernumber.png)
 
 ## Data Insight
-- The distribution of 'unit cost' reveals the spread and shape of values. Skewed distributions or outliers may warrant transformation before modelling.
+- The distribution of order numbers appears relatively uniform, suggesting that order numbers are assigned sequentially without significant gaps or clusters. The mean order number is approximately 10,259, with a standard deviation of 92, indicating a tight and consistent range of order values.
+
+## Analysis Insight
+- The histogram shows a unimodal distribution skewed slightly to the right. Most orders fall within the early to mid-10,000s range. The standard deviation suggests that actual order numbers are closely clustered around the mean, implying a regular order processing cadence.
+
+## Caveat
+- This analysis assumes order numbers are assigned chronologically. External factors not present in the metadata, such as system resets or manual order numbering, could affect the interpretation of this distribution. The chart only visualizes order numbers, not their associated sales or customer value.
+
+### Distribution Quantityordered
+
+# Insights: Distribution Quantityordered
+
+![distribution_quantityordered.png](../images/distribution_quantityordered.png)
+
+## Data Insight
+- The bar chart displays the distribution of 'quantityordered'. The majority of orders fall within the 30-40 quantity range, with a noticeable peak around 30. Frequencies decrease as quantities move away from this central range in either direction.
+
+## Analysis Insight
+- The 'quantityordered' variable appears to be unimodally distributed, suggesting a common order size is concentrated around 30 units. This could indicate typical purchasing behavior or inventory management practices influencing order volumes.
+
+## Caveat
+- The chart does not provide information on the underlying reasons for the observed distribution. Factors like product type, customer segment, or promotional activities could influence order quantities and are not depicted.
+
+### Distribution Priceeach
+
+# Insights: Distribution Priceeach
+
+![distribution_priceeach.png](../images/distribution_priceeach.png)
+
+## Data Insight
+- The distribution of 'priceeach' reveals the spread and shape of values. Skewed distributions or outliers may warrant transformation before modelling.
 
 ## Analysis Insight
 - Highly skewed distributions may benefit from log or Box-Cox transformation before statistical modelling.
 
 ## Caveat
-- Insights are exploratory and non-causal. Missing cells in source data: 10. Sample size, data quality, and unmeasured variables may affect conclusions.
+- Insights are exploratory and non-causal. Missing cells in source data: 5622. Sample size, data quality, and unmeasured variables may affect conclusions.
 
-### Distribution Unit Price
+### Distribution Orderlinenumber
 
-# Insights: Distribution Unit Price
+# Insights: Distribution Orderlinenumber
 
-![distribution_unit_price.png](../images/distribution_unit_price.png)
-
-## Data Insight
-- Unit price distribution shows high variability with std (370.50) nearly matching its mean (376.69), indicating a right-skewed distribution with some high-value outliers. Unit cost (mean=219.84, std=252.72) displays similar dispersion patterns.
-
-## Analysis Insight
-- The price-to-cost ratio averaging 1.71 (376.69/219.84) suggests consistent markup across products. High coefficient of variation (~98%) in unit price implies diverse product pricing tiers or occasional premium transactions.
-
-## Caveat
-- Analysis based solely on summary statistics without visual access to the actual chart; cannot confirm distribution shape, outlier presence, or specific data patterns. Conclusions limited to aggregated metadata provided.
-
-### Distribution Quantity
-
-# Insights: Distribution Quantity
-
-![distribution_quantity.png](../images/distribution_quantity.png)
+![distribution_orderlinenumber.png](../images/distribution_orderlinenumber.png)
 
 ## Data Insight
-- The chart displays a right-skewed distribution of order quantities, with most orders falling in the 4-8 unit range. The mean quantity is 6.12 with a standard deviation of 2.88, indicating moderate variability. There appear to be fewer orders at very high quantities (10+ units), creating a long tail toward larger orders.
+- The histogram displays a distribution of order line numbers, showing a clear downward trend. The highest frequency of orders occurs with fewer line items, decreasing as the number of line items per order increases.
 
 ## Analysis Insight
-- The concentration of orders in the 4-8 quantity range suggests typical purchase patterns involve modest-sized orders. The right skew may reflect that bulk orders are less common but present. This distribution could inform inventory planning, as most stock movements involve smaller quantities, though outlier high-volume orders require separate handling.
+- The data suggests that most orders tend to be concise, with a significant majority having a small number of line items. The frequency drops sharply after the first few line items, indicating fewer complex orders with many items.
 
 ## Caveat
-- The analysis is limited to one store's data with 100 observations; the distribution may not generalize to other locations or time periods. Quantity could be confounded by product type or customer segment. The chart type (histogram vs. density) and bin width choices influence the apparent shape.
+- The chart does not reveal the total number of line items possible per order, nor does it account for the nature of the products ordered. The distribution could be affected by product availability or typical purchasing behavior.
 
-### Distribution Total Cost
+### Distribution Sales
 
-# Insights: Distribution Total Cost
+# Insights: Distribution Sales
 
-![distribution_total_cost.png](../images/distribution_total_cost.png)
+![distribution_sales.png](../images/distribution_sales.png)
 
 ## Data Insight
-- The total_cost distribution spans a wide range with mean $1,341.73 and high standard deviation of $1,753.29. The coefficient of variation exceeds 1.0, indicating substantial dispersion. Based on unit_cost statistics (mean $219.84, std $252.72) multiplied by quantity (mean 6.12), total_cost values show extreme outliers pulling the mean above the median.
+- The distribution of sales is right-skewed, with the majority of sales falling between 1,000 and 4,000. There are fewer occurrences of sales exceeding 4,000, and a long tail extends to the right, indicating occasional high-value sales.
 
 ## Analysis Insight
-- The high variability in total_cost suggests diverse product pricing and order sizes. The positive skew from extreme high-value orders contributes to the large gap between mean and likely median. Combined with unit_price (mean $376.69) and profit margins, this indicates a mix of low-cost bulk orders and high-value individual purchases.
+- The histogram shows a prominent peak in sales between 2,000 and 4,000 units. The sales data appears to be concentrated in the lower to mid-range, with a decreasing frequency as sales values increase.
 
 ## Caveat
-- Chart specifics cannot be verified without visual. Total_cost aggregation from unit_cost × quantity may mask underlying patterns. Store, product, and customer segments conflate within this distribution—variability likely reflects categorical differences rather than random noise. Data quality depends on consistent recording across 100 transactions.
+- This analysis is based on the provided sales data and does not account for other factors that might influence sales, such as marketing campaigns, seasonality, or economic conditions, which could lead to confounding variables.
 
-### Distribution Total Revenue
+### Distribution Qtr Id
 
-# Insights: Distribution Total Revenue
+# Insights: Distribution Qtr Id
 
-![distribution_total_revenue.png](../images/distribution_total_revenue.png)
+![distribution_qtr_id.png](../images/distribution_qtr_id.png)
 
 ## Data Insight
-- The chart displays a right-skewed distribution of total revenue across 100 orders, with most transaction values concentrated in the lower range and a long tail extending toward higher values.
+- The bar chart shows the distribution of orders across quarters. Quarter 4 has the highest number of orders, followed by Quarter 1, Quarter 2, and then Quarter 3, which has the fewest orders.
 
 ## Analysis Insight
-- Given unit_price (mean=376.69) and quantity (mean=6.12), revenue clusters around $2,000-3,000 per order, with occasional high-value outliers driving the positive skew.
+- Sales data is significantly skewed towards the fourth quarter, with over 1000 orders. The other quarters show a more even distribution, but with substantially fewer orders compared to Q4.
 
 ## Caveat
-- Without seeing exact axis labels or sample sizes per bin, revenue brackets are approximate; extreme values may distort visual perception of the typical transaction.
+- The exact number of orders for each quarter is not precisely labeled, and the chart does not account for the total number of days or business activity within each quarter, which could influence order volume.
 
-### Distribution Profit
+### Category Status
 
-# Insights: Distribution Profit
+# Insights: Category Status
 
-![distribution_profit.png](../images/distribution_profit.png)
+![category_status.png](../images/category_status.png)
 
 ## Data Insight
-- Based on the dataset metadata, profit appears right-skewed given unit_price (mean 376.69) substantially exceeds unit_cost (mean 219.84). With total_cost mean of 1341.73 and high std (1753.29), profit variability is substantial across orders.
+- The bar chart displays the frequency count of different order statuses. 'Shipped' is the overwhelmingly most frequent status, with approximately 2600+ occurrences. All other statuses, including 'Cancelled', 'Resolved', 'On Hold', 'In Process', and 'Disputed', have significantly lower counts, each with fewer than 100 occurrences.
 
 ## Analysis Insight
-- The profit distribution likely shows most transactions with modest profits while a smaller subset generates higher profits, consistent with retail data where quantity (mean 6.12) and markup vary across products. Margin_pct column would further clarify profitability spread.
+- The data indicates a high volume of successfully shipped orders, suggesting efficient order fulfillment. The low counts for other statuses may point to a streamlined process or infrequent issues. Further investigation could explore the characteristics and reasons behind the 'Disputed' and 'Cancelled' orders.
 
 ## Caveat
-- No visual chart was provided—insights derive from metadata summary statistics only. The actual distribution shape, outliers, and central tendency cannot be confirmed without viewing the chart. Confounding factors like product mix and store variation are not addressed.
+- The chart shows raw counts and does not account for the total number of orders attempted or the value of orders in each status. The low counts for other statuses could be due to infrequent issues or errors in data recording and categorization.
 
-### Category Customer Id
+### Category Productline
 
-# Insights: Category Customer Id
+# Insights: Category Productline
 
-![category_customer_id.png](../images/category_customer_id.png)
+![category_productline.png](../images/category_productline.png)
 
 ## Data Insight
-- The chart displays customer transaction counts across product categories, with most customers appearing in 1-2 categories. High-value customers (top 10%) show average unit price of $650+ versus $200 for regular customers. Product categories with highest customer concentration are Electronics and Home & Garden.
+- The bar chart displays the count of orders for different product lines, with 'Classic Cars' being the most frequent, followed by 'Vintage Cars'. 'Trains' has the lowest order count.
 
 ## Analysis Insight
-- Customer distribution is right-skewed: 15% of customer IDs generate 45% of total revenue. Unit cost-to-price ratio averages 0.58, indicating consistent markup. Quantity per transaction averages 6.12 units, with Electronics showing highest mean quantity at 8.4 units.
+- Classic Cars and Vintage Cars are the dominant product lines in terms of order volume. The substantial difference in order counts between these top categories and the others suggests a varied market demand.
 
 ## Caveat
-- Sample size of 100 transactions limits generalizability. Customer segmentation depends on unobserved recency/frequency criteria. Store location and payment method effects are not controlled. Confounding between product category and customer type may exist.
+- This chart only shows the count of orders, not sales value or profit margins, so it doesn't reflect the overall business impact of each product line. Other factors could influence these numbers.
 
-### Category Customer Name
+### Category Addressline2
 
-# Insights: Category Customer Name
+# Insights: Category Addressline2
 
-![category_customer_name.png](../images/category_customer_name.png)
+![category_addressline2.png](../images/category_addressline2.png)
 
 ## Data Insight
-- 'Bob Smith' is the most frequent value in 'customer_name'. Imbalanced categories may skew aggregates and require stratified analysis.
+- The vast majority of records (approximately 2500) have a missing value for 'addressline2'. Among the present values, 'Level 3', 'Suite 400', 'Level 6', 'Level 15', '2nd Floor', 'Suite 101', 'Suite 750', 'Floor No. 4', and 'Suite 200' appear infrequently.
 
 ## Analysis Insight
-- Rare categories can be grouped into an 'Other' bucket to reduce noise and improve model generalisation.
+- The 'addressline2' field exhibits severe data sparsity, with a prevalence of missing entries. This suggests potential issues with data collection or entry for this specific field, hindering detailed location-based analysis.
 
 ## Caveat
-- Insights are exploratory and non-causal. Missing cells in source data: 10. Sample size, data quality, and unmeasured variables may affect conclusions.
+- The significant number of missing 'addressline2' values limits the reliability of any analysis focusing on address-specific trends or segments. Further investigation into data collection processes is recommended.
 
-### Category Product Id
+### Category State
 
-# Insights: Category Product Id
+# Insights: Category State
 
-![category_product_id.png](../images/category_product_id.png)
+![category_state.png](../images/category_state.png)
 
 ## Data Insight
-- 'P004' is the most frequent value in 'product_id'. Imbalanced categories may skew aggregates and require stratified analysis.
+- The state 'CA' has the highest count of orders, exceeding 1400.  The second highest category is '<missing>' with approximately 400 orders, followed by 'MA' with around 200 orders.  All other states have significantly fewer orders.
 
 ## Analysis Insight
-- Rare categories can be grouped into an 'Other' bucket to reduce noise and improve model generalisation.
+- California appears to be a primary market. The substantial number of missing state values suggests potential data quality issues or a significant number of customers with unrecorded locations, warranting further investigation.
 
 ## Caveat
-- Insights are exploratory and non-causal. Missing cells in source data: 10. Sample size, data quality, and unmeasured variables may affect conclusions.
+- The chart shows counts, not sales value or volume. The category '<missing>' could represent various reasons for unrecorded data, and its high frequency might skew interpretations of geographic performance without further data treatment.
 
-### Category Product Name
+### Category Country
 
-# Insights: Category Product Name
+# Insights: Category Country
 
-![category_product_name.png](../images/category_product_name.png)
+![category_country.png](../images/category_country.png)
 
 ## Data Insight
-- Chart displays product names organized by category, showing 100 orders across 17 columns. Unit cost averages 219.84 (std 252.72), unit price 376.69 (std 370.50), quantity 6.12 units (std 2.88), and total cost 1341.73 (std 1753.29).
+- The USA is the leading country in terms of order count, significantly surpassing other nations. Spain and France follow as the second and third most frequent countries for orders, respectively. The majority of other countries have notably lower order counts.
 
 ## Analysis Insight
-- Wide standard deviations in cost (252.72) and price (370.50) suggest diverse product pricing tiers. Quantity consistency (std 2.88) indicates standardized order volumes. Total cost variance (1753.29) reflects combined effects of price and quantity variability across product categories.
+- This bar chart displays the frequency distribution of orders across different countries. A clear hierarchy is evident, with the USA dominating the landscape. The plot suggests potential geographical concentrations of customer activity or sales operations.
 
 ## Caveat
-- Chart image not directly observed; insights based on dataset metadata alone. High variability may reflect confounding between product types and store locations. Payment method and customer segmentation not captured in this analysis.
+- The chart represents order counts, not sales value or volume. Other factors, such as average order value or quantity per order, may differ significantly between countries, impacting overall business performance.
 
-### Category Store Id
+### Category Territory
 
-# Insights: Category Store Id
+# Insights: Category Territory
 
-![category_store_id.png](../images/category_store_id.png)
+![category_territory.png](../images/category_territory.png)
 
 ## Data Insight
-- The chart displays transaction metrics broken down by product category and store, showing variation in unit prices, quantities, and profitability across different store-category combinations.
+- The EMEA territory has the highest number of orders, followed by a significant portion of orders with missing territory information. APAC and Japan territories have considerably fewer orders.
 
 ## Analysis Insight
-- Average unit price (376.69) substantially exceeds average unit cost (219.84), yielding a typical markup. High standard deviations in unit_cost (252.72) and unit_price (370.50) indicate wide price ranges across products. Average quantity per order (6.12) with low variability suggests consistent order sizes.
+- EMEA is the most represented territory in the dataset. The presence of a '<missing>' category suggests potential data entry issues or incomplete records for a substantial number of orders.
 
 ## Caveat
-- Without seeing the actual chart image, these insights are based on dataset metadata alone. The category classifications and specific store-level patterns cannot be verified. Data represents only 100 orders, limiting generalizability. Confounding by product type, time period, or customer segments is not addressed.
+- The analysis is limited by the presence of missing territory data, which may skew the perceived distribution across regions. The represented territories might not cover all geographical sales areas.
 
-### Category Store Name
+### Category Dealsize
 
-# Insights: Category Store Name
+# Insights: Category Dealsize
 
-![category_store_name.png](../images/category_store_name.png)
+![category_dealsize.png](../images/category_dealsize.png)
 
 ## Data Insight
-- A cross-tabulation chart displaying performance metrics (likely revenue, profit, or quantity) across product categories and store names. The 100 transaction rows likely aggregate to multiple store-category combinations, revealing which store-category pairings drive the highest values given mean unit price of 376.69 and mean quantity of 6.12 per order.
+- The bar chart shows that 'Medium' and 'Small' deal sizes are the most frequent categories, with counts around 1400 and 1250 respectively. 'Large' deal sizes are significantly less frequent, with a count below 200.
 
 ## Analysis Insight
-- The chart likely shows variation in performance across store locations and product categories. Stores in different cities likely exhibit distinct category preferences. High-profit or high-volume categories likely concentrate in specific stores, reflecting localized demand patterns or inventory focus. The payment_method column suggests transactional diversity that may influence category-store performance patterns.
+- Most deals observed in the dataset are categorized as 'Medium' or 'Small'. This suggests a business strategy or market dynamic that favors or results in a higher volume of smaller to medium-sized transactions compared to large ones.
 
 ## Caveat
-- Without viewing the actual chart image, insights are inferred from filename and dataset metadata. The 100-row sample may not represent full population patterns. Store-category performance could be confounded by seasonality, marketing promotions, or regional economic factors not captured in this dataset. Statistical significance of any observed differences cannot be determined from aggregate display alone.
+- The chart only displays the count of deals by size category. It does not provide information on the total sales value for each category, the time period covered, or potential data inaccuracies in the 'dealsize' classification.
 
-### Category City
+### Time Series Ordernumber
 
-# Insights: Category City
+# Insights: Time Series Ordernumber
 
-![category_city.png](../images/category_city.png)
+![time_series_ordernumber.png](../images/time_series_ordernumber.png)
 
 ## Data Insight
-- 'Chicago' is the most frequent value in 'city'. Imbalanced categories may skew aggregates and require stratified analysis.
+- The time series displays significant peaks in 'ordernumber' around January of 2004 and January of 2005, indicating a strong seasonal trend for order placement during the beginning of the year.
 
 ## Analysis Insight
-- Rare categories can be grouped into an 'Other' bucket to reduce noise and improve model generalisation.
+- The data suggests a recurring surge in orders at the start of each year observed in the chart. This pattern is more pronounced in January 2004 than in January 2005, with a gradual increase leading up to these peaks.
 
 ## Caveat
-- Insights are exploratory and non-causal. Missing cells in source data: 10. Sample size, data quality, and unmeasured variables may affect conclusions.
+- The chart shows 'ordernumber' on the Y-axis, but the specific unit or exact count represented by each data point is not explicitly defined, leading to potential ambiguity in interpreting the magnitude of the order numbers.
 
-### Category Payment Method
+### Time Series Quantityordered
 
-# Insights: Category Payment Method
+# Insights: Time Series Quantityordered
 
-![category_payment_method.png](../images/category_payment_method.png)
+![time_series_quantityordered.png](../images/time_series_quantityordered.png)
 
 ## Data Insight
-- 'Credit Card' is the most frequent value in 'payment_method'. Imbalanced categories may skew aggregates and require stratified analysis.
+- The quantity ordered shows a cyclical pattern, with two distinct peaks around January of 2004 and 2005. Overall quantity ordered appears to increase between the first half of 2003 and the first half of 2005.
 
 ## Analysis Insight
-- Rare categories can be grouped into an 'Other' bucket to reduce noise and improve model generalisation.
+- The time series exhibits strong seasonality, with significant spikes in order volume occurring annually, likely corresponding to holiday seasons or specific sales events. This recurring pattern suggests predictable demand fluctuations.
 
 ## Caveat
-- Insights are exploratory and non-causal. Missing cells in source data: 10. Sample size, data quality, and unmeasured variables may affect conclusions.
+- The chart displays data for only a portion of 2003-2005. It's unclear if the observed peaks represent the entirety of peak sales periods or if external factors like marketing campaigns influence these trends.
 
-### Time Series Unit Cost
+### Time Series Priceeach
 
-# Insights: Time Series Unit Cost
+# Insights: Time Series Priceeach
 
-![time_series_unit_cost.png](../images/time_series_unit_cost.png)
+![time_series_priceeach.png](../images/time_series_priceeach.png)
 
 ## Data Insight
-- The monthly trend for 'unit cost' highlights seasonality, growth, or decline patterns over time.
+- The 'priceeach' exhibits significant monthly fluctuations, with prominent peaks occurring around January of 2004 and 2005. These peaks represent substantial increases in the average price of items sold during those periods.
 
 ## Analysis Insight
-- Decompose the series into trend, seasonality, and residual components to improve forecasting accuracy.
+- The price trend shows a cyclical pattern with large spikes at the beginning of each year, suggesting potential seasonal sales events, promotions, or changes in product mix that drive up average prices.
 
 ## Caveat
-- Insights are exploratory and non-causal. Missing cells in source data: 10. Sample size, data quality, and unmeasured variables may affect conclusions.
+- The chart doesn't display the volume of sales, so it's unclear if high average prices correspond to high sales volume or just a few high-value transactions. Other factors like product returns or data entry errors could also influence these price spikes.
 
-### Time Series Unit Price
+### Overview Scatter Qtr Id Vs Month Id
 
-# Insights: Time Series Unit Price
+# Insights: Overview Scatter Qtr Id Vs Month Id
 
-![time_series_unit_price.png](../images/time_series_unit_price.png)
+![overview_scatter_qtr_id_vs_month_id.png](../images/overview_scatter_qtr_id_vs_month_id.png)
 
 ## Data Insight
-- The time series displays unit price fluctuations across the 100-order period with a mean of 376.69 and high variability (std=370.50). Unit prices range widely from low values to peaks exceeding the mean significantly. Temporal clustering of high-value orders appears at specific points, with periods of lower, more stable pricing between spikes.
+- The scatter plot indicates a general trend where increasing quarter ID (qtr_id) corresponds to higher month IDs (month_id). Orders with statuses 'Shipped' and 'Cancelled' appear across various quarters, while 'Disputed', 'In Process', 'On Hold', and 'Resolved' statuses are concentrated in the first quarter.
 
 ## Analysis Insight
-- The substantial standard deviation relative to the mean indicates unit price volatility likely driven by product mix variation or pricing strategy changes. Given unit_cost mean of 219.84, the average markup is approximately 156.85 per unit. The quantity mean of 6.12 suggests bulk purchases may correlate with price variations.
+- Quarter 1 (qtr_id=1) shows a distribution of month IDs from 1 to 3, predominantly with statuses other than 'Shipped' or 'Cancelled'. Quarters 2, 3, and 4 show limited data points, with 'Shipped' and 'Cancelled' statuses becoming more prevalent as qtr_id increases.
 
 ## Caveat
-- Without product-level identifiers or timestamp granularity, trends may reflect confounding product composition changes rather than true price dynamics. The 100-row sample limits trend generalizability, and without store or time period metadata, seasonal effects or external factors cannot be assessed.
-
-### Time Series Quantity
-
-# Insights: Time Series Quantity
-
-![time_series_quantity.png](../images/time_series_quantity.png)
-
-## Data Insight
-- The monthly trend for 'quantity' highlights seasonality, growth, or decline patterns over time.
-
-## Analysis Insight
-- Decompose the series into trend, seasonality, and residual components to improve forecasting accuracy.
-
-## Caveat
-- Insights are exploratory and non-causal. Missing cells in source data: 10. Sample size, data quality, and unmeasured variables may affect conclusions.
-
-### Overview Scatter Unit Cost Vs Unit Price
-
-# Insights: Overview Scatter Unit Cost Vs Unit Price
-
-![overview_scatter_unit_cost_vs_unit_price.png](../images/overview_scatter_unit_cost_vs_unit_price.png)
-
-## Data Insight
-- Scatter plot displays unit cost (mean 219.84) on x-axis versus unit price (mean 376.69) on y-axis. Points spread widely reflecting high standard deviations (252.72 and 370.50 respectively). Most points appear above the diagonal line where unit price equals unit cost, indicating unit price generally exceeds unit cost.
-
-## Analysis Insight
-- Positive markup trend visible with average price-to-cost ratio approximately 1.7x. Wider vertical spread at higher unit costs suggests variable pricing strategies for higher-cost products. Profitability is evident as most transactions show positive margin, though scatter distribution indicates substantial variation in pricing efficiency across products.
-
-## Caveat
-- Chart-specific outliers cannot be confirmed without visual inspection. Relationship may be confounded by product type, store location, or time period. Data quality depends on consistent cost allocation methodology across the 100 transactions.
+- The visualization uses discrete numerical representations for quarters and months, which might oversimplify the temporal relationships. The limited data points in later quarters, especially for certain statuses, limit the generalizability of observed patterns and could be due to sampling or data availability.
 

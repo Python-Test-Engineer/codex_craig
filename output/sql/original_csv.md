@@ -1,3 +1,3 @@
 # Original CSV
 
-`sales_data_100.csv`
+`sales_data_sample.csv`

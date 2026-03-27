@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from csv_analyser.services.data_service import DATA_PATH
+from csv_analyser.services.data_service import DATA_PATH, read_csv_any_encoding
 
 _HERE = Path(__file__).resolve().parents[3]  # project root
 SQL_DIR = _HERE / "output" / "sql"
@@ -106,32 +106,65 @@ def _entries(df: pd.DataFrame, table: str) -> list[tuple[str, str, str, str, str
             "—",
         ))
 
+    # ── Business metric column detection ─────────────────────────────────────
+    _bm_pct = [n for n in numeric if any(k in n.lower() for k in ["pct", "rate", "margin", "ratio", "score", "avg"])]
+    _bm_sum = [n for n in numeric if n not in _bm_pct]
+    _revenue_col = next((n for n in _bm_sum if any(k in n.lower() for k in ["revenue", "sales", "amount", "income"])), None)
+    _profit_col  = next((n for n in _bm_sum if "profit" in n.lower()), None)
+    _qty_col     = next((n for n in numeric if any(k in n.lower() for k in ["quantity", "qty", "units", "volume", "count"])), None)
+    _ranking_cols = list(dict.fromkeys(c for c in [_revenue_col, _profit_col, _qty_col] if c))
+
     # ── Rankings ─────────────────────────────────────────────────────────────
     if numeric and cats:
-        n0, c0 = numeric[0], cats[0]
-        out.append((
-            "Rankings",
-            f"Top 10 {c0} by {n0}",
-            f"Lists the 10 {c0} values with the highest total {n0}.",
-            f"SELECT {c0}, SUM({n0}) AS total_{n0}\nFROM {table}\nGROUP BY {c0}\nORDER BY total_{n0} DESC\nLIMIT 10;",
-            "—",
-        ))
-        out.append((
-            "Rankings",
-            f"Bottom 10 {c0} by {n0}",
-            f"Lists the 10 {c0} values with the lowest total {n0}.",
-            f"SELECT {c0}, SUM({n0}) AS total_{n0}\nFROM {table}\nGROUP BY {c0}\nORDER BY total_{n0} ASC\nLIMIT 10;",
-            "—",
-        ))
-        if len(cats) >= 2:
-            c1 = cats[1]
+        if _ranking_cols:
+            for cat in cats[:3]:
+                for metric in _ranking_cols:
+                    select_parts = [
+                        f"    {cat}",
+                        f"    COUNT(*) AS transaction_count",
+                        f"    ROUND(SUM({metric}), 2) AS total_{metric}",
+                    ]
+                    if _bm_pct:
+                        select_parts.append(f"    ROUND(AVG({_bm_pct[0]}), 1) AS avg_{_bm_pct[0]}")
+                    select_str = ",\n".join(select_parts)
+                    out.append((
+                        "Rankings",
+                        f"{cat} Ranked by Total {metric}",
+                        f"Ranks each {cat} by total {metric}, highest first.",
+                        (
+                            f"SELECT\n{select_str}\n"
+                            f"FROM {table}\n"
+                            f"GROUP BY {cat}\n"
+                            f"ORDER BY total_{metric} DESC;"
+                        ),
+                        "—",
+                    ))
+        else:
+            # Fallback for datasets without obvious business metric columns
+            n0, c0 = numeric[0], cats[0]
             out.append((
                 "Rankings",
-                f"Top 10 {c1} by {n0}",
-                f"Lists the 10 {c1} values with the highest total {n0}.",
-                f"SELECT {c1}, SUM({n0}) AS total_{n0}\nFROM {table}\nGROUP BY {c1}\nORDER BY total_{n0} DESC\nLIMIT 10;",
+                f"Top 10 {c0} by {n0}",
+                f"Lists the 10 {c0} values with the highest total {n0}.",
+                f"SELECT {c0}, SUM({n0}) AS total_{n0}\nFROM {table}\nGROUP BY {c0}\nORDER BY total_{n0} DESC\nLIMIT 10;",
                 "—",
             ))
+            out.append((
+                "Rankings",
+                f"Bottom 10 {c0} by {n0}",
+                f"Lists the 10 {c0} values with the lowest total {n0}.",
+                f"SELECT {c0}, SUM({n0}) AS total_{n0}\nFROM {table}\nGROUP BY {c0}\nORDER BY total_{n0} ASC\nLIMIT 10;",
+                "—",
+            ))
+            if len(cats) >= 2:
+                c1 = cats[1]
+                out.append((
+                    "Rankings",
+                    f"Top 10 {c1} by {n0}",
+                    f"Lists the 10 {c1} values with the highest total {n0}.",
+                    f"SELECT {c1}, SUM({n0}) AS total_{n0}\nFROM {table}\nGROUP BY {c1}\nORDER BY total_{n0} DESC\nLIMIT 10;",
+                    "—",
+                ))
 
     # ── Multi-dimensional ────────────────────────────────────────────────────
     if len(cats) >= 2 and numeric:
@@ -224,30 +257,67 @@ def _entries(df: pd.DataFrame, table: str) -> list[tuple[str, str, str, str, str
 
     # ── Parametric lookups ───────────────────────────────────────────────────
     if cats and numeric:
-        c0, n0 = cats[0], numeric[0]
-        out.append((
-            "Parametric Lookups",
-            f"Filter by {c0}",
-            f"Returns all rows where {c0} matches a given value.",
-            f"SELECT *\nFROM {table}\nWHERE {c0} = :{c0};",
-            c0,
-        ))
-        out.append((
-            "Parametric Lookups",
-            f"Total {n0} for a Specific {c0}",
-            f"Returns total {n0} for a single {c0} value.",
-            (
-                f"SELECT {c0}, SUM({n0}) AS total_{n0}\n"
-                f"FROM {table}\n"
-                f"WHERE {c0} = :{c0}\n"
-                f"GROUP BY {c0};"
-            ),
-            c0,
-        ))
+        # Build the performance summary metric columns (reused for every category)
+        _param_metrics: list[str] = ["    COUNT(*) AS transaction_count"]
+        if _revenue_col:
+            _param_metrics.append(f"    ROUND(SUM({_revenue_col}), 2) AS total_{_revenue_col}")
+        if _profit_col:
+            _param_metrics.append(f"    ROUND(SUM({_profit_col}), 2) AS total_{_profit_col}")
+        if _qty_col:
+            _param_metrics.append(f"    SUM({_qty_col}) AS total_{_qty_col}")
+        if _bm_pct:
+            _param_metrics.append(f"    ROUND(AVG({_bm_pct[0]}), 1) AS avg_{_bm_pct[0]}")
+        # Fallback: if no business cols detected, include first two numeric cols
+        if len(_param_metrics) == 1 and numeric:
+            for n in numeric[:2]:
+                _param_metrics.append(f"    ROUND(SUM({n}), 2) AS total_{n}")
+        _param_metrics_str = ",\n".join(_param_metrics)
+
+        for cat in cats[:4]:
+            out.append((
+                "Parametric Lookups",
+                f"Filter by {cat}",
+                f"Returns all rows where {cat} matches a given value.",
+                f"SELECT *\nFROM {table}\nWHERE {cat} = :{cat};",
+                cat,
+            ))
+            out.append((
+                "Parametric Lookups",
+                f"Performance Summary for a Specific {cat}",
+                f"Returns transaction count and all key metrics for a single {cat} value.",
+                (
+                    f"SELECT\n    {cat},\n{_param_metrics_str}\n"
+                    f"FROM {table}\n"
+                    f"WHERE {cat} = :{cat}\n"
+                    f"GROUP BY {cat};"
+                ),
+                cat,
+            ))
+
+        # Cross-dimensional: breakdown of cat1 values for a specific cat0
+        if len(cats) >= 2 and (_revenue_col or _profit_col):
+            c0, c1 = cats[0], cats[1]
+            _biz_col = _revenue_col or _profit_col
+            out.append((
+                "Parametric Lookups",
+                f"{c0} × {c1} Revenue Breakdown",
+                f"Returns {c1} revenue breakdown for a specific {c0} value.",
+                (
+                    f"SELECT\n"
+                    f"    {c1},\n"
+                    f"    COUNT(*) AS transaction_count,\n"
+                    f"    ROUND(SUM({_biz_col}), 2) AS total_{_biz_col}\n"
+                    f"FROM {table}\n"
+                    f"WHERE {c0} = :{c0}\n"
+                    f"GROUP BY {c1}\n"
+                    f"ORDER BY total_{_biz_col} DESC;"
+                ),
+                c0,
+            ))
 
     # ── Time-based ───────────────────────────────────────────────────────────
     if dates and numeric:
-        d0, n0 = dates[0], numeric[0]
+        d0, n0 = dates[0], _sort_col or numeric[0]
         out.append((
             "Time-Based Analysis",
             f"Monthly {n0} Trend",
@@ -531,7 +601,7 @@ def run_tests_and_merge(queries_path: Path, csv_path: Path) -> dict[str, int]:
     import sqlite3
 
     table = _table_name(csv_path)
-    df = pd.read_csv(csv_path)
+    df = read_csv_any_encoding(csv_path)
     con = sqlite3.connect(":memory:")
     df.to_sql(table, con, if_exists="replace", index=False)
     con.row_factory = sqlite3.Row
@@ -696,7 +766,7 @@ def run_query_against_db(sql: str, params: dict[str, str] | None = None, limit: 
         raise FileNotFoundError("data.csv not found — upload a CSV first.")
 
     table = _table_name(DATA_PATH)
-    df = pd.read_csv(DATA_PATH)
+    df = read_csv_any_encoding(DATA_PATH)
     con = sqlite3.connect(":memory:")
     df.to_sql(table, con, if_exists="replace", index=False)
 

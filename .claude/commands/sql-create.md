@@ -87,6 +87,16 @@ Work through every title in order. For each one, produce:
   use a named placeholder: `WHERE column = :param_name` — record `param_name` as an ARG
 - `ARGS` — comma-separated placeholder names, or `—` if none
 
+**Parametric query rules** — generate parametric queries for *every* key categorical
+dimension (product, customer, store, region, etc.), not just the first one:
+- For each dimension, produce at minimum: (1) a full row filter (`SELECT * WHERE dim = :dim`),
+  and (2) a performance summary with all key metrics (`COUNT`, `SUM(revenue)`, `SUM(profit)`,
+  `SUM(quantity)`, `AVG(margin)`) filtered to that dimension value.
+- Performance summaries must use `:dim_param` named placeholder and GROUP BY the dimension.
+- Also produce at least one cross-dimensional query: breakdown of a second dimension's revenue
+  filtered by the first (e.g. "product revenue for a specific customer").
+- This ensures Ask AI can answer "show me all sales for [any entity]" across the entire dataset.
+
 **Description** — use the `DESCRIPTION` extracted from `SQL_TITLES_FILE` if present.
 If the titles file had no description for this entry, generate one following these rules:
 - One sentence, max 20 words

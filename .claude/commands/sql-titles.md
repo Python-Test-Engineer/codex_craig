@@ -43,33 +43,121 @@ Note any obvious **data quality issues** visible in the sample:
 ## Step 2 — Design the query catalog
 
 Based on the columns and data discovered in Step 1, design a comprehensive set of SQL query
-titles organised into thematic sections. Aim for 40–60 query titles total.
+titles organised into thematic sections. **Aim for 80–100 query titles total.**
 
-Always include these standard sections if supported by the data:
+Think like an experienced SQL Administrator being examined in a technical interview — cover
+every angle: aggregations, rankings, parametric lookups, cross-dimensional breakdowns,
+time-series, advanced analytics, and data quality. Leave no obvious question unanswered.
 
-1. **Revenue & Sales** — totals, breakdowns by each dimension, averages
-2. **Volume & Orders** — counts of transactions, units, averages
-3. **Profit & Margin** — profit totals, margins, rankings
-4. **Customer Analysis** — top customers, frequency, lifetime value (if customer data present)
-5. **Product Analysis** — bestsellers, share of total, unit economics (if product data present)
-6. **[Entity] Analysis** — one section per additional key entity (store, region, channel, etc.)
-7. **Time-Based Analysis** — trends, period comparisons, seasonality (if date column present)
-8. **[Category] Analysis** — one section per categorical dimension (payment method, status, etc.)
-9. **Data Quality Checks** — queries targeting the specific issues spotted in Step 1
+---
 
-**Mandatory ranking queries** — always generate these if the relevant columns exist. Users
-frequently ask natural-language questions like "which product has the highest sales?" and
-the answer must be findable in the catalog:
+### Standard analytical sections
 
-- For every key dimension (product, customer, store, region, etc.):
-  - **[Dimension] Ranked by Total Revenue** — `SUM(revenue_col)` per dimension, DESC
-  - **[Dimension] Ranked by Total Profit** — `SUM(profit_col)` per dimension, DESC
-  - **[Dimension] Ranked by Total Units Sold** — `SUM(quantity_col)` per dimension, DESC
-- Each ranking query must include supporting columns (transaction count, revenue, profit,
-  avg margin) so a single query answers the full picture, not just one metric.
+Always include these sections if supported by the data:
 
-Tailor section names and query titles to the actual column names and entities in this dataset.
-Do not use generic placeholder names — use the real product names, store names, etc. where helpful.
+1. **Overview** — row count, column sample, distinct value counts per key column
+2. **Revenue & Sales** — grand total, by each dimension (product/customer/store/region), averages, per-unit
+3. **Volume & Orders** — transaction counts, units sold, average order size, order frequency
+4. **Profit & Margin** — profit totals, average margin, margin by dimension, margin distribution
+5. **Customer Analysis** — top customers by revenue/profit/orders, frequency, recency, avg spend (if customer data)
+6. **Product Analysis** — bestsellers by revenue/units/profit, slowest sellers, unit economics, price vs cost (if product data)
+7. **[Entity] Analysis** — one section per additional key entity (store, region, channel, etc.)
+8. **Time-Based Analysis** — monthly/yearly trends, period-over-period comparison, seasonality (if date col)
+9. **[Category] Analysis** — one section per remaining categorical dimension (payment method, status, tier, etc.)
+10. **Data Quality Checks** — NULL counts, duplicates, negative values, referential integrity, calculation consistency
+
+---
+
+### Mandatory ranking queries
+
+For **every key dimension** (product, customer, store, region, etc.) generate all of:
+
+- **[Dimension] Ranked by Total Revenue** — `SUM(revenue)` per dimension, DESC, with transaction count + avg margin
+- **[Dimension] Ranked by Total Profit** — `SUM(profit)` per dimension, DESC
+- **[Dimension] Ranked by Total Units Sold** — `SUM(quantity)` per dimension, DESC
+- **Top 5 [Dimension] by Revenue** — `LIMIT 5`, DESC — quick "who's #1" answer
+- **Bottom 5 [Dimension] by Revenue** — `LIMIT 5`, ASC — identifies underperformers
+
+---
+
+### Mandatory parametric queries (comprehensive)
+
+For **every key categorical dimension** generate ALL of the following. Use named placeholders
+(`:param_name`). These are the most valuable queries for Ask AI — anticipate every entity-
+specific question a business user could ask.
+
+**Per single dimension (repeat for each: customer, product, store, city, payment method, etc.):**
+
+- **All Transactions for [Dimension] = :param** — `SELECT * WHERE dim = :param ORDER BY date`
+- **Revenue Summary for [Dimension] = :param** — total revenue, orders, units, avg order value for one value
+- **Full Performance for [Dimension] = :param** — revenue, profit, units, avg margin, order count for one value
+- **Monthly Revenue Trend for [Dimension] = :param** — revenue grouped by month for one entity (if date col)
+- **Top Products Bought by [Customer] = :param** — revenue/units by product filtered to one customer
+- **Top Customers for [Product] = :param** — revenue/units by customer filtered to one product
+- **[Dimension] Comparison: :param vs dataset average** — entity's metrics vs overall avg (use subquery or CTE)
+
+**Cross-dimensional parametric (at least one per dimension pair):**
+
+- **Revenue for [Dim1] = :d1 and [Dim2] = :d2** — filtered to specific combination of two dimensions
+- **[Dim2] Breakdown for [Dim1] = :param** — aggregate Dim2 values filtered to one Dim1 value
+- **[Dim1] Performance in [Store/Region] = :param** — product/customer metrics filtered to one location
+
+**Date-parametric (if date column present):**
+
+- **Revenue Between :start_date and :end_date** — total revenue in arbitrary date range
+- **Transactions Between :start_date and :end_date** — all rows in date range
+- **[Dimension] Performance Between :start_date and :end_date** — dimension breakdown in date range
+- **Revenue for :year** — total revenue for a specific year (`:year` as 4-digit string)
+- **Revenue for :year_month** — total revenue for a specific month (`:year_month` as `YYYY-MM`)
+
+**Threshold / comparison parametric:**
+
+- **Orders Above :min_revenue** — transactions where revenue exceeds a given threshold
+- **Customers with Total Revenue Above :threshold** — customers whose lifetime spend exceeds threshold
+- **Products with Margin Below :min_margin** — flags low-margin products below a threshold
+- **Top :n Products by Revenue** — parameterised N (note: SQLite doesn't support `:n` in LIMIT, so use a fixed set of top-N queries: top 3, 5, 10)
+
+---
+
+### Advanced analytics queries
+
+Include these if the data supports them (they distinguish a strong SQL skill set):
+
+- **Revenue Share % by [Dimension]** — each dimension's revenue as percentage of grand total (subquery)
+- **Cumulative Revenue Over Time** — running total of revenue ordered by date (window function or self-join)
+- **Month-over-Month Revenue Change** — revenue this month vs prior month as % change (LAG or self-join)
+- **[Dimension] Revenue as % of Category Total** — e.g. each product's revenue share within its category
+- **Average Order Value by [Dimension]** — `SUM(revenue) / COUNT(DISTINCT order_id)` per dimension
+- **Revenue per Transaction by [Dimension]** — avg revenue per row grouped by dimension
+- **Pareto: Customers Generating Top 80% of Revenue** — identify high-value customer segment (CTE + running sum)
+- **Products Never Ordered Together** — products with no overlap in customer base (if order detail data)
+- **Repeat vs One-Time [Customers]** — count customers with >1 order vs exactly 1 (if order ID present)
+- **[Dimension] Contribution to Total Profit** — profit contribution % and rank for each dimension value
+
+---
+
+### Data quality deep-dive queries
+
+Go beyond basic NULL counts — an experienced DBA would also check:
+
+- **NULL Count per Column** — counts NULLs in every column, ordered by severity
+- **Duplicate [ID] Values** — finds any primary key appearing more than once
+- **Negative [Metric] Values** — flags rows where quantity/cost/revenue is negative
+- **[Revenue] Calculation Validation** — checks if `quantity × unit_price ≈ total_revenue` (within rounding)
+- **[Cost] Calculation Validation** — checks if `quantity × unit_cost ≈ total_cost`
+- **Margin Consistency Check** — flags rows where `(revenue - cost) / revenue` differs from stored margin_pct
+- **Price Below Cost (Loss-Making Rows)** — rows where `unit_price < unit_cost`
+- **Outlier [Revenue] Rows** — rows where revenue is more than 3× the average (potential data entry errors)
+- **[ID] Without Matching [FK]** — orphaned records where a foreign key has no matching parent
+- **Distinct Value Count per Categorical Column** — cardinality of every text column
+- **Typo Detection in [Category]** — groups similar-looking category values (e.g. "Mousse" vs "Mouse")
+- **Rows with Any NULL** — flags any row containing at least one NULL in key columns
+
+---
+
+Tailor every title and section name to the actual columns and entities in this dataset.
+Use real column names, real entity names (product names, store names, etc.) in titles where helpful.
+Do not use generic placeholders — if the dimension is `store_name`, say `store_name`, not `[Dimension]`.
 
 ---
 
@@ -142,4 +230,5 @@ Tell the user:
 - Total number of query titles written
 - Sections included
 - Path to the output file (`output/sql/sql_title.md`)
+- Count of parametric queries (those with `:param` placeholders)
 - Any data quality issues spotted during inspection

@@ -1,80 +1,82 @@
 # CSV Dataset Report
 
 ## Dataset Snapshot
-- Rows: 100
-- Columns: 17
-- Numeric columns: 7
-- Categorical columns: 9
-- Date/time columns: date
-- Missing cells: 10
+- Rows: 2823
+- Columns: 25
+- Numeric columns: 10
+- Categorical columns: 14
+- Date/time columns: orderdate
+- Missing cells: 5622
 
 ## Numeric Summary
-- **unit_cost**: mean=219.84, std=252.72, min=8.50, max=650.00, median=180.00
-- **unit_price**: mean=376.69, std=370.50, min=29.99, max=999.99, median=349.99
-- **quantity**: mean=6.12, std=2.88, min=-1.00, max=10.00, median=7.00
-- **total_cost**: mean=1341.73, std=1753.29, min=17.00, max=6500.00, median=440.00
-- **total_revenue**: mean=2308.02, std=2624.08, min=59.98, max=9999.90, median=1049.93
-- **profit**: mean=964.84, std=902.45, min=42.98, max=3499.90, median=617.43
-- **margin_pct**: mean=54.07, std=13.47, min=35.00, max=71.70, median=48.60
+- **ordernumber**: mean=10258.73, std=92.09, min=10100.00, max=10425.00, median=10262.00
+- **quantityordered**: mean=35.09, std=9.74, min=6.00, max=97.00, median=35.00
+- **priceeach**: mean=83.66, std=20.17, min=26.88, max=100.00, median=95.70
+- **orderlinenumber**: mean=6.47, std=4.23, min=1.00, max=18.00, median=6.00
+- **sales**: mean=3553.89, std=1841.87, min=482.13, max=14082.80, median=3184.80
+- **qtr_id**: mean=2.72, std=1.20, min=1.00, max=4.00, median=3.00
+- **month_id**: mean=7.09, std=3.66, min=1.00, max=12.00, median=8.00
+- **year_id**: mean=2003.82, std=0.70, min=2003.00, max=2005.00, median=2004.00
 
 ## Top Category Distributions
-### customer_id (top 5 of 10 unique values)
-- C02: 16 (16.0%)
-- C04: 14 (14.0%)
-- C09: 12 (12.0%)
-- C05: 12 (12.0%)
-- C07: 11 (11.0%)
-### customer_name (top 5 of 10 unique values)
-- Bob Smith: 16 (16.0%)
-- David Brown: 14 (14.0%)
-- Isabella Taylor: 12 (12.0%)
-- Emma Davis: 12 (12.0%)
-- Grace Wilson: 11 (11.0%)
-### product_id (top 5 of 5 unique values)
-- P004: 27 (27.0%)
-- P001: 24 (24.0%)
-- P003: 19 (19.0%)
-- P005: 15 (15.0%)
-- P002: 15 (15.0%)
-### product_name (top 5 of 6 unique values)
-- Monitor: 27 (27.0%)
-- Laptop: 24 (24.0%)
-- Keyboard: 19 (19.0%)
-- Headphones: 15 (15.0%)
-- Mouse: 14 (14.0%)
-### store_id (top 3 of 3 unique values)
-- S3: 37 (37.0%)
-- S2: 34 (34.0%)
-- S1: 29 (29.0%)
+### status (top 5 of 6 unique values)
+- Shipped: 2617 (92.7%)
+- Cancelled: 60 (2.1%)
+- Resolved: 47 (1.7%)
+- On Hold: 44 (1.6%)
+- In Process: 41 (1.5%)
+### productline (top 5 of 7 unique values)
+- Classic Cars: 967 (34.3%)
+- Vintage Cars: 607 (21.5%)
+- Motorcycles: 331 (11.7%)
+- Planes: 306 (10.8%)
+- Trucks and Buses: 301 (10.7%)
+### addressline2 (top 5 of 9 unique values)
+- <missing>: 2521 (89.3%)
+- Level 3: 55 (1.9%)
+- Suite 400: 48 (1.7%)
+- Level 6: 46 (1.6%)
+- Level 15: 46 (1.6%)
+### state (top 5 of 16 unique values)
+- <missing>: 1486 (52.6%)
+- CA: 416 (14.7%)
+- MA: 190 (6.7%)
+- NY: 178 (6.3%)
+- NSW: 92 (3.3%)
+### country (top 5 of 19 unique values)
+- USA: 1004 (35.6%)
+- Spain: 342 (12.1%)
+- France: 314 (11.1%)
+- Australia: 185 (6.6%)
+- UK: 144 (5.1%)
 
 ## Top Correlations
-- unit_cost vs unit_price: r = 0.998
-- total_cost vs total_revenue: r = 0.996
-- total_revenue vs profit: r = 0.987
-- total_cost vs profit: r = 0.970
-- unit_price vs margin_pct: r = -0.950
+- qtr_id vs month_id: r = 0.979
+- ordernumber vs year_id: r = 0.905
+- priceeach vs msrp: r = 0.671
+- priceeach vs sales: r = 0.658
+- sales vs msrp: r = 0.635
 
 ## Chart Index
 - overview_numeric_distributions.png (overview)
 - correlation_heatmap.png (correlation)
-- distribution_unit_cost.png (distribution)
-- distribution_unit_price.png (distribution)
-- distribution_quantity.png (distribution)
-- distribution_total_cost.png (distribution)
-- distribution_total_revenue.png (distribution)
-- distribution_profit.png (distribution)
-- category_customer_id.png (category)
-- category_customer_name.png (category)
-- category_product_id.png (category)
-- category_product_name.png (category)
-- category_store_id.png (category)
-- category_store_name.png (category)
-- category_city.png (category)
-- category_payment_method.png (category)
-- time_series_unit_cost.png (time)
-- time_series_unit_price.png (time)
-- time_series_quantity.png (time)
-- overview_scatter_unit_cost_vs_unit_price.png (overview)
+- distribution_ordernumber.png (distribution)
+- distribution_quantityordered.png (distribution)
+- distribution_priceeach.png (distribution)
+- distribution_orderlinenumber.png (distribution)
+- distribution_sales.png (distribution)
+- distribution_qtr_id.png (distribution)
+- category_status.png (category)
+- category_productline.png (category)
+- category_addressline2.png (category)
+- category_state.png (category)
+- category_country.png (category)
+- category_territory.png (category)
+- category_dealsize.png (category)
+- time_series_ordernumber.png (time)
+- time_series_quantityordered.png (time)
+- time_series_priceeach.png (time)
+- overview_scatter_qtr_id_vs_month_id.png (overview)
 
 ## Caveats
 - This report is exploratory. Observed patterns should be validated before drawing conclusions.

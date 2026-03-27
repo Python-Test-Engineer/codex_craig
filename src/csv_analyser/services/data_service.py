@@ -56,12 +56,30 @@ def _coerce_column_types(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
+_ENCODINGS = ("utf-8-sig", "utf-8", "latin-1")
+
+
+def read_csv_any_encoding(src: "Path | BytesIO", **kwargs) -> pd.DataFrame:
+    """Try common encodings in order; latin-1 is the safe fallback (never fails)."""
+    from io import BytesIO as _BytesIO
+
+    last_exc: Exception = RuntimeError("No encodings tried")
+    for enc in _ENCODINGS:
+        try:
+            if isinstance(src, _BytesIO):
+                src.seek(0)
+            return pd.read_csv(src, encoding=enc, **kwargs)
+        except UnicodeDecodeError as exc:
+            last_exc = exc
+    raise ValueError(f"Could not decode CSV with any supported encoding: {last_exc}") from last_exc
+
+
 def load_dataset(path: str | Path | None = None) -> pd.DataFrame:
     target_path = Path(path) if path is not None else DATA_PATH
     if not target_path.exists():
         raise FileNotFoundError(f"Dataset file not found at '{target_path}'.")
 
-    df = pd.read_csv(target_path)
+    df = read_csv_any_encoding(target_path)
     df = df.rename(columns=dict(zip(df.columns, _dedupe_columns(list(df.columns)), strict=False)))
     df = _coerce_column_types(df)
     return df
