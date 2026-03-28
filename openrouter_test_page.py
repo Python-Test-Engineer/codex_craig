@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env", override=False)
 
-MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-opus-4.1")
+MODEL = os.environ.get("OPENROUTER_MODEL", "google/gemini-2.5-flash-lite")
 API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api"
 PROMPT = "Capital of France"
