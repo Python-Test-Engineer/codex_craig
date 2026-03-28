@@ -3,10 +3,10 @@
 ![overview_numeric_distributions.png](../images/overview_numeric_distributions.png)
 
 ## Data Insight
-- The box plot reveals that 'unit_price' and 'total_price' have a wide range of values with significant variability, unlike 'quantity' which is tightly clustered. 'Total_price' exhibits the highest values and spread, indicating a majority of orders fall within a lower range but with some exceptionally high priced orders.
+- The box plot clearly shows that 'total_price' has the widest range and highest median value, followed by 'unit_price'. 'Quantity' has minimal variability and a very low median, suggesting most orders contain few items.
 
 ## Analysis Insight
-- The distribution for 'unit_price' and 'total_price' is right-skewed, suggesting that most orders have lower prices, but a few orders significantly increase the upper bounds. The 'quantity' column shows minimal variation, with all values appearing to be compressed to a single point.
+- The distributions indicate that while individual item prices vary, the total price of orders exhibits significant spread. This suggests that the number of units purchased, despite its low median, can substantially impact the final order cost.
 
 ## Caveat
-- The extremely small dataset size (20 rows) limits the generalizability of these distribution insights. The 'quantity' distribution appears anomalous, potentially due to data entry errors or a very specific subset of data, and its interpretation should be approached with caution.
+- The analysis is based on a small dataset (20 rows). The wide spread in 'total_price' and 'unit_price' could be due to outliers or a limited variety of products and order sizes represented.

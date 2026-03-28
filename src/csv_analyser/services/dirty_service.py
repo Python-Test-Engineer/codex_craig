@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pandas as pd
 
-OUTPUT_DIR = Path("output")
+from csv_analyser.config import OUTPUT_DIR
+
+
+logger = logging.getLogger(__name__)
 DIRTY_CSV_PATH = OUTPUT_DIR / "dirty.csv"
 DIRTY_MD_PATH = OUTPUT_DIR / "dirty_rows.md"
 

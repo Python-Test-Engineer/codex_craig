@@ -3,10 +3,10 @@
 ![overview_scatter_unit_price_vs_total_price.png](../images/overview_scatter_unit_price_vs_total_price.png)
 
 ## Data Insight
-- The scatter plot displays a generally positive correlation between unit price and total price. Most data points cluster at lower unit prices, with total prices increasing as unit prices rise, suggesting that higher-priced items also result in higher total order values.
+- The scatter plot displays a generally positive relationship between unit price and total price, indicated by points clustering towards the upper right. However, there are distinct groups of points suggesting potential variations in quantity or product type, such as orders with similar unit prices but different total prices.
 
 ## Analysis Insight
-- The data indicates that total price tends to increase with unit price. However, there are multiple orders with similar unit prices but varying total prices, and vice versa, implying that quantity, or other unplotted factors, significantly influences the total price per order.
+- When unit price increases, total price tends to increase as well, but the number of data points is small. The data appears segmented, with several orders having unit prices around 400 and others around 100, each with varying total prices suggesting differences in quantity or product.
 
 ## Caveat
-- The analysis is based on a limited sample of 20 orders. The relationship between unit price and total price might be influenced by the quantity of items purchased, which is not directly visualized here, and potential variations in product types.
+- With only 20 data points, observed patterns may not be statistically significant or generalizable. The scatter plot does not account for the 'quantity' variable, which is a crucial factor in determining total price and could explain the observed variations.

@@ -24,17 +24,20 @@ uv run uvicorn csv_analyser.main:app --reload
 
 ```
 src/csv_analyser/
-├── main.py                   app bootstrap & lifespan hooks
+├── main.py                   app bootstrap, lifespan hooks, CORS, structured logging
+├── config.py                 PROJECT_ROOT, DATA_PATH, OUTPUT_DIR — single source of truth
 ├── api/routes.py             all endpoints
 ├── models/schemas.py         Pydantic request/response models
 ├── services/
 │   ├── data_service.py       CSV loading, type coercion, domain detection
-│   ├── chart_service.py      Plotly chart generation (6 chart families)
-│   ├── dirty_service.py      data quality detection (nulls, dupes, outliers)
+│   ├── chart_service.py      Plotly chart generation (6 chart families, smart time period)
+│   ├── dirty_service.py      data quality detection (nulls, dupes, outliers, negatives)
 │   ├── report_service.py     statistical summary report
-│   ├── insight_service.py    LLM-powered per-chart insights (OpenRouter)
-│   ├── objectives_service.py LLM response to user-defined objectives
+│   ├── insight_service.py    LLM-powered per-chart insights (OpenRouter, streaming)
+│   ├── objectives_service.py LLM response to user-defined objectives (streaming + cancellable)
 │   └── sql_service.py        in-memory SQLite query execution against uploaded CSV
+├── utils/
+│   └── html.py               shared markdown-to-HTML renderer (tables, bold, italic, code)
 └── templates/
     ├── gallery.html
     └── viewer.html
@@ -53,12 +56,14 @@ POST /generate/report
 POST /generate/insights
     └─► insight_service — per-chart AI commentary → insights.md + insights.html
 POST /generate/response-to-objectives
-    └─► objectives_service — detailed analytical response to OBJECTIVES.md
+    └─► objectives_service — detailed analytical response to OBJECTIVES.md (streaming)
                              (uses SQL catalog + insights as primary context)
 POST /ask
     └─► OpenRouter — context-aware Q&A grounded in SQL results + insights
+                     supports optional conversation history (last 5 exchanges)
 POST /execute
     └─► runs charts + report + insights in one call (cancellable via POST /cancel-pipeline)
+        └─► writes GET /pipeline-status step progress throughout
 ```
 
 ### Endpoints
@@ -67,8 +72,9 @@ POST /execute
 |---|---|---|
 | GET | `/` | Gallery page |
 | GET | `/health` | Health check |
-| POST | `/upload/csv` | Upload + validate dataset; triggers SQL catalog build as background task |
+| POST | `/upload/csv` | Upload + validate dataset (50 MB limit, content-type check); triggers SQL catalog build |
 | GET | `/summary` | Dataset profile (schema, missingness, domain) |
+| GET | `/preview?rows=N` | First N rows of the uploaded dataset as JSON (default 10, max 100) |
 | POST | `/generate/charts` | Generate chart bundle (PNG + metadata) |
 | GET | `/charts` | List chart artifacts |
 | GET | `/charts/{name}` | Fetch chart image |
@@ -79,13 +85,16 @@ POST /execute
 | GET | `/insights` | Read merged insights |
 | POST | `/upload/objectives` | Save `OBJECTIVES.md` content |
 | GET | `/objectives` | Read current objectives |
-| POST | `/generate/response-to-objectives` | Generate `output/RESPONSE_TO_OBJECTIVES.md` |
+| POST | `/generate/response-to-objectives` | Generate `output/RESPONSE_TO_OBJECTIVES.md` (streaming, cancellable) |
 | GET | `/response-to-objectives/download` | Download objectives response (Markdown) |
 | GET | `/response-to-objectives/download-html` | Download objectives response (HTML) |
-| POST | `/ask` | Ask a question grounded in SQL results + insights; response includes `context_files` |
+| POST | `/ask` | Ask a question grounded in SQL results + insights; supports `history` for follow-up questions |
 | POST | `/execute` | Run full charts + report + insights pipeline (cancellable) |
 | POST | `/cancel-pipeline` | Cancel a running `/execute` pipeline (~100–300 ms latency) |
+| GET | `/pipeline-status` | Step-level progress during a running pipeline (`step`, `step_index`, `total_steps`) |
 | GET | `/sql-status` | Poll SQL catalog build status — returns `status`, `query_count`, `original_filename` |
+| POST | `/rerun-sql-catalog` | Re-trigger SQL catalog build for the current CSV |
+| GET | `/unanswered-questions` | Questions the AI couldn't answer (logged to `output/sql/unanswered_questions.md`) |
 | GET | `/viewer/{name}` | Single-chart viewer page |
 | GET | `/gallery` | Full-page chart gallery |
 
@@ -117,11 +126,62 @@ between every LLM token chunk, giving ~100–300 ms cancellation latency. The pi
 HTTP 499 when cancelled. The gallery UI shows a **Cancel** button while a pipeline run is
 active and re-enables the **Ask AI** button only after a run completes successfully.
 
+`POST /generate/response-to-objectives` now also streams token-by-token and accepts a
+`cancel_event`, matching the same pattern as insight generation.
+
 ### Environment Variables
 
-| Variable | Required for |
-|---|---|
-| `OPENROUTER_API_KEY` | `/generate/insights`, `/generate/response-to-objectives`, `/ask` |
+| Variable | Required for | Default |
+|---|---|---|
+| `OPENROUTER_API_KEY` | `/generate/insights`, `/generate/response-to-objectives`, `/ask` | — |
+| `OPENROUTER_INSIGHTS_MODEL` | Model used for per-chart insights | `anthropic/claude-3.5-sonnet` |
+| `OPENROUTER_OBJECTIVES_MODEL` | Model used for response-to-objectives | `minimax/minimax-m2.5:free` |
+| `OPENROUTER_MODEL` | Fallback model for both services if specific var not set | — |
+| `CORS_ORIGINS` | Comma-separated list of allowed origins for CORS | `http://localhost:8000,http://localhost:8001` |
+| `LOG_LEVEL` | Logging verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
+
+A warning is logged at startup if `OPENROUTER_API_KEY` is not set.
+
+---
+
+## What's New (from RECOMMENDATIONS.md)
+
+### Code Quality
+
+- **Removed `_safe_category_from_name` duplication** — the copy in `routes.py` was deleted; both files now import from `chart_service`.
+- **Shared markdown-to-HTML renderer** — extracted to `utils/html.py`. Both `insight_service` and `objectives_service` import `render_markdown_to_html` from there. The richer implementation (tables, inline bold/italic/code, horizontal rules) is now used everywhere.
+- **`asyncio.get_event_loop()` replaced** — both usages in `routes.py` now call `asyncio.get_running_loop()`, which is safe inside async handlers in Python 3.10+.
+- **Inline imports moved to module level** — `asyncio`, `os`, `httpx`, `datetime` are now top-level imports in `routes.py`. Download endpoint imports for `RESPONSE_PATH` / `RESPONSE_HTML_PATH` are also moved to the top.
+- **Chart failures now logged** — silent `except: pass` replaced with `logger.warning("Chart %s failed to render: %s", name, exc)`.
+
+### Architecture
+
+- **Anchored path constants** — `config.py` provides `PROJECT_ROOT`, `DATA_PATH`, and `OUTPUT_DIR` anchored to the file's resolved location. All services import from there instead of using `Path("output")` relative strings.
+- **Structured logging** — every service has `logger = logging.getLogger(__name__)`. `main.py` configures `basicConfig` with level controlled by the `LOG_LEVEL` env var.
+- **`generate_response_to_objectives` is now streaming** — converted from a blocking `client.messages.create()` call to `client.messages.stream()` with a per-chunk `cancel_event` check, matching the pattern in `insight_service`.
+- **Per-service model env vars** — `OPENROUTER_INSIGHTS_MODEL` and `OPENROUTER_OBJECTIVES_MODEL` allow independent model selection without touching source code.
+- **Startup API key warning** — `main.py` logs a warning at startup if `OPENROUTER_API_KEY` is absent.
+
+### Security
+
+- **50 MB upload limit** — `POST /upload/csv` raises HTTP 413 if the uploaded file exceeds 50 MB.
+- **CSV content validation** — after parsing, the endpoint verifies that the DataFrame has at least one column and one row. Content-type is also checked and rejected if it's not `text/csv`, `application/octet-stream`, or `text/plain`.
+- **CORS policy** — `CORSMiddleware` is now configured in `main.py`, with allowed origins controlled by the `CORS_ORIGINS` env var.
+
+### New Endpoints
+
+- **`GET /pipeline-status`** — returns `{ running, step, step_index, total_steps }`. The pipeline writes a `.pipeline_step.json` file between each of its 4 steps (loading → charts → report → insights), allowing the frontend to show granular progress.
+- **`GET /preview?rows=N`** — returns the first N rows of the uploaded dataset as a JSON array alongside total row count and column list. Useful to verify data loaded correctly before running the pipeline.
+- **`GET /unanswered-questions`** — returns the content and count of questions the AI was unable to answer (stored in `output/sql/unanswered_questions.md`).
+
+### UX Improvements
+
+- **Conversation history in `/ask`** — `AskRequest` now accepts an optional `history: list[ChatMessage]` field. Up to the last 5 exchanges are prepended to the messages array sent to the LLM, enabling follow-up questions.
+- **Per-chart download links** — each gallery tile now includes a `↓ Download` link pointing to the PNG with the `download` attribute, allowing direct save from the browser without navigating to `/output/images/`.
+- **Smart time-series period** — `chart_service` detects the date range and selects the aggregation period automatically:
+  - < 90 days → daily (`D`)
+  - 90 days – 2 years → monthly (`M`, was always this before)
+  - > 2 years → quarterly (`Q`)
 
 ---
 
@@ -144,7 +204,7 @@ POST /upload/csv
             └─► writes output/sql/.status.json                (polled by GET /sql-status)
 ```
 
-The catalog now includes **multi-metric analysis** queries automatically generated from the
+The catalog includes **multi-metric analysis** queries automatically generated from the
 dataset schema:
 
 - **Performance breakdown by category** — transaction count + all sum/avg metrics grouped by each categorical column
@@ -181,9 +241,6 @@ POST /upload/csv
                     ├─► output/sql/sql_queries_<table>.md   (SQL + inline test results)
                     └─► output/sql/log_test_at_sql_queries_<table>.md
 ```
-
-Both tiers write `output/sql/.status.json`. The gallery UI polls `GET /sql-status` every
-2 seconds and shows a live status indicator in the upload card.
 
 Each entry in the query file is structured for instant Grep retrieval:
 
@@ -252,24 +309,29 @@ ORDER BY total_revenue DESC
 
 ```
 src/
-  csv_analyser/              main FastAPI service
-  biomed_api/                biomedical variant (mirrors csv_analyser structure)
-data/                        source CSV datasets
+  csv_analyser/
+    config.py                  anchored path constants (PROJECT_ROOT, DATA_PATH, OUTPUT_DIR)
+    utils/html.py              shared markdown-to-HTML renderer
+    api/routes.py              all HTTP endpoints
+    services/                  data, chart, dirty, report, insight, objectives, sql services
+    templates/                 gallery.html, viewer.html
+data/                          source CSV datasets
 output/
-  images/                    generated charts (reset on API startup)
-  insights/                  insight files    (reset on API startup)
-  sql/                       SQL query library (durable — not reset)
+  images/                      generated charts (reset on upload)
+  insights/                    insight files    (reset on upload)
+  sql/                         SQL query library (durable — not reset)
     sql_title.md
     sql_queries_<table>.md
     original_csv.md            original upload filename (persists across resets)
     .status.json               build status polled by GET /sql-status
-_ideas/                      research idea files  → /planner input
-_plans/                      research plans       → /spec input
-_specs/                      technical specs      → /execute input
+    unanswered_questions.md    questions the AI could not answer
+_ideas/                        research idea files  → /planner input
+_plans/                        research plans       → /spec input
+_specs/                        technical specs      → /execute input
 .claude/
-  commands/                  slash command definitions
-  agents/                    agent definitions
-  output-styles/             output formatting styles
+  commands/                    slash command definitions
+  agents/                      agent definitions
+  output-styles/               output formatting styles
 ```
 
 ---
@@ -281,3 +343,16 @@ uv run pytest
 uv run ruff check .
 uv run ruff format .
 ```
+
+### Test Coverage
+
+| Module | Tests |
+|---|---|
+| `data_service.py` | `tests/test_data_service.py` |
+| `chart_service.py` | `tests/test_chart_service.py` |
+| `dirty_service.py` | `tests/test_dirty_service.py` — missing values, duplicates, outliers, negatives, non-negative hints |
+| `report_service.py` | `tests/test_report_service.py` |
+| `insight_service.py` | `tests/test_insight_service.py` |
+| `objectives_service.py` | `tests/test_objectives_service.py` — `count_objectives` (bullet/numbered/prose), `render_markdown_to_html` (tables, inline markup) |
+| `sql_service.py` | `tests/test_sql_service.py` — catalog generation, SQL code blocks, test execution, inline result merging |
+| `api/routes.py` | `tests/test_api_routes.py` |

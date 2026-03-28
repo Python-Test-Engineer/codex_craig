@@ -117,8 +117,14 @@ class ResponseToObjectivesResponse(BaseModel):
     model_used: str
 
 
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+
 class AskRequest(BaseModel):
     question: str
+    history: list[ChatMessage] = Field(default_factory=list)
 
 
 class AskResponse(BaseModel):
@@ -134,6 +140,24 @@ class SqlStatusResponse(BaseModel):
     message: str = ""
     query_count: int = 0
     original_filename: str = ""
+
+
+class PipelineStatusResponse(BaseModel):
+    running: bool
+    step: str = ""
+    step_index: int = 0
+    total_steps: int = 0
+
+
+class PreviewResponse(BaseModel):
+    rows: list[dict]
+    total_rows: int
+    columns: list[str]
+
+
+class UnansweredQuestionsResponse(BaseModel):
+    content: str
+    count: int
 
 
 class ErrorResponse(BaseModel):

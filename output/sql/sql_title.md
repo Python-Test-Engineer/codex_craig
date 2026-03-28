@@ -1,6 +1,6 @@
 # SQL Query Catalog — data.csv
 
-Dataset: `data\data.csv`
+Dataset: `C:\Users\mrcra\Desktop\data-intelligence-agent\data\data.csv`
 Columns: `order_id`, `date`, `product_name`, `unit_price`, `quantity`, `total_price`, `city`
 
 ---

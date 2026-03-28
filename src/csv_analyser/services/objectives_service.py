@@ -1,27 +1,34 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
+import threading
 from datetime import UTC, datetime
-from html import escape
 from pathlib import Path
 
 import anthropic
 from dotenv import load_dotenv
 
+from csv_analyser.config import OUTPUT_DIR, PROJECT_ROOT
 from csv_analyser.models.schemas import ChartArtifact
+from csv_analyser.utils.html import render_markdown_to_html
 
 
-_HERE = Path(__file__).resolve().parents[3]  # project root
-OBJECTIVES_PATH = _HERE / "OBJECTIVES.md"
-RESPONSE_PATH = _HERE / "output" / "RESPONSE_TO_OBJECTIVES.md"
-RESPONSE_HTML_PATH = _HERE / "output" / "RESPONSE_TO_OBJECTIVES.html"
-DOTENV_PATH = _HERE / ".env"
-_SQL_DIR = _HERE / "output" / "sql"
+logger = logging.getLogger(__name__)
+
+OBJECTIVES_PATH = PROJECT_ROOT / "OBJECTIVES.md"
+RESPONSE_PATH = OUTPUT_DIR / "RESPONSE_TO_OBJECTIVES.md"
+RESPONSE_HTML_PATH = OUTPUT_DIR / "RESPONSE_TO_OBJECTIVES.html"
+DOTENV_PATH = PROJECT_ROOT / ".env"
+_SQL_DIR = OUTPUT_DIR / "sql"
 
 load_dotenv(dotenv_path=DOTENV_PATH, override=False)
 
-MODEL = os.environ.get("OPENROUTER_MODEL", "minimax/minimax-m2.5:free")
+MODEL = os.environ.get(
+    "OPENROUTER_OBJECTIVES_MODEL",
+    os.environ.get("OPENROUTER_MODEL", "minimax/minimax-m2.5:free"),
+)
 MAX_TOKENS = 16_000
 OPENROUTER_BASE_URL = "https://openrouter.ai/api"
 
@@ -50,127 +57,6 @@ def count_objectives(text: str) -> int:
     return len(paragraphs)
 
 
-def _inline(text: str) -> str:
-    """Apply inline markdown (bold, italic, code) to already-escaped HTML text."""
-    out = escape(text)
-    out = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", out)
-    out = re.sub(r"\*(.+?)\*", r"<em>\1</em>", out)
-    out = re.sub(r"`(.+?)`", r"<code>\1</code>", out)
-    return out
-
-
-def _is_table_separator(line: str) -> bool:
-    """Return True for markdown table separator rows like |---|:---:|---:|."""
-    return bool(re.match(r"^\|[\s\|\-\:]+\|$", line))
-
-
-def _parse_table_cells(line: str) -> list[str]:
-    return [c.strip() for c in line.strip().strip("|").split("|")]
-
-
-def _render_markdown_to_html(markdown_text: str) -> str:
-    lines = markdown_text.splitlines()
-    html_parts: list[str] = []
-    in_list = False
-    in_table = False
-    table_header_done = False
-
-    def _close_open_blocks() -> None:
-        nonlocal in_list, in_table, table_header_done
-        if in_list:
-            html_parts.append("</ul>")
-            in_list = False
-        if in_table:
-            html_parts.append("</tbody></table>")
-            in_table = False
-            table_header_done = False
-
-    for raw_line in lines:
-        line = raw_line.strip()
-
-        # --- table rows ---
-        if line.startswith("|"):
-            if _is_table_separator(line):
-                if in_table and not table_header_done:
-                    html_parts.append("</tr></thead><tbody>")
-                    table_header_done = True
-                continue
-
-            if not in_table:
-                _close_open_blocks()
-                html_parts.append("<table>")
-                html_parts.append("<thead><tr>")
-                for cell in _parse_table_cells(line):
-                    html_parts.append(f"<th>{_inline(cell)}</th>")
-                in_table = True
-                table_header_done = False
-            else:
-                html_parts.append("<tr>")
-                for cell in _parse_table_cells(line):
-                    html_parts.append(f"<td>{_inline(cell)}</td>")
-                html_parts.append("</tr>")
-            continue
-
-        # leaving a table
-        if in_table:
-            html_parts.append("</tbody></table>")
-            in_table = False
-            table_header_done = False
-
-        if not line:
-            if in_list:
-                html_parts.append("</ul>")
-                in_list = False
-            continue
-
-        if line.startswith("---"):
-            if in_list:
-                html_parts.append("</ul>")
-                in_list = False
-            html_parts.append("<hr />")
-            continue
-
-        if line.startswith("### "):
-            if in_list:
-                html_parts.append("</ul>")
-                in_list = False
-            html_parts.append(f"<h3>{_inline(line[4:])}</h3>")
-            continue
-
-        if line.startswith("## "):
-            if in_list:
-                html_parts.append("</ul>")
-                in_list = False
-            html_parts.append(f"<h2>{_inline(line[3:])}</h2>")
-            continue
-
-        if line.startswith("# "):
-            if in_list:
-                html_parts.append("</ul>")
-                in_list = False
-            html_parts.append(f"<h1>{_inline(line[2:])}</h1>")
-            continue
-
-        if line.startswith("- "):
-            if not in_list:
-                html_parts.append("<ul>")
-                in_list = True
-            html_parts.append(f"<li>{_inline(line[2:])}</li>")
-            continue
-
-        if in_list:
-            html_parts.append("</ul>")
-            in_list = False
-
-        if line.startswith("_") and line.endswith("_") and len(line) > 2:
-            html_parts.append(f"<p><em>{escape(line[1:-1])}</em></p>")
-        else:
-            html_parts.append(f"<p>{_inline(line)}</p>")
-
-    _close_open_blocks()
-
-    return "\n".join(html_parts)
-
 
 def _chart_index(artifacts: list[ChartArtifact]) -> str:
     if not artifacts:
@@ -182,7 +68,8 @@ def generate_response_to_objectives(
     chart_artifacts: list[ChartArtifact],
     objectives_path: Path | None = None,
     response_path: Path | None = None,
-) -> Path:
+    cancel_event: threading.Event | None = None,
+) -> tuple[Path, Path]:
     obj_path = objectives_path or OBJECTIVES_PATH
     out_path = response_path or RESPONSE_PATH
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -200,8 +87,8 @@ def generate_response_to_objectives(
             "OBJECTIVES.md is empty. Add your analysis objectives before generating a response."
         )
 
-    report_text = _read(_HERE / "output" / "report.md")
-    insights_text = _read(_HERE / "output" / "insights" / "insights.md")
+    report_text = _read(OUTPUT_DIR / "report.md")
+    insights_text = _read(OUTPUT_DIR / "insights" / "insights.md")
     sql_catalog_text = _read_sql_catalog()
     chart_index = _chart_index(chart_artifacts)
     generated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
@@ -282,21 +169,20 @@ Please write the full detailed Response to Objectives document now.\
         base_url=OPENROUTER_BASE_URL,
     )
 
-    response = client.messages.create(
+    text_content = ""
+    with client.messages.stream(
         model=MODEL,
         max_tokens=MAX_TOKENS,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
-    )
+    ) as stream:
+        for chunk in stream.text_stream:
+            if cancel_event and cancel_event.is_set():
+                raise RuntimeError("Pipeline cancelled.")
+            text_content += chunk
 
-    if not response.content:
-        raise RuntimeError(
-            f"Model returned no content (stop_reason={response.stop_reason!r})."
-        )
-    text_content = next(
-        (block.text for block in response.content if block.type == "text"),
-        "",
-    )
+    if not text_content.strip():
+        raise RuntimeError("Model returned no content.")
 
     objectives_block = (
         f"## Original Objectives\n\n{objectives_text}\n\n---\n\n"
@@ -313,7 +199,7 @@ Please write the full detailed Response to Objectives document now.\
     out_path.write_text(full_md, encoding="utf-8")
 
     html_path = out_path.with_suffix(".html")
-    html_body = _render_markdown_to_html(full_md)
+    html_body = render_markdown_to_html(full_md)
     html_page = f"""<!DOCTYPE html>
 <html lang="en">
 <head>

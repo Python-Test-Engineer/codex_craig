@@ -1,17 +1,25 @@
 from __future__ import annotations
 
+import asyncio
+import datetime
 import json as _json
+import logging
+import os
 import re
 import shutil
 import threading
 from io import BytesIO
 from pathlib import Path
 
+import httpx
 import pandas as pd
 from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
+
+
+logger = logging.getLogger(__name__)
 
 from csv_analyser.models.schemas import (
     AskRequest,
@@ -26,6 +34,8 @@ from csv_analyser.models.schemas import (
     ObjectivesResponse,
     ObjectivesUploadRequest,
     ObjectivesUploadResponse,
+    PipelineStatusResponse,
+    PreviewResponse,
     ResponseToObjectivesResponse,
     InsightsGenerationResponse,
     InsightsResponse,
@@ -33,9 +43,11 @@ from csv_analyser.models.schemas import (
     ReportResponse,
     SqlStatusResponse,
     SummaryResponse,
+    UnansweredQuestionsResponse,
 )
 from csv_analyser.services.chart_service import (
     OUTPUT_DIR,
+    _safe_category_from_name,
     generate_standard_charts,
     get_chart_path,
     list_chart_artifacts,
@@ -46,6 +58,8 @@ from csv_analyser.services.insight_service import generate_insights_bundle, read
 from csv_analyser.services.objectives_service import MODEL as OBJECTIVES_MODEL
 from csv_analyser.services.objectives_service import (
     OPENROUTER_BASE_URL,
+    RESPONSE_HTML_PATH,
+    RESPONSE_PATH,
     count_objectives,
     generate_response_to_objectives,
 )
@@ -115,19 +129,6 @@ def _clear_output() -> None:
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parents[1] / "templates"))
 
 
-def _safe_category_from_name(name: str) -> str:
-    if name.startswith("overview_"):
-        return "overview"
-    if name.startswith("correlation_"):
-        return "correlation"
-    if name.startswith("distribution_"):
-        return "distribution"
-    if name.startswith("category_"):
-        return "category"
-    if name.startswith("time_series_"):
-        return "time"
-    return "other"
-
 
 def _build_image_cards() -> list[dict[str, str]]:
     image_dir = OUTPUT_DIR / "images"
@@ -192,6 +193,54 @@ def sql_status() -> SqlStatusResponse:
     return SqlStatusResponse(status="not_started", original_filename=original_filename)
 
 
+@router.get("/pipeline-status", response_model=PipelineStatusResponse)
+def pipeline_status() -> PipelineStatusResponse:
+    """Returns the current pipeline execution status."""
+    with _pipeline_lock:
+        running = _pipeline_running
+    step_path = OUTPUT_DIR / ".pipeline_step.json"
+    if running and step_path.exists():
+        try:
+            data = _json.loads(step_path.read_text(encoding="utf-8"))
+            return PipelineStatusResponse(
+                running=True,
+                step=data.get("step", ""),
+                step_index=data.get("step_index", 0),
+                total_steps=data.get("total_steps", 0),
+            )
+        except Exception:
+            pass
+    return PipelineStatusResponse(running=running)
+
+
+@router.get("/preview", response_model=PreviewResponse)
+def preview_dataset(rows: int = 10) -> PreviewResponse:
+    """Return the first N rows of the uploaded dataset."""
+    try:
+        df = load_dataset()
+        preview_df = df.head(max(1, min(rows, 100)))
+        return PreviewResponse(
+            rows=preview_df.where(pd.notnull(preview_df), None).to_dict(orient="records"),
+            total_rows=len(df),
+            columns=list(df.columns),
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Preview failed: {exc}") from exc
+
+
+@router.get("/unanswered-questions", response_model=UnansweredQuestionsResponse)
+def unanswered_questions() -> UnansweredQuestionsResponse:
+    """Return questions that the AI was unable to answer."""
+    path = SQL_STATUS_PATH.parent / "unanswered_questions.md"
+    if not path.exists():
+        return UnansweredQuestionsResponse(content="", count=0)
+    content = path.read_text(encoding="utf-8")
+    count = sum(1 for line in content.splitlines() if line.strip().startswith("- ["))
+    return UnansweredQuestionsResponse(content=content, count=count)
+
+
 @router.post("/rerun-sql-catalog")
 async def rerun_sql_catalog(background_tasks: BackgroundTasks) -> dict:
     """Re-trigger the SQL catalog build for the currently uploaded CSV."""
@@ -220,10 +269,20 @@ async def upload_csv(background_tasks: BackgroundTasks, file: UploadFile = File(
         if not content:
             raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
+        _MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+        if len(content) > _MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="File exceeds 50 MB limit.")
+
+        content_type = file.content_type or ""
+        if content_type and content_type not in ("text/csv", "application/octet-stream", "text/plain"):
+            raise HTTPException(status_code=400, detail=f"Unexpected content type: {content_type}. Expected text/csv.")
+
         try:
-            read_csv_any_encoding(BytesIO(content))
+            _df_check = read_csv_any_encoding(BytesIO(content))
         except Exception as exc:
             raise HTTPException(status_code=400, detail=f"Malformed CSV: {exc}") from exc
+        if len(_df_check.columns) == 0 or len(_df_check) == 0:
+            raise HTTPException(status_code=400, detail="CSV must contain at least one column and one row.")
 
         DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
         DATA_PATH.write_bytes(content)
@@ -265,9 +324,8 @@ def get_objectives() -> ObjectivesResponse:
 @router.post("/generate/response-to-objectives", response_model=ResponseToObjectivesResponse)
 async def generate_response_to_objectives_endpoint() -> ResponseToObjectivesResponse:
     try:
-        import asyncio
         artifacts = list_chart_artifacts()
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         out_path, html_path = await loop.run_in_executor(None, generate_response_to_objectives, artifacts)
         objectives_text = OBJECTIVES_PATH.read_text(encoding="utf-8") if OBJECTIVES_PATH.exists() else ""
         objectives_count = count_objectives(objectives_text)
@@ -284,7 +342,6 @@ async def generate_response_to_objectives_endpoint() -> ResponseToObjectivesResp
 
 @router.get("/response-to-objectives/download")
 def download_response_to_objectives() -> FileResponse:
-    from csv_analyser.services.objectives_service import RESPONSE_PATH
     if not RESPONSE_PATH.exists():
         raise HTTPException(status_code=404, detail="RESPONSE_TO_OBJECTIVES.md has not been generated yet.")
     return FileResponse(
@@ -296,7 +353,6 @@ def download_response_to_objectives() -> FileResponse:
 
 @router.get("/response-to-objectives/download-html")
 def download_response_to_objectives_html() -> FileResponse:
-    from csv_analyser.services.objectives_service import RESPONSE_HTML_PATH
     if not RESPONSE_HTML_PATH.exists():
         raise HTTPException(status_code=404, detail="RESPONSE_TO_OBJECTIVES.html has not been generated yet.")
     return FileResponse(
@@ -347,19 +403,36 @@ def execute_plan(payload: ExecutePlanRequest) -> ExecutePlanResponse:
             raise HTTPException(status_code=409, detail="Pipeline already running.")
         _pipeline_running = True
         _pipeline_cancel.clear()
+
+    _step_path = OUTPUT_DIR / ".pipeline_step.json"
+    _total_steps = 4
+
+    def _write_step(name: str, idx: int) -> None:
+        try:
+            _step_path.write_text(
+                _json.dumps({"step": name, "step_index": idx, "total_steps": _total_steps}),
+                encoding="utf-8",
+            )
+        except Exception:
+            pass
+
     try:
+        _write_step("loading_dataset", 0)
         df = load_dataset()
         _check_cancel()
+        _write_step("generating_charts", 1)
         artifacts = generate_standard_charts(
             df,
             clean_output=payload.clean_output,
             write_png=payload.write_png,
         )
         _check_cancel()
+        _write_step("generating_report", 2)
         save_dirty_report(df)
         _check_cancel()
         report_path = generate_report(df, artifacts)
         _check_cancel()
+        _write_step("generating_insights", 3)
         insights_md_path, insights_html_path, _ = generate_insights_bundle(
             df, artifacts, cancel_event=_pipeline_cancel
         )
@@ -396,6 +469,11 @@ def execute_plan(payload: ExecutePlanRequest) -> ExecutePlanResponse:
         with _pipeline_lock:
             _pipeline_running = False
         _pipeline_cancel.clear()
+        try:
+            if _step_path.exists():
+                _step_path.unlink()
+        except Exception:
+            pass
 
 
 @router.post("/cancel-pipeline")
@@ -502,9 +580,6 @@ def insights() -> InsightsResponse:
 
 @router.post("/ask", response_model=AskResponse)
 async def ask_question(payload: AskRequest) -> AskResponse:
-    import asyncio
-    import os
-
     question = payload.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
@@ -513,7 +588,7 @@ async def ask_question(payload: AskRequest) -> AskResponse:
     if not api_key:
         raise HTTPException(status_code=400, detail="OPENROUTER_API_KEY is not set.")
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     # ── Load SQL queries file directly ────────────────────────────────────────
     sql_dir = SQL_STATUS_PATH.parent
@@ -603,9 +678,14 @@ async def ask_question(payload: AskRequest) -> AskResponse:
         context_block += f"\n\n---\n\nInsights:\n{insights_content}"
     user_message = f"{context_block}\n\nQuestion: {question}"
 
-    def _call() -> str:
-        import httpx
+    # Build messages array: include up to last 5 history exchanges then the new question
+    history_messages = [
+        {"role": msg.role, "content": msg.content}
+        for msg in payload.history[-5:]
+    ]
+    messages = history_messages + [{"role": "user", "content": user_message}]
 
+    def _call() -> str:
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -615,7 +695,7 @@ async def ask_question(payload: AskRequest) -> AskResponse:
             "model": OBJECTIVES_MODEL,
             "max_tokens": 4096,
             "system": system_prompt,
-            "messages": [{"role": "user", "content": user_message}],
+            "messages": messages,
         }
         resp = httpx.post(
             f"{OPENROUTER_BASE_URL}/v1/messages",
@@ -641,8 +721,7 @@ async def ask_question(payload: AskRequest) -> AskResponse:
         _unanswered_path = SQL_STATUS_PATH.parent / "unanswered_questions.md"
         try:
             existing = _unanswered_path.read_text(encoding="utf-8") if _unanswered_path.exists() else "# Unanswered Questions\n"
-            import datetime as _dt
-            timestamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M")
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
             existing += f"\n- [{timestamp}] {question}"
             _unanswered_path.write_text(existing, encoding="utf-8")
         except Exception:

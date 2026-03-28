@@ -3,10 +3,10 @@
 ![time_series_unit_price.png](../images/time_series_unit_price.png)
 
 ## Data Insight
-- The unit price shows significant fluctuations throughout the months. It peaks in May 2025 at approximately 1800, then drops sharply before a smaller peak in September 2025, and stabilizes from November 2025 onwards. The price in January 2025 is around 500.
+- The unit price shows significant volatility throughout 2025. It peaks in May at approximately 1800, then drops sharply, recovers slightly in September to around 1000, and finally plateaus from November onwards, staying constant near 100.
 
 ## Analysis Insight
-- The unit price exhibits a volatile trend with a notable peak and subsequent decline. The period from January to May 2025 shows an increasing trend followed by a sharp decrease. The later months show less dramatic, but still present, fluctuations, ending with a plateau.
+- The trend indicates a generally decreasing unit price after May, with a notable dip in July and a brief resurgence in September. The price stabilization in the final two months suggests a potential shift in market conditions or inventory management.
 
 ## Caveat
-- The analysis is based on limited data points (20 rows). The observed trends in unit price might not be representative of a longer period or could be influenced by unobserved factors such as specific product sales or promotions.
+- The analysis is based on limited data points (20 rows). Fluctuations may be influenced by seasonal factors, specific product promotions, or reporting anomalies. The observed trends do not account for potential confounding variables like product type or sales volume.

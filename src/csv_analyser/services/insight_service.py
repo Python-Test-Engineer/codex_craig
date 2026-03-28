@@ -2,28 +2,31 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import os
 import threading
 from datetime import UTC, datetime
-from html import escape
 from pathlib import Path
 
 import anthropic
 import pandas as pd
 from dotenv import load_dotenv
 
+from csv_analyser.config import OUTPUT_DIR, PROJECT_ROOT
 from csv_analyser.models.schemas import ChartArtifact
+from csv_analyser.utils.html import render_markdown_to_html
 
 
-INSIGHTS_DIR = Path("output/insights")
+logger = logging.getLogger(__name__)
+
+INSIGHTS_DIR = OUTPUT_DIR / "insights"
 FINAL_INSIGHTS_MD = INSIGHTS_DIR / "insights.md"
 FINAL_INSIGHTS_HTML = INSIGHTS_DIR / "insights.html"
-_HERE = Path(__file__).resolve().parents[3]  # project root
-DOTENV_PATH = _HERE / ".env"
+DOTENV_PATH = PROJECT_ROOT / ".env"
 
 load_dotenv(dotenv_path=DOTENV_PATH, override=False)
 
-MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet")
+MODEL = os.environ.get("OPENROUTER_INSIGHTS_MODEL", os.environ.get("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet"))
 OPENROUTER_BASE_URL = "https://openrouter.ai/api"
 MAX_TOKENS = 1_400
 
@@ -276,71 +279,6 @@ Write concise, chart-specific insights now in strict JSON only.
     }
 
 
-def _render_markdown_to_html(markdown_text: str) -> str:
-    lines = markdown_text.splitlines()
-    html_parts: list[str] = []
-    in_list = False
-
-    for raw_line in lines:
-        line = raw_line.strip()
-
-        if not line:
-            if in_list:
-                html_parts.append("</ul>")
-                in_list = False
-            continue
-
-        if line.startswith("### "):
-            if in_list:
-                html_parts.append("</ul>")
-                in_list = False
-            html_parts.append(f"<h3>{escape(line[4:])}</h3>")
-            continue
-
-        if line.startswith("## "):
-            if in_list:
-                html_parts.append("</ul>")
-                in_list = False
-            html_parts.append(f"<h2>{escape(line[3:])}</h2>")
-            continue
-
-        if line.startswith("# "):
-            if in_list:
-                html_parts.append("</ul>")
-                in_list = False
-            html_parts.append(f"<h1>{escape(line[2:])}</h1>")
-            continue
-
-        if line.startswith("![") and "](" in line and line.endswith(")"):
-            alt_end = line.find("]")
-            src_start = line.find("(", alt_end) + 1
-            src = line[src_start:-1]
-            alt = line[2:alt_end]
-            if in_list:
-                html_parts.append("</ul>")
-                in_list = False
-            html_parts.append(
-                f'<p><img src="{escape(src)}" alt="{escape(alt)}" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>'
-            )
-            continue
-
-        if line.startswith("- "):
-            if not in_list:
-                html_parts.append("<ul>")
-                in_list = True
-            html_parts.append(f"<li>{escape(line[2:])}</li>")
-            continue
-
-        if in_list:
-            html_parts.append("</ul>")
-            in_list = False
-        html_parts.append(f"<p>{escape(line)}</p>")
-
-    if in_list:
-        html_parts.append("</ul>")
-
-    return "\n".join(html_parts)
-
 
 def generate_insights_bundle(
     df: pd.DataFrame,
@@ -385,6 +323,7 @@ def generate_insights_bundle(
             except RuntimeError:
                 raise  # propagate cancellation out of the loop
             except Exception as exc:
+                logger.warning("LLM insight generation failed for %s: %s", artifact.name, exc)
                 llm_failures.append(f"{artifact.name}: {exc}")
 
         lines = [
@@ -441,7 +380,7 @@ def generate_insights_bundle(
     final_html_path = target_dir / FINAL_INSIGHTS_HTML.name
     final_md_path.write_text("\n".join(merged_lines) + "\n", encoding="utf-8")
 
-    html_body = _render_markdown_to_html(final_md_path.read_text(encoding="utf-8"))
+    html_body = render_markdown_to_html(final_md_path.read_text(encoding="utf-8"))
     html_page = f"""<!DOCTYPE html>
 <html lang="en">
 <head>

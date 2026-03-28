@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pandas as pd
 
+from csv_analyser.config import OUTPUT_DIR
 from csv_analyser.models.schemas import ChartArtifact
 
 
-REPORT_PATH = Path("output/report.md")
+logger = logging.getLogger(__name__)
+REPORT_PATH = OUTPUT_DIR / "report.md"
 
 
 def generate_report(

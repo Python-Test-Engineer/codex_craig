@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+from csv_analyser.config import OUTPUT_DIR  # noqa: F401 — re-exported for importers
 from csv_analyser.models.schemas import ChartArtifact
 
 
-OUTPUT_DIR = Path("output")
+logger = logging.getLogger(__name__)
 
 
 def _has_columns(df: pd.DataFrame, required: list[str]) -> bool:
@@ -137,17 +139,25 @@ def generate_standard_charts(
     # --- Time series (date col + numeric cols) ---
     if date_cols and numeric_cols:
         date_col = date_cols[0]
+        # Choose aggregation period based on date range
+        date_range = (df[date_col].max() - df[date_col].min()).days if df[date_col].notna().any() else 0
+        if date_range < 90:
+            period_freq, period_label = "D", "Daily"
+        elif date_range <= 730:
+            period_freq, period_label = "M", "Monthly"
+        else:
+            period_freq, period_label = "Q", "Quarterly"
         # Generate a time series for each of the first 3 numeric columns
         for num_col in numeric_cols[:3]:
             ts_df = df[[date_col, num_col]].dropna().sort_values(date_col).copy()
-            ts_df["_period"] = ts_df[date_col].dt.to_period("M").dt.to_timestamp()
+            ts_df["_period"] = ts_df[date_col].dt.to_period(period_freq).dt.to_timestamp()
             ts_agg = ts_df.groupby("_period")[num_col].sum().reset_index()
             ts_agg.columns = ["period", num_col]
             safe_name = _safe_col_name(num_col)
             chart_defs.append((
                 f"time_series_{safe_name}",
                 "time",
-                px.line(ts_agg, x="period", y=num_col, title=f"Monthly Trend: {num_col}"),
+                px.line(ts_agg, x="period", y=num_col, title=f"{period_label} Trend: {num_col}"),
             ))
 
     # --- Scatter of top 2 correlated numeric columns ---
@@ -188,8 +198,8 @@ def generate_standard_charts(
                     path=str(png_path),
                 )
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Chart %s failed to render: %s", name, exc)
 
     return artifacts
 

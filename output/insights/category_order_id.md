@@ -3,10 +3,10 @@
 ![category_order_id.png](../images/category_order_id.png)
 
 ## Data Insight
-- The bar chart displays the frequency count for each order ID. All displayed order IDs have an equal count of 1, indicating that each listed order ID appears only once in this dataset.
+- The bar chart displays the frequency of top order IDs. Each visible order ID (ORD0001 through ORD0028) appears to have a count slightly above 1, suggesting each order ID is unique within the displayed subset of orders.
 
 ## Analysis Insight
-- This visualization seems to show the top order IDs, but since all counts are equal, it suggests that the filtering or sorting applied to derive 'Top Values' might not be effective in highlighting distinct orders based on their frequency in this specific subset of data.
+- This visualization focuses on the frequency of individual order IDs. The uniform height of the bars indicates that each of the selected order IDs occurs with approximately the same frequency in the dataset. This suggests no single order ID dominates this particular view.
 
 ## Caveat
-- The dataset contains only 20 rows, limiting the scope of 'Top Values.' The observation of equal counts might be an artifact of this small sample size or how the 'Top Values' were selected, rather than a general pattern.
+- The chart shows 'Top Values' for order_id, implying that not all order IDs in the dataset are represented. The exact count is obscured by the bar height relative to the y-axis, and the dataset's small size (20 rows) limits the generalizability of these findings.

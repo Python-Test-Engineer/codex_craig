@@ -307,6 +307,7 @@
                     <img src="{{ image.url }}" alt="{{ image.name }}" loading="lazy" />
                   </a>
                   <div class="meta">{{ image.name }} | {{ image.category }}</div>
+                  <a href="{{ image.url }}" download="{{ image.name }}" style="display:block;margin-top:5px;font-size:0.74rem;color:#54514a;text-decoration:none;text-align:center;">&#8595; Download</a>
                 </div>
               {% endfor %}
             {% else %}
@@ -483,6 +484,7 @@
               <img src="${img.url}" alt="${img.name}" loading="lazy" />
             </a>
             <div class="meta">${img.name} | ${img.category}</div>
+            <a href="${img.url}" download="${img.name}" style="display:block;margin-top:5px;font-size:0.74rem;color:#54514a;text-decoration:none;text-align:center;">&#8595; Download</a>
           </div>`).join("");
       } catch { /* leave grid as-is */ }
     }

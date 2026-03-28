@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
 
 import pandas as pd
 
+from csv_analyser.config import DATA_PATH  # noqa: F401 — re-exported for importers
 
-DATA_PATH = Path("data/data.csv")
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_column_name(name: str) -> str:

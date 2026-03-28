@@ -3,10 +3,10 @@
 ![correlation_heatmap.png](../images/correlation_heatmap.png)
 
 ## Data Insight
-- The heatmap shows a strong positive correlation of 0.94 between unit_price and total_price, and a weak positive correlation of 0.26 between quantity and total_price. Unit_price and quantity have a near-zero correlation (0.02).
+- The heatmap shows a very strong positive correlation (0.94) between 'unit_price' and 'total_price'. 'Quantity' shows a negligible correlation with both 'unit_price' (0.02) and 'total_price' (0.26).
 
 ## Analysis Insight
-- Total price is strongly influenced by unit price, suggesting that higher-priced items contribute more to the total cost. The weak correlation with quantity indicates that the number of items sold might have a less significant impact on total price compared to individual item costs.
+- The high correlation between 'unit_price' and 'total_price' suggests that the total price is largely driven by the unit price of products sold. The low correlation with quantity indicates that the number of items bought doesn't significantly affect the total sale value in this dataset.
 
 ## Caveat
-- The low number of rows (20) limits the statistical significance and generalizability of these correlation findings. Other unobserved factors ('city', 'date', 'product_name') could confound these relationships.
+- The analysis is based on a small dataset (20 rows), and correlations observed may not represent the general trend. Other factors influencing total price, not included in the chart, could be significant.

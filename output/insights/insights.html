@@ -55,7 +55,7 @@
     </div>
     <h1>Final Data Insights</h1>
 <ul>
-<li>Generated: 2026-03-28 09:04 UTC</li>
+<li>Generated: 2026-03-28 13:44 UTC</li>
 <li>Model setting: google/gemini-2.5-flash-lite</li>
 <li>LLM-enabled: yes</li>
 <li>Individual insight files: 12</li>
@@ -75,180 +75,180 @@
 <p><img src="../images/overview_numeric_distributions.png" alt="overview_numeric_distributions.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>The box plot reveals that &#x27;unit_price&#x27; and &#x27;total_price&#x27; have a wide range of values with significant variability, unlike &#x27;quantity&#x27; which is tightly clustered. &#x27;Total_price&#x27; exhibits the highest values and spread, indicating a majority of orders fall within a lower range but with some exceptionally high priced orders.</li>
+<li>The box plot clearly shows that &#x27;total_price&#x27; has the widest range and highest median value, followed by &#x27;unit_price&#x27;. &#x27;Quantity&#x27; has minimal variability and a very low median, suggesting most orders contain few items.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>The distribution for &#x27;unit_price&#x27; and &#x27;total_price&#x27; is right-skewed, suggesting that most orders have lower prices, but a few orders significantly increase the upper bounds. The &#x27;quantity&#x27; column shows minimal variation, with all values appearing to be compressed to a single point.</li>
+<li>The distributions indicate that while individual item prices vary, the total price of orders exhibits significant spread. This suggests that the number of units purchased, despite its low median, can substantially impact the final order cost.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The extremely small dataset size (20 rows) limits the generalizability of these distribution insights. The &#x27;quantity&#x27; distribution appears anomalous, potentially due to data entry errors or a very specific subset of data, and its interpretation should be approached with caution.</li>
+<li>The analysis is based on a small dataset (20 rows). The wide spread in &#x27;total_price&#x27; and &#x27;unit_price&#x27; could be due to outliers or a limited variety of products and order sizes represented.</li>
 </ul>
 <h3>Correlation Heatmap</h3>
 <h1>Insights: Correlation Heatmap</h1>
 <p><img src="../images/correlation_heatmap.png" alt="correlation_heatmap.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>The heatmap shows a strong positive correlation of 0.94 between unit_price and total_price, and a weak positive correlation of 0.26 between quantity and total_price. Unit_price and quantity have a near-zero correlation (0.02).</li>
+<li>The heatmap shows a very strong positive correlation (0.94) between &#x27;unit_price&#x27; and &#x27;total_price&#x27;. &#x27;Quantity&#x27; shows a negligible correlation with both &#x27;unit_price&#x27; (0.02) and &#x27;total_price&#x27; (0.26).</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>Total price is strongly influenced by unit price, suggesting that higher-priced items contribute more to the total cost. The weak correlation with quantity indicates that the number of items sold might have a less significant impact on total price compared to individual item costs.</li>
+<li>The high correlation between &#x27;unit_price&#x27; and &#x27;total_price&#x27; suggests that the total price is largely driven by the unit price of products sold. The low correlation with quantity indicates that the number of items bought doesn&#x27;t significantly affect the total sale value in this dataset.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The low number of rows (20) limits the statistical significance and generalizability of these correlation findings. Other unobserved factors (&#x27;city&#x27;, &#x27;date&#x27;, &#x27;product_name&#x27;) could confound these relationships.</li>
+<li>The analysis is based on a small dataset (20 rows), and correlations observed may not represent the general trend. Other factors influencing total price, not included in the chart, could be significant.</li>
 </ul>
 <h3>Distribution Unit Price</h3>
 <h1>Insights: Distribution Unit Price</h1>
 <p><img src="../images/distribution_unit_price.png" alt="distribution_unit_price.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>The histogram shows a non-uniform distribution of unit prices. There are notable peaks in counts for unit prices around 100-200, 300-400, and at 1000. The majority of unit prices fall within the lower ranges.</li>
+<li>The histogram shows three distinct groups of unit prices: around 100, between 300-400, and at 1000. The largest count (6) is observed for unit prices between 300 and 400. The counts for unit prices around 100 and at 1000 are lower, with 2 and 5 respectively.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>The distribution is multimodal with at least three distinct clusters suggesting different product categories or pricing strategies. The presence of a spike at 1000 might indicate premium products or a specific data entry pattern. The data&#x27;s standard deviation of 370.34, compared to the mean of 403.49, indicates significant variability.</li>
+<li>The distribution of unit prices in this dataset appears multimodal, with peaks suggesting distinct product categories or pricing tiers. The presence of a cluster around 300-400 and a solitary high price point at 1000 warrants further investigation into the products associated with these price ranges.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>With only 20 data points, this distribution might not be representative of the overall product pricing. The binning of the histogram could obscure finer details of the price distribution. Outliers or specific product types could heavily influence these observed peaks.</li>
+<li>The small sample size (20 rows) limits the generalizability of these findings. The histogram bins are wide, potentially obscuring finer price variations. Additional context on product types or categories is needed to fully interpret the observed price distributions.</li>
 </ul>
 <h3>Distribution Quantity</h3>
 <h1>Insights: Distribution Quantity</h1>
 <p><img src="../images/distribution_quantity.png" alt="distribution_quantity.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>The distribution of quantity shows a peak at 7 units, with a secondary peak at 3 and 5 units. Quantities 4, 8, 9, and 10 have significantly lower counts. The data suggests a preference for moderate quantities, with 7 units being the most frequent order size.</li>
+<li>The histogram shows the distribution of order quantities. Most orders fall between quantities of 6 and 9, with a peak at quantity 7. Quantities of 3, 5, 6, 8, 9, and 10 have at least two orders, while quantity 4 has only one.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>The histogram visualizes the frequency of different order quantities. The distribution is unimodal with a clear peak at quantity 7, indicating it&#x27;s the most common order size. The mean quantity is 6.65, which aligns with the visual representation of the distribution&#x27;s center.</li>
+<li>The quantity distribution is skewed, with a higher frequency of quantities around 7. This suggests a common order size, but data represents a small sample size of 20 orders.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The dataset size is small (20 rows), limiting the generalizability of these findings. The distribution might change with a larger sample. Additionally, the chart doesn&#x27;t show quantities below 3 or above 10, so the complete distribution is not represented.</li>
+<li>The observed distribution might not represent the overall trend due to the very small dataset size (20 rows). It&#x27;s difficult to infer general patterns or make predictions based on this limited data.</li>
 </ul>
 <h3>Distribution Total Price</h3>
 <h1>Insights: Distribution Total Price</h1>
 <p><img src="../images/distribution_total_price.png" alt="distribution_total_price.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>The histogram shows that the most frequent total_price range is between 0 and 2000, with 5 occurrences. There are also notable counts in the 0-1000 and 7000-8000 ranges.</li>
+<li>The histogram shows that most orders have a total price between 0 and 1,000, with a significant drop in frequency for prices between 1,000 and 4,000. There are two distinct peaks, one around 1,000 and another around 7,000-8,000.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>The distribution of total_price appears right-skewed, with a concentration of values at the lower end and a few outliers at higher prices. The bins suggest a significant number of lower-priced transactions.</li>
+<li>The distribution of total_price is highly skewed. The majority of orders fall into the lower price ranges, suggesting a concentration of lower-value transactions. The presence of higher-priced orders creates a long tail in the distribution.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The small sample size of 20 rows limits the generalizability of these observations. The bin widths are not uniform, potentially affecting the visual interpretation of the distribution&#x27;s shape.</li>
+<li>The small dataset size (20 rows) limits the generalizability of these findings. The binning method might obscure finer price point variations. Outliers or specific product types could be driving the higher price clusters.</li>
 </ul>
 <h3>Category Order Id</h3>
 <h1>Insights: Category Order Id</h1>
 <p><img src="../images/category_order_id.png" alt="category_order_id.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>The bar chart displays the frequency count for each order ID. All displayed order IDs have an equal count of 1, indicating that each listed order ID appears only once in this dataset.</li>
+<li>The bar chart displays the frequency of top order IDs. Each visible order ID (ORD0001 through ORD0028) appears to have a count slightly above 1, suggesting each order ID is unique within the displayed subset of orders.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>This visualization seems to show the top order IDs, but since all counts are equal, it suggests that the filtering or sorting applied to derive &#x27;Top Values&#x27; might not be effective in highlighting distinct orders based on their frequency in this specific subset of data.</li>
+<li>This visualization focuses on the frequency of individual order IDs. The uniform height of the bars indicates that each of the selected order IDs occurs with approximately the same frequency in the dataset. This suggests no single order ID dominates this particular view.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The dataset contains only 20 rows, limiting the scope of &#x27;Top Values.&#x27; The observation of equal counts might be an artifact of this small sample size or how the &#x27;Top Values&#x27; were selected, rather than a general pattern.</li>
+<li>The chart shows &#x27;Top Values&#x27; for order_id, implying that not all order IDs in the dataset are represented. The exact count is obscured by the bar height relative to the y-axis, and the dataset&#x27;s small size (20 rows) limits the generalizability of these findings.</li>
 </ul>
 <h3>Category Product Name</h3>
 <h1>Insights: Category Product Name</h1>
 <p><img src="../images/category_product_name.png" alt="category_product_name.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>The bar chart displays the frequency of different product names. &#x27;Monitor&#x27; is the most frequent product with 6 occurrences, followed by &#x27;Headphones&#x27; and &#x27;Laptop&#x27; both with 5 occurrences. &#x27;Mouse&#x27; and &#x27;Keyboard&#x27; are the least frequent, each appearing twice.</li>
+<li>Monitors are the most frequently ordered product, appearing 6 times, followed by Headphones and Laptops, each appearing 5 times. Keyboards and Mice are the least frequently ordered, each appearing 2 times.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>This visualization highlights the popularity distribution among the top products. Monitors appear to be the most commonly purchased item in this dataset, suggesting potential market demand or availability differences compared to other products like mice and keyboards.</li>
+<li>The bar chart clearly illustrates the distribution of product orders, highlighting &#x27;Monitor&#x27;, &#x27;Headphones&#x27;, and &#x27;Laptop&#x27; as the top-performing products in terms of order frequency within this dataset.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The dataset is small (20 rows), and the chart only shows the top values for product names. This limits the generalizability of the findings. Other products not shown may be more or less frequent, and the observed popularity could be influenced by factors not present in the data.</li>
+<li>This analysis is based on a small dataset of 20 rows. The observed frequencies may not be representative of overall sales trends and could be influenced by various factors not captured in the data.</li>
 </ul>
 <h3>Category City</h3>
 <h1>Insights: Category City</h1>
 <p><img src="../images/category_city.png" alt="category_city.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>Los Angeles has the highest count of orders at 8, followed by New York with 7, and Chicago with 5. This indicates a concentration of customer activity in these three cities.</li>
+<li>Los Angeles has the highest count of orders (8), followed by New York (7), and Chicago (5). These three cities represent the top values in the dataset.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>The bar chart visually represents the frequency of orders across different cities. Los Angeles and New York are the most frequent locations for orders within the dataset provided, suggesting a stronger market presence or customer base there.</li>
+<li>The bar chart visually represents the frequency of orders across different cities. Los Angeles shows the most activity, suggesting it is a primary market or has the most customers based on this data.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The dataset might not represent all cities or a complete time period. The chart only shows counts, not order values or product types, which could offer further insights into city-specific performance.</li>
+<li>This analysis is based on a small dataset of 20 rows. The &#x27;Top Values&#x27; might not reflect the overall market distribution and could be influenced by sampling or specific time periods not represented.</li>
 </ul>
 <h3>Time Series Unit Price</h3>
 <h1>Insights: Time Series Unit Price</h1>
 <p><img src="../images/time_series_unit_price.png" alt="time_series_unit_price.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>The unit price shows significant fluctuations throughout the months. It peaks in May 2025 at approximately 1800, then drops sharply before a smaller peak in September 2025, and stabilizes from November 2025 onwards. The price in January 2025 is around 500.</li>
+<li>The unit price shows significant volatility throughout 2025. It peaks in May at approximately 1800, then drops sharply, recovers slightly in September to around 1000, and finally plateaus from November onwards, staying constant near 100.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>The unit price exhibits a volatile trend with a notable peak and subsequent decline. The period from January to May 2025 shows an increasing trend followed by a sharp decrease. The later months show less dramatic, but still present, fluctuations, ending with a plateau.</li>
+<li>The trend indicates a generally decreasing unit price after May, with a notable dip in July and a brief resurgence in September. The price stabilization in the final two months suggests a potential shift in market conditions or inventory management.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The analysis is based on limited data points (20 rows). The observed trends in unit price might not be representative of a longer period or could be influenced by unobserved factors such as specific product sales or promotions.</li>
+<li>The analysis is based on limited data points (20 rows). Fluctuations may be influenced by seasonal factors, specific product promotions, or reporting anomalies. The observed trends do not account for potential confounding variables like product type or sales volume.</li>
 </ul>
 <h3>Time Series Quantity</h3>
 <h1>Insights: Time Series Quantity</h1>
 <p><img src="../images/time_series_quantity.png" alt="time_series_quantity.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>The chart displays a significant peak in quantity in May 2025, reaching over 30 units. Following this peak, there&#x27;s a sharp decline to about 6 units in July 2025. The quantity fluctuates between 5 and 10 units for the remainder of the period shown.</li>
+<li>The quantity shows a significant peak in May 2025, reaching over 30 units. Following this peak, there is a sharp decline in June and July, stabilizing at a lower level for the remainder of the observed period.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>The quantity sold shows a volatile trend over the observed period. An initial increase from January to May is followed by a dramatic drop. The latter half of the year exhibits smaller fluctuations, suggesting a stabilization at a lower volume after the May peak.</li>
+<li>The monthly trend of quantity reveals a dramatic surge in May, followed by a substantial drop. This suggests a possible seasonal event, promotion, or a specific product launch causing the May spike, with demand returning to baseline levels afterward.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The dataset contains only 20 rows, meaning the monthly trends are based on limited data points. The chart does not show the products or cities involved, limiting deeper analysis into the drivers of these quantity changes.</li>
+<li>The time series is limited to 20 data points, providing a short observation window. The identity of the product and the specific reasons for the quantity fluctuations are not available, preventing a deeper causal analysis.</li>
 </ul>
 <h3>Time Series Total Price</h3>
 <h1>Insights: Time Series Total Price</h1>
 <p><img src="../images/time_series_total_price.png" alt="time_series_total_price.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>Total price shows a peak in May 2025, reaching approximately 14.5k. Following this peak, there&#x27;s a significant decline through July 2025, before a slight recovery in September and a gradual decrease towards November 2025.</li>
+<li>The total price shows a significant peak in May 2025, reaching approximately 14.5k. Following this peak, there&#x27;s a sharp decline through June and July, with a slight recovery in September and a general downward trend towards the end of the year.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>The time series reveals substantial month-over-month fluctuations in total price throughout 2025. The period from March to May 2025 indicates a sharp increase, contrasting with the steep drop observed between May and July 2025.</li>
+<li>The total price exhibits high volatility throughout the observed period. The sharp increase leading to May and the subsequent drastic decrease suggest potentially seasonal or event-driven sales patterns. The overall trend indicates that sales performance in the latter half of the year is considerably lower than the mid-year peak.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The dataset contains only 20 rows, making this monthly trend analysis based on limited data points. Unspecified factors or external events occurring within these months could be influencing the total price trends beyond product sales.</li>
+<li>The analysis is based on a small dataset (20 rows) and limited time frame. The observed trends may not be representative of longer-term performance. Variations in total price could be influenced by factors not present in the data, such as specific product sales or marketing campaigns.</li>
 </ul>
 <h3>Overview Scatter Unit Price Vs Total Price</h3>
 <h1>Insights: Overview Scatter Unit Price Vs Total Price</h1>
 <p><img src="../images/overview_scatter_unit_price_vs_total_price.png" alt="overview_scatter_unit_price_vs_total_price.png" style="max-width: 100%; border: 1px solid #d0d6dd; border-radius: 10px;" /></p>
 <h2>Data Insight</h2>
 <ul>
-<li>The scatter plot displays a generally positive correlation between unit price and total price. Most data points cluster at lower unit prices, with total prices increasing as unit prices rise, suggesting that higher-priced items also result in higher total order values.</li>
+<li>The scatter plot displays a generally positive relationship between unit price and total price, indicated by points clustering towards the upper right. However, there are distinct groups of points suggesting potential variations in quantity or product type, such as orders with similar unit prices but different total prices.</li>
 </ul>
 <h2>Analysis Insight</h2>
 <ul>
-<li>The data indicates that total price tends to increase with unit price. However, there are multiple orders with similar unit prices but varying total prices, and vice versa, implying that quantity, or other unplotted factors, significantly influences the total price per order.</li>
+<li>When unit price increases, total price tends to increase as well, but the number of data points is small. The data appears segmented, with several orders having unit prices around 400 and others around 100, each with varying total prices suggesting differences in quantity or product.</li>
 </ul>
 <h2>Caveat</h2>
 <ul>
-<li>The analysis is based on a limited sample of 20 orders. The relationship between unit price and total price might be influenced by the quantity of items purchased, which is not directly visualized here, and potential variations in product types.</li>
+<li>With only 20 data points, observed patterns may not be statistically significant or generalizable. The scatter plot does not account for the &#x27;quantity&#x27; variable, which is a crucial factor in determining total price and could explain the observed variations.</li>
 </ul>
   </main>
 </body>

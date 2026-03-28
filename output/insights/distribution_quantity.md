@@ -3,10 +3,10 @@
 ![distribution_quantity.png](../images/distribution_quantity.png)
 
 ## Data Insight
-- The distribution of quantity shows a peak at 7 units, with a secondary peak at 3 and 5 units. Quantities 4, 8, 9, and 10 have significantly lower counts. The data suggests a preference for moderate quantities, with 7 units being the most frequent order size.
+- The histogram shows the distribution of order quantities. Most orders fall between quantities of 6 and 9, with a peak at quantity 7. Quantities of 3, 5, 6, 8, 9, and 10 have at least two orders, while quantity 4 has only one.
 
 ## Analysis Insight
-- The histogram visualizes the frequency of different order quantities. The distribution is unimodal with a clear peak at quantity 7, indicating it's the most common order size. The mean quantity is 6.65, which aligns with the visual representation of the distribution's center.
+- The quantity distribution is skewed, with a higher frequency of quantities around 7. This suggests a common order size, but data represents a small sample size of 20 orders.
 
 ## Caveat
-- The dataset size is small (20 rows), limiting the generalizability of these findings. The distribution might change with a larger sample. Additionally, the chart doesn't show quantities below 3 or above 10, so the complete distribution is not represented.
+- The observed distribution might not represent the overall trend due to the very small dataset size (20 rows). It's difficult to infer general patterns or make predictions based on this limited data.
