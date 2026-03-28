@@ -115,8 +115,10 @@ Derive a short filename slug from `QUESTION`:
 Save the full answer (exactly as displayed to the user, including all sections) to:
 
 ```
-C:\Users\mrcra\Desktop\data-intelligence-researcher\output\answer_<slug>.md
+output/answers/answer_<slug>.md
 ```
+
+Create the `output/answers/` directory if it does not exist.
 
 Prepend a header block before the answer content:
 

@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from biomed_api.services.chart_service import generate_standard_charts
-from biomed_api.services.report_service import generate_report, read_report
+from csv_analyser.services.chart_service import generate_standard_charts
+from csv_analyser.services.report_service import generate_report, read_report
 
 
 def _build_report_df() -> pd.DataFrame:
@@ -33,9 +33,9 @@ def test_generate_report_writes_required_sections(tmp_path: Path) -> None:
 
     assert written.exists()
     content = written.read_text(encoding="utf-8")
-    assert "## Cohort Snapshot" in content
-    assert "## Outcome Stratification" in content
-    assert "## Top Biomarker-EFS Associations" in content
+    assert "## Dataset Snapshot" in content
+    assert "## Numeric Summary" in content
+    assert "## Top Correlations" in content
     assert "## Chart Index" in content
     assert "## Caveats" in content
 

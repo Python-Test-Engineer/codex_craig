@@ -30,20 +30,15 @@ You are a senior data scientist and business intelligence consultant with expert
 
 ## Step 1 — Locate the output folder and create insights subfolder
 
-Find the highest-numbered output folder:
-
-```
-Glob: output/PROJECT_*
-```
-
-Select the folder with the highest `_XX` suffix. Set `PROJECT_FOLDER` to that path.
+Derive `PROJECT_FOLDER` from `IMAGE_FOLDER` — it is the **parent directory** of `IMAGE_FOLDER`.
+For example: if `IMAGE_FOLDER` = `output/PROJECT_01/plots`, then `PROJECT_FOLDER` = `output/PROJECT_01`.
 
 Create the insights subfolder:
-```
-mkdir -p output/PROJECT_XX/insights
+```bash
+mkdir -p <PROJECT_FOLDER>/insights
 ```
 
-Set `INSIGHTS_FOLDER` = `output/PROJECT_XX/insights`
+Set `INSIGHTS_FOLDER` = `<PROJECT_FOLDER>/insights`
 
 ---
 

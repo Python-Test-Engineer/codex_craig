@@ -72,7 +72,7 @@ Only ask questions that cannot be answered from the idea file or the data itself
 
 ## Step 4 — Write the plan
 
-Save the completed plan to `_plans/kaggle_plan.md>`.
+Save the completed plan to `_plans/kaggle_plan.md`.
 
 Use this structure:
 

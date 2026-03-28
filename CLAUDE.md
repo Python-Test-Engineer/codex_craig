@@ -6,14 +6,9 @@ A data intelligence environment with two layers:
 
 1. **`src/csv_analyser`** — FastAPI service that ingests any CSV and produces charts,
    statistical reports, AI insights (via OpenRouter), and answers to user-defined objectives.
-   This is the primary application.
 
 2. **Claude Code commands** — slash commands that extend the analysis workflow with SQL
    query generation, research planning, and insight synthesis.
-
-`src/biomed_api` mirrors `csv_analyser` in structure but is a secondary module for
-biomedical-specific work. Default to `csv_analyser` for all changes unless the user
-explicitly mentions `biomed_api`.
 
 ## Run the app
 
@@ -120,7 +115,6 @@ Ruff line length: 100. Target: Python 3.11.
 
 ## What NOT to do
 
-- Do not touch `src/biomed_api` unless the user explicitly asks
 - Do not commit files from `output/images/` or `output/insights/`
 - Do not add API keys to source files or tests
 - Do not remove `_CLEAN_SKIP = {"sql"}` from `chart_service.py` — it prevents the pipeline from deleting SQL catalog files

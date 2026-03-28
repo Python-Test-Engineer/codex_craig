@@ -27,7 +27,7 @@ Announce: `Running /rsi — scope: <SCOPE>`
 List the 10 most recently modified `.jsonl` session files for this project:
 
 ```bash
-ls -lt C:/Users/mrcra/.claude/projects/C--Users-mrcra-Desktop-data-intelligence-researcher/*.jsonl
+ls -lt C:/Users/mrcra/.claude/projects/C--Users-mrcra-Desktop-data-intelligence-agent/*.jsonl
 ```
 
 Take the **10 most recently modified** files. Record each filename (UUID stem) and its modification timestamp.
@@ -234,7 +234,7 @@ Set `TIMESTAMP` to the output.
 Ensure the `logs/` directory exists:
 
 ```bash
-mkdir -p C:/Users/mrcra/Desktop/data-intelligence-researcher/logs
+mkdir -p logs
 ```
 
 Write `logs/rsi_<TIMESTAMP>.md` with the following structure:

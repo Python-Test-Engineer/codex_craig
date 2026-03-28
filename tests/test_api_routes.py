@@ -4,8 +4,8 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from biomed_api.api import routes
-from biomed_api.main import app
+from csv_analyser.api import routes
+from csv_analyser.main import app
 
 
 client = TestClient(app)
@@ -37,7 +37,7 @@ def test_home_page_renders() -> None:
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "Biomedical FastAPI Frontend" in response.text
+    assert "CSV Analyser Dashboard" in response.text
 
 
 def test_upload_csv_endpoint_overwrites_dataset(tmp_path: Path, monkeypatch) -> None:
@@ -126,7 +126,7 @@ def test_generate_and_get_report() -> None:
 
     report_response = client.get("/report")
     assert report_response.status_code == 200
-    assert "Cohort Snapshot" in report_response.json()["content"]
+    assert "Dataset Snapshot" in report_response.json()["content"]
 
 
 def test_generate_and_get_insights() -> None:
@@ -143,7 +143,7 @@ def test_generate_and_get_insights() -> None:
 
     insights_response = client.get("/insights")
     assert insights_response.status_code == 200
-    assert "Final Biomedical Insights" in insights_response.json()["content"]
+    assert "Final Data Insights" in insights_response.json()["content"]
 
 
 def test_generate_response_to_objectives_returns_model_used(
@@ -157,7 +157,7 @@ def test_generate_response_to_objectives_returns_model_used(
     output_path.write_text("# Response to Objectives\n", encoding="utf-8")
 
     def _fake_generate_response_to_objectives(_artifacts):
-        return output_path
+        return output_path, output_path
 
     monkeypatch.setattr(routes, "generate_response_to_objectives", _fake_generate_response_to_objectives)
 

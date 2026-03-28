@@ -7,7 +7,7 @@ argument-hint: "data/data.csv"
 Parse `$ARGUMENTS`:
 - `CSV_FILE` — first token (path to the CSV file)
 
-If missing or empty: default to `data/data.csv`. If `data/data.csv` does not exist, glob `data/*.csv`, list available files, and ask the user to pick one.
+If missing or empty: check `output/sql/original_csv.md` — if it exists, read it to get the last-uploaded filename and resolve it as `data/<filename>`. If that file does not exist either, fall back to `data/data.csv`. If `data/data.csv` does not exist, glob `data/*.csv`, list available files, and ask the user to pick one.
 
 ---
 

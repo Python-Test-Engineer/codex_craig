@@ -3,10 +3,10 @@
 ![overview_numeric_distributions.png](../images/overview_numeric_distributions.png)
 
 ## Data Insight
-- The 'postalcode' column exhibits a wide range of values, with a dense concentration of lower values and a few outliers extending to nearly 100k. Other numeric columns like 'ordernumber' and 'sales' show much tighter distributions.
+- The box plot reveals that 'unit_price' and 'total_price' have a wide range of values with significant variability, unlike 'quantity' which is tightly clustered. 'Total_price' exhibits the highest values and spread, indicating a majority of orders fall within a lower range but with some exceptionally high priced orders.
 
 ## Analysis Insight
-- The box plot indicates significant variation in monetary values represented by 'sales' and 'postalcode'. 'Sales' appears to have a more conventional distribution, while 'postalcode' suggests potential data entry issues or a wide geographic spread.
+- The distribution for 'unit_price' and 'total_price' is right-skewed, suggesting that most orders have lower prices, but a few orders significantly increase the upper bounds. The 'quantity' column shows minimal variation, with all values appearing to be compressed to a single point.
 
 ## Caveat
-- The 'postalcode' distribution's extreme range might be due to data entry errors or how zip codes are encoded. Without further context, it's difficult to determine if these are genuine values or require cleaning.
+- The extremely small dataset size (20 rows) limits the generalizability of these distribution insights. The 'quantity' distribution appears anomalous, potentially due to data entry errors or a very specific subset of data, and its interpretation should be approached with caution.

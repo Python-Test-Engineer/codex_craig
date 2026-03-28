@@ -1,23 +1,19 @@
 # Final Data Insights
 
-- Generated: 2026-03-27 17:46 UTC
+- Generated: 2026-03-28 09:04 UTC
 - Model setting: google/gemini-2.5-flash-lite
 - LLM-enabled: yes
-- Individual insight files: 19
+- Individual insight files: 12
 
 ## Dataset Context
-- Rows: 2823
-- Columns: 25
-- Numeric columns: 10
-- ordernumber: mean=10258.73, std=92.09
-- quantityordered: mean=35.09, std=9.74
-- priceeach: mean=83.66, std=20.17
+- Rows: 20
+- Columns: 7
+- Numeric columns: 3
+- unit_price: mean=403.49, std=370.34
+- quantity: mean=6.65, std=1.95
+- total_price: mean=2695.93, std=2567.29
 
 ## Consolidated Chart Insights
-
-## Generation Notes
-- LLM generation failed for one or more charts; heuristic fallback was used.
-- distribution_priceeach.png: LLM output was not valid JSON.
 
 ### Overview Numeric Distributions
 
@@ -26,13 +22,13 @@
 ![overview_numeric_distributions.png](../images/overview_numeric_distributions.png)
 
 ## Data Insight
-- The 'postalcode' column exhibits a wide range of values, with a dense concentration of lower values and a few outliers extending to nearly 100k. Other numeric columns like 'ordernumber' and 'sales' show much tighter distributions.
+- The box plot reveals that 'unit_price' and 'total_price' have a wide range of values with significant variability, unlike 'quantity' which is tightly clustered. 'Total_price' exhibits the highest values and spread, indicating a majority of orders fall within a lower range but with some exceptionally high priced orders.
 
 ## Analysis Insight
-- The box plot indicates significant variation in monetary values represented by 'sales' and 'postalcode'. 'Sales' appears to have a more conventional distribution, while 'postalcode' suggests potential data entry issues or a wide geographic spread.
+- The distribution for 'unit_price' and 'total_price' is right-skewed, suggesting that most orders have lower prices, but a few orders significantly increase the upper bounds. The 'quantity' column shows minimal variation, with all values appearing to be compressed to a single point.
 
 ## Caveat
-- The 'postalcode' distribution's extreme range might be due to data entry errors or how zip codes are encoded. Without further context, it's difficult to determine if these are genuine values or require cleaning.
+- The extremely small dataset size (20 rows) limits the generalizability of these distribution insights. The 'quantity' distribution appears anomalous, potentially due to data entry errors or a very specific subset of data, and its interpretation should be approached with caution.
 
 ### Correlation Heatmap
 
@@ -41,266 +37,161 @@
 ![correlation_heatmap.png](../images/correlation_heatmap.png)
 
 ## Data Insight
-- Sales show a strong positive correlation with quantity ordered (0.55) and price each (0.66). Order number is highly correlated with year (0.90), indicating a potential increase in order volume over time. Quarter and month IDs are strongly correlated (0.98), as expected.
+- The heatmap shows a strong positive correlation of 0.94 between unit_price and total_price, and a weak positive correlation of 0.26 between quantity and total_price. Unit_price and quantity have a near-zero correlation (0.02).
 
 ## Analysis Insight
-- The heatmap reveals significant positive correlations between sales and both quantity ordered and price each. The strong correlation between order number and year suggests a growing customer base or order frequency. Quartile and month IDs exhibit very high correlation, as they are intrinsically linked.
+- Total price is strongly influenced by unit price, suggesting that higher-priced items contribute more to the total cost. The weak correlation with quantity indicates that the number of items sold might have a less significant impact on total price compared to individual item costs.
 
 ## Caveat
-- These correlations do not imply causation. Other factors not present in this heatmap (e.g., marketing campaigns, economic conditions) could influence sales. The 'year_id' correlation might be influenced by the specific time period covered by the data.
+- The low number of rows (20) limits the statistical significance and generalizability of these correlation findings. Other unobserved factors ('city', 'date', 'product_name') could confound these relationships.
 
-### Distribution Ordernumber
+### Distribution Unit Price
 
-# Insights: Distribution Ordernumber
+# Insights: Distribution Unit Price
 
-![distribution_ordernumber.png](../images/distribution_ordernumber.png)
+![distribution_unit_price.png](../images/distribution_unit_price.png)
 
 ## Data Insight
-- The distribution of order numbers appears relatively uniform, suggesting that order numbers are assigned sequentially without significant gaps or clusters. The mean order number is approximately 10,259, with a standard deviation of 92, indicating a tight and consistent range of order values.
+- The histogram shows a non-uniform distribution of unit prices. There are notable peaks in counts for unit prices around 100-200, 300-400, and at 1000. The majority of unit prices fall within the lower ranges.
 
 ## Analysis Insight
-- The histogram shows a unimodal distribution skewed slightly to the right. Most orders fall within the early to mid-10,000s range. The standard deviation suggests that actual order numbers are closely clustered around the mean, implying a regular order processing cadence.
+- The distribution is multimodal with at least three distinct clusters suggesting different product categories or pricing strategies. The presence of a spike at 1000 might indicate premium products or a specific data entry pattern. The data's standard deviation of 370.34, compared to the mean of 403.49, indicates significant variability.
 
 ## Caveat
-- This analysis assumes order numbers are assigned chronologically. External factors not present in the metadata, such as system resets or manual order numbering, could affect the interpretation of this distribution. The chart only visualizes order numbers, not their associated sales or customer value.
+- With only 20 data points, this distribution might not be representative of the overall product pricing. The binning of the histogram could obscure finer details of the price distribution. Outliers or specific product types could heavily influence these observed peaks.
 
-### Distribution Quantityordered
+### Distribution Quantity
 
-# Insights: Distribution Quantityordered
+# Insights: Distribution Quantity
 
-![distribution_quantityordered.png](../images/distribution_quantityordered.png)
+![distribution_quantity.png](../images/distribution_quantity.png)
 
 ## Data Insight
-- The bar chart displays the distribution of 'quantityordered'. The majority of orders fall within the 30-40 quantity range, with a noticeable peak around 30. Frequencies decrease as quantities move away from this central range in either direction.
+- The distribution of quantity shows a peak at 7 units, with a secondary peak at 3 and 5 units. Quantities 4, 8, 9, and 10 have significantly lower counts. The data suggests a preference for moderate quantities, with 7 units being the most frequent order size.
 
 ## Analysis Insight
-- The 'quantityordered' variable appears to be unimodally distributed, suggesting a common order size is concentrated around 30 units. This could indicate typical purchasing behavior or inventory management practices influencing order volumes.
+- The histogram visualizes the frequency of different order quantities. The distribution is unimodal with a clear peak at quantity 7, indicating it's the most common order size. The mean quantity is 6.65, which aligns with the visual representation of the distribution's center.
 
 ## Caveat
-- The chart does not provide information on the underlying reasons for the observed distribution. Factors like product type, customer segment, or promotional activities could influence order quantities and are not depicted.
+- The dataset size is small (20 rows), limiting the generalizability of these findings. The distribution might change with a larger sample. Additionally, the chart doesn't show quantities below 3 or above 10, so the complete distribution is not represented.
 
-### Distribution Priceeach
+### Distribution Total Price
 
-# Insights: Distribution Priceeach
+# Insights: Distribution Total Price
 
-![distribution_priceeach.png](../images/distribution_priceeach.png)
+![distribution_total_price.png](../images/distribution_total_price.png)
 
 ## Data Insight
-- The distribution of 'priceeach' reveals the spread and shape of values. Skewed distributions or outliers may warrant transformation before modelling.
+- The histogram shows that the most frequent total_price range is between 0 and 2000, with 5 occurrences. There are also notable counts in the 0-1000 and 7000-8000 ranges.
 
 ## Analysis Insight
-- Highly skewed distributions may benefit from log or Box-Cox transformation before statistical modelling.
+- The distribution of total_price appears right-skewed, with a concentration of values at the lower end and a few outliers at higher prices. The bins suggest a significant number of lower-priced transactions.
 
 ## Caveat
-- Insights are exploratory and non-causal. Missing cells in source data: 5622. Sample size, data quality, and unmeasured variables may affect conclusions.
+- The small sample size of 20 rows limits the generalizability of these observations. The bin widths are not uniform, potentially affecting the visual interpretation of the distribution's shape.
 
-### Distribution Orderlinenumber
+### Category Order Id
 
-# Insights: Distribution Orderlinenumber
+# Insights: Category Order Id
 
-![distribution_orderlinenumber.png](../images/distribution_orderlinenumber.png)
+![category_order_id.png](../images/category_order_id.png)
 
 ## Data Insight
-- The histogram displays a distribution of order line numbers, showing a clear downward trend. The highest frequency of orders occurs with fewer line items, decreasing as the number of line items per order increases.
+- The bar chart displays the frequency count for each order ID. All displayed order IDs have an equal count of 1, indicating that each listed order ID appears only once in this dataset.
 
 ## Analysis Insight
-- The data suggests that most orders tend to be concise, with a significant majority having a small number of line items. The frequency drops sharply after the first few line items, indicating fewer complex orders with many items.
+- This visualization seems to show the top order IDs, but since all counts are equal, it suggests that the filtering or sorting applied to derive 'Top Values' might not be effective in highlighting distinct orders based on their frequency in this specific subset of data.
 
 ## Caveat
-- The chart does not reveal the total number of line items possible per order, nor does it account for the nature of the products ordered. The distribution could be affected by product availability or typical purchasing behavior.
+- The dataset contains only 20 rows, limiting the scope of 'Top Values.' The observation of equal counts might be an artifact of this small sample size or how the 'Top Values' were selected, rather than a general pattern.
 
-### Distribution Sales
+### Category Product Name
 
-# Insights: Distribution Sales
+# Insights: Category Product Name
 
-![distribution_sales.png](../images/distribution_sales.png)
+![category_product_name.png](../images/category_product_name.png)
 
 ## Data Insight
-- The distribution of sales is right-skewed, with the majority of sales falling between 1,000 and 4,000. There are fewer occurrences of sales exceeding 4,000, and a long tail extends to the right, indicating occasional high-value sales.
+- The bar chart displays the frequency of different product names. 'Monitor' is the most frequent product with 6 occurrences, followed by 'Headphones' and 'Laptop' both with 5 occurrences. 'Mouse' and 'Keyboard' are the least frequent, each appearing twice.
 
 ## Analysis Insight
-- The histogram shows a prominent peak in sales between 2,000 and 4,000 units. The sales data appears to be concentrated in the lower to mid-range, with a decreasing frequency as sales values increase.
+- This visualization highlights the popularity distribution among the top products. Monitors appear to be the most commonly purchased item in this dataset, suggesting potential market demand or availability differences compared to other products like mice and keyboards.
 
 ## Caveat
-- This analysis is based on the provided sales data and does not account for other factors that might influence sales, such as marketing campaigns, seasonality, or economic conditions, which could lead to confounding variables.
+- The dataset is small (20 rows), and the chart only shows the top values for product names. This limits the generalizability of the findings. Other products not shown may be more or less frequent, and the observed popularity could be influenced by factors not present in the data.
 
-### Distribution Qtr Id
+### Category City
 
-# Insights: Distribution Qtr Id
+# Insights: Category City
 
-![distribution_qtr_id.png](../images/distribution_qtr_id.png)
+![category_city.png](../images/category_city.png)
 
 ## Data Insight
-- The bar chart shows the distribution of orders across quarters. Quarter 4 has the highest number of orders, followed by Quarter 1, Quarter 2, and then Quarter 3, which has the fewest orders.
+- Los Angeles has the highest count of orders at 8, followed by New York with 7, and Chicago with 5. This indicates a concentration of customer activity in these three cities.
 
 ## Analysis Insight
-- Sales data is significantly skewed towards the fourth quarter, with over 1000 orders. The other quarters show a more even distribution, but with substantially fewer orders compared to Q4.
+- The bar chart visually represents the frequency of orders across different cities. Los Angeles and New York are the most frequent locations for orders within the dataset provided, suggesting a stronger market presence or customer base there.
 
 ## Caveat
-- The exact number of orders for each quarter is not precisely labeled, and the chart does not account for the total number of days or business activity within each quarter, which could influence order volume.
+- The dataset might not represent all cities or a complete time period. The chart only shows counts, not order values or product types, which could offer further insights into city-specific performance.
 
-### Category Status
+### Time Series Unit Price
 
-# Insights: Category Status
+# Insights: Time Series Unit Price
 
-![category_status.png](../images/category_status.png)
+![time_series_unit_price.png](../images/time_series_unit_price.png)
 
 ## Data Insight
-- The bar chart displays the frequency count of different order statuses. 'Shipped' is the overwhelmingly most frequent status, with approximately 2600+ occurrences. All other statuses, including 'Cancelled', 'Resolved', 'On Hold', 'In Process', and 'Disputed', have significantly lower counts, each with fewer than 100 occurrences.
+- The unit price shows significant fluctuations throughout the months. It peaks in May 2025 at approximately 1800, then drops sharply before a smaller peak in September 2025, and stabilizes from November 2025 onwards. The price in January 2025 is around 500.
 
 ## Analysis Insight
-- The data indicates a high volume of successfully shipped orders, suggesting efficient order fulfillment. The low counts for other statuses may point to a streamlined process or infrequent issues. Further investigation could explore the characteristics and reasons behind the 'Disputed' and 'Cancelled' orders.
+- The unit price exhibits a volatile trend with a notable peak and subsequent decline. The period from January to May 2025 shows an increasing trend followed by a sharp decrease. The later months show less dramatic, but still present, fluctuations, ending with a plateau.
 
 ## Caveat
-- The chart shows raw counts and does not account for the total number of orders attempted or the value of orders in each status. The low counts for other statuses could be due to infrequent issues or errors in data recording and categorization.
+- The analysis is based on limited data points (20 rows). The observed trends in unit price might not be representative of a longer period or could be influenced by unobserved factors such as specific product sales or promotions.
 
-### Category Productline
+### Time Series Quantity
 
-# Insights: Category Productline
+# Insights: Time Series Quantity
 
-![category_productline.png](../images/category_productline.png)
+![time_series_quantity.png](../images/time_series_quantity.png)
 
 ## Data Insight
-- The bar chart displays the count of orders for different product lines, with 'Classic Cars' being the most frequent, followed by 'Vintage Cars'. 'Trains' has the lowest order count.
+- The chart displays a significant peak in quantity in May 2025, reaching over 30 units. Following this peak, there's a sharp decline to about 6 units in July 2025. The quantity fluctuates between 5 and 10 units for the remainder of the period shown.
 
 ## Analysis Insight
-- Classic Cars and Vintage Cars are the dominant product lines in terms of order volume. The substantial difference in order counts between these top categories and the others suggests a varied market demand.
+- The quantity sold shows a volatile trend over the observed period. An initial increase from January to May is followed by a dramatic drop. The latter half of the year exhibits smaller fluctuations, suggesting a stabilization at a lower volume after the May peak.
 
 ## Caveat
-- This chart only shows the count of orders, not sales value or profit margins, so it doesn't reflect the overall business impact of each product line. Other factors could influence these numbers.
+- The dataset contains only 20 rows, meaning the monthly trends are based on limited data points. The chart does not show the products or cities involved, limiting deeper analysis into the drivers of these quantity changes.
 
-### Category Addressline2
+### Time Series Total Price
 
-# Insights: Category Addressline2
+# Insights: Time Series Total Price
 
-![category_addressline2.png](../images/category_addressline2.png)
+![time_series_total_price.png](../images/time_series_total_price.png)
 
 ## Data Insight
-- The vast majority of records (approximately 2500) have a missing value for 'addressline2'. Among the present values, 'Level 3', 'Suite 400', 'Level 6', 'Level 15', '2nd Floor', 'Suite 101', 'Suite 750', 'Floor No. 4', and 'Suite 200' appear infrequently.
+- Total price shows a peak in May 2025, reaching approximately 14.5k. Following this peak, there's a significant decline through July 2025, before a slight recovery in September and a gradual decrease towards November 2025.
 
 ## Analysis Insight
-- The 'addressline2' field exhibits severe data sparsity, with a prevalence of missing entries. This suggests potential issues with data collection or entry for this specific field, hindering detailed location-based analysis.
+- The time series reveals substantial month-over-month fluctuations in total price throughout 2025. The period from March to May 2025 indicates a sharp increase, contrasting with the steep drop observed between May and July 2025.
 
 ## Caveat
-- The significant number of missing 'addressline2' values limits the reliability of any analysis focusing on address-specific trends or segments. Further investigation into data collection processes is recommended.
+- The dataset contains only 20 rows, making this monthly trend analysis based on limited data points. Unspecified factors or external events occurring within these months could be influencing the total price trends beyond product sales.
 
-### Category State
+### Overview Scatter Unit Price Vs Total Price
 
-# Insights: Category State
+# Insights: Overview Scatter Unit Price Vs Total Price
 
-![category_state.png](../images/category_state.png)
+![overview_scatter_unit_price_vs_total_price.png](../images/overview_scatter_unit_price_vs_total_price.png)
 
 ## Data Insight
-- The state 'CA' has the highest count of orders, exceeding 1400.  The second highest category is '<missing>' with approximately 400 orders, followed by 'MA' with around 200 orders.  All other states have significantly fewer orders.
+- The scatter plot displays a generally positive correlation between unit price and total price. Most data points cluster at lower unit prices, with total prices increasing as unit prices rise, suggesting that higher-priced items also result in higher total order values.
 
 ## Analysis Insight
-- California appears to be a primary market. The substantial number of missing state values suggests potential data quality issues or a significant number of customers with unrecorded locations, warranting further investigation.
+- The data indicates that total price tends to increase with unit price. However, there are multiple orders with similar unit prices but varying total prices, and vice versa, implying that quantity, or other unplotted factors, significantly influences the total price per order.
 
 ## Caveat
-- The chart shows counts, not sales value or volume. The category '<missing>' could represent various reasons for unrecorded data, and its high frequency might skew interpretations of geographic performance without further data treatment.
-
-### Category Country
-
-# Insights: Category Country
-
-![category_country.png](../images/category_country.png)
-
-## Data Insight
-- The USA is the leading country in terms of order count, significantly surpassing other nations. Spain and France follow as the second and third most frequent countries for orders, respectively. The majority of other countries have notably lower order counts.
-
-## Analysis Insight
-- This bar chart displays the frequency distribution of orders across different countries. A clear hierarchy is evident, with the USA dominating the landscape. The plot suggests potential geographical concentrations of customer activity or sales operations.
-
-## Caveat
-- The chart represents order counts, not sales value or volume. Other factors, such as average order value or quantity per order, may differ significantly between countries, impacting overall business performance.
-
-### Category Territory
-
-# Insights: Category Territory
-
-![category_territory.png](../images/category_territory.png)
-
-## Data Insight
-- The EMEA territory has the highest number of orders, followed by a significant portion of orders with missing territory information. APAC and Japan territories have considerably fewer orders.
-
-## Analysis Insight
-- EMEA is the most represented territory in the dataset. The presence of a '<missing>' category suggests potential data entry issues or incomplete records for a substantial number of orders.
-
-## Caveat
-- The analysis is limited by the presence of missing territory data, which may skew the perceived distribution across regions. The represented territories might not cover all geographical sales areas.
-
-### Category Dealsize
-
-# Insights: Category Dealsize
-
-![category_dealsize.png](../images/category_dealsize.png)
-
-## Data Insight
-- The bar chart shows that 'Medium' and 'Small' deal sizes are the most frequent categories, with counts around 1400 and 1250 respectively. 'Large' deal sizes are significantly less frequent, with a count below 200.
-
-## Analysis Insight
-- Most deals observed in the dataset are categorized as 'Medium' or 'Small'. This suggests a business strategy or market dynamic that favors or results in a higher volume of smaller to medium-sized transactions compared to large ones.
-
-## Caveat
-- The chart only displays the count of deals by size category. It does not provide information on the total sales value for each category, the time period covered, or potential data inaccuracies in the 'dealsize' classification.
-
-### Time Series Ordernumber
-
-# Insights: Time Series Ordernumber
-
-![time_series_ordernumber.png](../images/time_series_ordernumber.png)
-
-## Data Insight
-- The time series displays significant peaks in 'ordernumber' around January of 2004 and January of 2005, indicating a strong seasonal trend for order placement during the beginning of the year.
-
-## Analysis Insight
-- The data suggests a recurring surge in orders at the start of each year observed in the chart. This pattern is more pronounced in January 2004 than in January 2005, with a gradual increase leading up to these peaks.
-
-## Caveat
-- The chart shows 'ordernumber' on the Y-axis, but the specific unit or exact count represented by each data point is not explicitly defined, leading to potential ambiguity in interpreting the magnitude of the order numbers.
-
-### Time Series Quantityordered
-
-# Insights: Time Series Quantityordered
-
-![time_series_quantityordered.png](../images/time_series_quantityordered.png)
-
-## Data Insight
-- The quantity ordered shows a cyclical pattern, with two distinct peaks around January of 2004 and 2005. Overall quantity ordered appears to increase between the first half of 2003 and the first half of 2005.
-
-## Analysis Insight
-- The time series exhibits strong seasonality, with significant spikes in order volume occurring annually, likely corresponding to holiday seasons or specific sales events. This recurring pattern suggests predictable demand fluctuations.
-
-## Caveat
-- The chart displays data for only a portion of 2003-2005. It's unclear if the observed peaks represent the entirety of peak sales periods or if external factors like marketing campaigns influence these trends.
-
-### Time Series Priceeach
-
-# Insights: Time Series Priceeach
-
-![time_series_priceeach.png](../images/time_series_priceeach.png)
-
-## Data Insight
-- The 'priceeach' exhibits significant monthly fluctuations, with prominent peaks occurring around January of 2004 and 2005. These peaks represent substantial increases in the average price of items sold during those periods.
-
-## Analysis Insight
-- The price trend shows a cyclical pattern with large spikes at the beginning of each year, suggesting potential seasonal sales events, promotions, or changes in product mix that drive up average prices.
-
-## Caveat
-- The chart doesn't display the volume of sales, so it's unclear if high average prices correspond to high sales volume or just a few high-value transactions. Other factors like product returns or data entry errors could also influence these price spikes.
-
-### Overview Scatter Qtr Id Vs Month Id
-
-# Insights: Overview Scatter Qtr Id Vs Month Id
-
-![overview_scatter_qtr_id_vs_month_id.png](../images/overview_scatter_qtr_id_vs_month_id.png)
-
-## Data Insight
-- The scatter plot indicates a general trend where increasing quarter ID (qtr_id) corresponds to higher month IDs (month_id). Orders with statuses 'Shipped' and 'Cancelled' appear across various quarters, while 'Disputed', 'In Process', 'On Hold', and 'Resolved' statuses are concentrated in the first quarter.
-
-## Analysis Insight
-- Quarter 1 (qtr_id=1) shows a distribution of month IDs from 1 to 3, predominantly with statuses other than 'Shipped' or 'Cancelled'. Quarters 2, 3, and 4 show limited data points, with 'Shipped' and 'Cancelled' statuses becoming more prevalent as qtr_id increases.
-
-## Caveat
-- The visualization uses discrete numerical representations for quarters and months, which might oversimplify the temporal relationships. The limited data points in later quarters, especially for certain statuses, limit the generalizability of observed patterns and could be due to sampling or data availability.
+- The analysis is based on a limited sample of 20 orders. The relationship between unit price and total price might be influenced by the quantity of items purchased, which is not directly visualized here, and potential variations in product types.
 

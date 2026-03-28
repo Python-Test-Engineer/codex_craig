@@ -34,7 +34,7 @@ file that Claude can search and retrieve from instantly.
 
 ## Step 1 — Load dataset context
 
-1. **Glob** `data/*.csv` — use the first match as the source table
+1. **Resolve CSV**: Read `output/sql/original_csv.md` — if it exists, use its content as the CSV filename and resolve as `data/<filename>`. If that file is missing or the path does not exist, **Glob** `data/*.csv` and use the first match.
 2. **Read** the first 3 lines of that CSV to extract the header row (column names)
 3. **Read** `SQL_TITLES_FILE` in full — this is both the source of titles AND additional
    context about the dataset's entities and measures

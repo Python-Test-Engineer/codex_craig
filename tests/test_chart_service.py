@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from biomed_api.services.chart_service import generate_standard_charts, list_chart_artifacts
+from csv_analyser.services.chart_service import generate_standard_charts, list_chart_artifacts
 
 
 def _build_chart_df() -> pd.DataFrame:
@@ -43,5 +43,5 @@ def test_chart_artifacts_have_required_categories(tmp_path: Path) -> None:
     listed = list_chart_artifacts(output_dir=tmp_path)
     categories = {item.category for item in listed}
 
-    assert {"clinical", "biomarker", "survival"}.issubset(categories)
-    assert len(listed) >= 10
+    assert {"overview", "correlation", "distribution", "category"}.issubset(categories)
+    assert len(listed) >= 8

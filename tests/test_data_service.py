@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from biomed_api.services.data_service import build_summary, infer_schema, load_dataset
+from csv_analyser.services.data_service import build_summary, infer_schema, load_dataset
 
 
 def test_load_dataset_normalizes_columns(tmp_path: Path) -> None:

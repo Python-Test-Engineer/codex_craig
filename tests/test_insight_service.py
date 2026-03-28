@@ -5,8 +5,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from biomed_api.models.schemas import ChartArtifact
-from biomed_api.services.insight_service import generate_insights_bundle, read_final_insights
+from csv_analyser.models.schemas import ChartArtifact
+from csv_analyser.services.insight_service import generate_insights_bundle, read_final_insights
 
 
 def _build_df() -> pd.DataFrame:
@@ -51,41 +51,47 @@ def test_generate_insights_bundle_writes_markdown_and_html(tmp_path: Path) -> No
     assert len(section_paths) == 2
     for section_path in section_paths:
         content = section_path.read_text(encoding="utf-8")
-        assert "## Medical Insight" in content
-        assert "## Research Insight" in content
+        assert "## Data Insight" in content
+        assert "## Analysis Insight" in content
         assert "![" in content
 
 
 def test_read_final_insights_returns_path_and_content(tmp_path: Path) -> None:
     insights_path = tmp_path / "insights.md"
-    insights_path.write_text("# Final Biomedical Insights\n", encoding="utf-8")
+    insights_path.write_text("# Final Data Insights\n", encoding="utf-8")
 
     path, content = read_final_insights(insights_path=insights_path)
 
     assert path == insights_path
-    assert "Final Biomedical Insights" in content
+    assert "Final Data Insights" in content
 
 
 def test_generate_insights_uses_llm_when_configured(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from biomed_api.services import insight_service
+    from csv_analyser.services import insight_service
 
-    class _TextBlock:
-        type = "text"
-        text = (
-            '{"medical_insight":"LLM medical insight",'
-            '"research_insight":"LLM research insight",'
-            '"caveat":"LLM caveat"}'
-        )
+    _LLM_JSON = (
+        '{"data_insight":"LLM data insight",'
+        '"analysis_insight":"LLM analysis insight",'
+        '"caveat":"LLM caveat"}'
+    )
 
-    class _Response:
-        content = [_TextBlock()]
+    class _Stream:
+        def __enter__(self) -> "_Stream":
+            return self
+
+        def __exit__(self, *_: object) -> None:
+            pass
+
+        @property
+        def text_stream(self):
+            return iter([_LLM_JSON])
 
     class _Messages:
         @staticmethod
-        def create(**_: object) -> _Response:
-            return _Response()
+        def stream(**_: object) -> _Stream:
+            return _Stream()
 
     class _Client:
         def __init__(self, **_: object) -> None:
@@ -112,6 +118,6 @@ def test_generate_insights_uses_llm_when_configured(
     insights_md, _, _ = generate_insights_bundle(df, artifacts, insights_dir=tmp_path / "insights")
     content = insights_md.read_text(encoding="utf-8")
 
-    assert "LLM medical insight" in content
-    assert "LLM research insight" in content
+    assert "LLM data insight" in content
+    assert "LLM analysis insight" in content
     assert "LLM caveat" in content

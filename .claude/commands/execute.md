@@ -57,7 +57,7 @@ For each script defined in the spec, in phase order:
 
 ### Writing rules
 - Save to `src/<script_name>.py`
-- Use Python 3.12 features where appropriate
+- Use Python 3.11 features where appropriate
 - Define `RANDOM_SEED = 42` and `OUTPUT_DIR = Path("output/PROJECT_XX")` at the top
 - Use `pathlib.Path` for all file paths — never string concatenation
 - Follow the data contract exactly: same column names, same dirty-row rules
